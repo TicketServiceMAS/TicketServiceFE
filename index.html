@@ -1,12 +1,188 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-    <script type="module" src="index.js"></script>
+    <title>Ticket Routing Tool – Statistik</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Din egen logik -->
+    <script type="module" src=".idea/js/index.js"></script>
+
+    <style>
+        :root {
+            --accent: #16a34a;       /* grøn */
+            --accent-soft: #dcfce7;
+            --danger: #dc2626;
+            --danger-soft: #fee2e2;
+            --text: #111827;
+            --text-muted: #6b7280;
+            --surface: #ffffff;
+            --surface-alt: #f9fafb;
+            --border: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, sans-serif;
+            background: #f3f4f6;
+            color: var(--text);
+        }
+
+        .page {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 16px 40px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+        }
+
+        header p {
+            margin: 6px 0 24px;
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 999px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge.good {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .badge.ok {
+            background: #fef9c3;
+            color: #eab308;
+        }
+
+        .badge.bad {
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+
+        .muted {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .content-layout {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .accuracy-main {
+            font-size: 2.3rem;
+            font-weight: 700;
+        }
+
+        .accuracy-sub {
+            color: var(--text-muted);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .stat-card {
+            background: var(--surface-alt);
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .stat-extra {
+            font-size: 0.8rem;
+            margin-top: 4px;
+            color: var(--text-muted);
+        }
+
+        .chart-wrapper {
+            background: var(--surface-alt);
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-caption {
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 800px) {
+            .content-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
+
+<div class="page">
+    <header>
+        <h1>Ticket Routing Tool</h1>
+        <p>Overblik over hvor præcist systemet fordeler tickets baseret på jeres ordlister.</p>
+    </header>
+
+    <main id="output">
+        Indlæser statistik...
+    </main>
+</div>
 
 </body>
 </html>
