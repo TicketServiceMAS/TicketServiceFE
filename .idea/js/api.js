@@ -9,3 +9,13 @@ export async function getRoutingStats() {
 
     return await response.json();
 }
+
+export async function getDepartments() {
+    const response = await fetch(`${API_BASE_URL}/api/ticketservice/departments`);
+
+    if (!response.ok) {
+        throw new Error("Kunne ikke hente departments");
+    }
+
+    return await response.json();
+}
