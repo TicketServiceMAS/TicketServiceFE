@@ -8,9 +8,6 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Din egen logik -->
-    <script type="module" src=".idea/js/index.js"></script>
-
     <style>
         :root {
             --accent: #16a34a;       /* grøn */
@@ -41,15 +38,57 @@
             padding: 0 16px 40px;
         }
 
+        header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
         header h1 {
             margin: 0;
             font-size: 2.2rem;
         }
 
         header p {
-            margin: 6px 0 24px;
+            margin: 6px 0 0;
             color: var(--text-muted);
             font-size: 1rem;
+        }
+
+        .header-text {
+            flex: 1;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-decoration: none;
+            border: 1px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
         }
 
         .card {
@@ -162,6 +201,16 @@
             .content-layout {
                 grid-template-columns: 1fr;
             }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                align-self: stretch;
+                justify-content: flex-start;
+            }
         }
     </style>
 </head>
@@ -169,14 +218,26 @@
 
 <div class="page">
     <header>
-        <h1>Ticket Routing Tool</h1>
-        <p>Overblik over hvor præcist systemet fordeler tickets.</p>
+        <div class="header-text">
+            <h1>Ticket Routing Tool</h1>
+            <p>Overblik over hvor præcist systemet fordeler tickets.</p>
+        </div>
+
+        <!-- KNAP TIL DEPARTMENTS -->
+        <div class="header-actions">
+            <a href="./departments.html" class="btn btn-secondary">
+                Se departments
+            </a>
+        </div>
     </header>
 
     <main id="output">
         Indlæser statistik...
     </main>
 </div>
+
+<!-- VIGTIGT: korrekt sti til index.js i .idea/js -->
+<script type="module" src=".idea/js/index.js"></script>
 
 </body>
 </html>

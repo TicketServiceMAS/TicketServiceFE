@@ -5,10 +5,18 @@ let chartInstance = null; // så vi kan nulstille grafen ved reload
 async function loadStats() {
     const output = document.getElementById("output");
 
-    try {
-        output.innerHTML = `Indlæser statistik...`;
+    if (!output) {
+        console.error("Kunne ikke finde elementet med id='output'.");
+        return;
+    }
 
+    // Vis loading-tekst
+    output.innerHTML = `Indlæser statistik...`;
+
+    try {
+        console.log("Henter stats fra backend...");
         const stats = await getRoutingStats();
+        console.log("Stats modtaget:", stats);
 
         const total = stats.totalTickets ?? 0;
         const success = stats.successCount ?? 0;
@@ -147,15 +155,25 @@ async function loadStats() {
         });
     } catch (error) {
         console.error("Fejl ved hentning af stats:", error);
-        output.innerHTML = `
+
+        // Hvis vi af en eller anden grund ikke har et output-element, kan vi ikke vise fejl
+        const outputFallback = document.getElementById("output");
+        if (!outputFallback) {
+            return;
+        }
+
+        outputFallback.innerHTML = `
             <section class="card">
                 <p style="color:#dc2626; font-size:0.9rem;">
                     Der opstod en fejl ved kald til backend.<br>
-                    <small>${error}</small>
+                    <small>${error && error.message ? error.message : error}</small>
                 </p>
             </section>
         `;
     }
 }
 
-loadStats();
+// Vent til DOM er klar
+window.addEventListener("DOMContentLoaded", () => {
+    loadStats();
+});
