@@ -3,10 +3,16 @@ import { getDepartments } from "./api.js";
 async function loadDepartments() {
     const output = document.getElementById("department-output");
 
-    try {
-        output.innerHTML = "Henter departments...";
+    if (!output) {
+        console.error("Kunne ikke finde #department-output");
+        return;
+    }
 
+    output.innerHTML = "Henter departments...";
+
+    try {
         const departments = await getDepartments();
+        console.log("Departments modtaget:", departments);
 
         if (!departments || departments.length === 0) {
             output.innerHTML = "<p>Ingen departments fundet.</p>";
@@ -19,15 +25,14 @@ async function loadDepartments() {
                     <div class="department-item">
                         <div class="department-header">
                             <div class="department-title">
-                                ${dep.subject || "(ingen subject)"}
+                                ${dep.departmentName || "(ingen navn)"}
                             </div>
                             <div class="department-status">
-                                ${dep.status || "-"}
+                                ID: ${dep.categoryID ?? "-"}
                             </div>
                         </div>
                         <div class="department-meta">
-                            Ticket ID: ${dep.ticketId || "-"} ·
-                            Priority: ${dep.priority || "-"}
+                            Mail: ${dep.mailAddress ?? "-"}
                         </div>
                     </div>
                 `).join("")}
@@ -40,10 +45,10 @@ async function loadDepartments() {
         output.innerHTML = `
             <p style="color:#dc2626; font-size:0.9rem;">
                 Der opstod en fejl ved hentning af departments.<br>
-                <small>${error}</small>
+                <small>${error && error.message ? error.message : error}</small>
             </p>
         `;
     }
 }
 
-loadDepartments();
+window.addEventListener("DOMContentLoaded", loadDepartments);
