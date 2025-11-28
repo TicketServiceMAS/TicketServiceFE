@@ -14,10 +14,9 @@ async function loadStats() {
         const success = stats.successCount ?? 0;
         const failure = stats.failureCount ?? 0;
         const defaulted = stats.defaultedCount ?? 0;
-        const incorrect = failure + defaulted;
 
-        // Undefined = alt der ikke har en kendt status
-        const undefinedCount = Math.max(total - (success + failure + defaulted), 0);
+        // samlet “forkerte” = FAILURE + DEFAULTED
+        const incorrect = failure + defaulted;
 
         const accuracyPercent =
             stats.accuracy != null
@@ -68,10 +67,10 @@ async function loadStats() {
                             </div>
 
                             <div class="stat-card">
-                                <div class="stat-label">Undefined</div>
-                                <div class="stat-value">${undefinedCount}</div>
+                                <div class="stat-label">Defaulted</div>
+                                <div class="stat-value">${defaulted}</div>
                                 <div class="stat-extra">
-                                    Tickets uden registreret status
+                                    Tickets der er havnet i fallback-routing
                                 </div>
                             </div>
                         </div>
@@ -79,7 +78,9 @@ async function loadStats() {
 
                     <div class="chart-wrapper">
                         <canvas id="accuracyChart"></canvas>
-                        <div class="chart-caption">Fordeling af korrekte, forkerte og undefined tickets</div>
+                        <div class="chart-caption">
+                            Fordeling af korrekte, forkerte og defaulted tickets
+                        </div>
                     </div>
                 </div>
             </section>
@@ -101,14 +102,14 @@ async function loadStats() {
         chartInstance = new Chart(ctx, {
             type: "doughnut",
             data: {
-                labels: ["Korrekte", "Forkerte", "Undefined"],
+                labels: ["Korrekte", "Forkerte", "Defaulted"],
                 datasets: [
                     {
-                        data: [success, incorrect, undefinedCount],
+                        data: [success, failure, defaulted],
                         backgroundColor: [
                             "#16a34a", // grøn – korrekt
-                            "#ef4444", // rød – forkert
-                            "#9ca3af"  // grå – undefined
+                            "#ef4444", // rød – forkert (FAILURE)
+                            "#9ca3af"  // grå – defaulted
                         ],
                         hoverBackgroundColor: [
                             "#15803d",
