@@ -2,123 +2,65 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Departments – Ticket Routing Tool</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Departments</title>
 
-    <!-- VIGTIGT: korrekt sti til departments.js i .idea/js -->
     <script type="module" src=".idea/js/departments.js"></script>
 
     <style>
-        :root {
-            --accent: #16a34a;
-            --text: #111827;
-            --text-muted: #6b7280;
-            --surface: #ffffff;
-            --surface-alt: #f9fafb;
-            --border: #e5e7eb;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
         body {
-            margin: 0;
-            font-family: Inter, system-ui, sans-serif;
+            font-family: Inter, sans-serif;
             background: #f3f4f6;
-            color: var(--text);
-        }
-
-        .page {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 16px 40px;
-        }
-
-        h1 {
-            margin: 0 0 10px;
-        }
-
-        .subtitle {
-            margin: 0 0 20px;
-            color: var(--text-muted);
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin-bottom: 16px;
-            color: var(--accent);
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
+            margin: 0;
+            padding: 40px;
         }
 
         .card {
-            background: var(--surface);
+            background: white;
             padding: 20px;
             border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-        }
-
-        .department-list {
-            margin-top: 10px;
+            max-width: 900px;
+            margin: auto;
+            border: 1px solid #e5e7eb;
         }
 
         .department-item {
             padding: 12px;
-            background: var(--surface-alt);
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
             margin-bottom: 10px;
-            border: 1px solid var(--border);
+            cursor: pointer;
         }
 
-        .department-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 4px;
-            gap: 8px;
+        .department-item:hover {
+            background: #e5e7eb;
         }
 
         .department-title {
             font-weight: 600;
-            word-break: break-word;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
         }
 
-        .department-status {
-            font-size: 0.8rem;
-            padding: 2px 8px;
-            border-radius: 999px;
-            background: #e5e7eb;
-            color: #374151;
-            white-space: nowrap;
-        }
-
-        .department-meta {
-            font-size: 0.85rem;
-            color: var(--text-muted);
+        .back {
+            color: #16a34a;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-block;
         }
     </style>
 </head>
 <body>
 
-<div class="page">
-    <a class="back-link" href="./index.html">← Tilbage til dashboard</a>
+<div class="card">
+    <div class="back" onclick="window.location.href='index.html'">
+        ← Tilbage
+    </div>
 
     <h1>Departments</h1>
-    <p class="subtitle">Liste over alle departments i systemet.</p>
+    <p>Vælg et department for at se alle dets tickets.</p>
 
-
-    <section class="card">
-        <div id="department-output">Henter departments...</div>
-    </section>
+    <div id="department-output">Henter departments...</div>
 </div>
 
 </body>

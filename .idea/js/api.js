@@ -1,21 +1,22 @@
 const API_BASE_URL = "http://localhost:8080";
 
-export async function getRoutingStats() {
-    const response = await fetch(`${API_BASE_URL}/api/ticketservice/stats`);
-
-    if (!response.ok) {
-        throw new Error("Kunne ikke hente routing statistics");
-    }
-
-    return await response.json();
+// Hent alle departments
+export async function getDepartments() {
+    const r = await fetch(`${API_BASE_URL}/api/ticketservice/departments`);
+    if (!r.ok) throw new Error("Kunne ikke hente departments");
+    return await r.json();
 }
 
-export async function getDepartments() {
-    const response = await fetch(`${API_BASE_URL}/api/ticketservice/departments`);
+// Hent alle metrics/tickets for et department
+export async function getTicketsForDepartment(id) {
+    const r = await fetch(`${API_BASE_URL}/api/ticketservice/departments/${id}/tickets`);
+    if (!r.ok) throw new Error("Kunne ikke hente tickets for department");
+    return await r.json();
+}
 
-    if (!response.ok) {
-        throw new Error("Kunne ikke hente departments");
-    }
-
-    return await response.json();
+// Hent stats (du bruger denne på index.html)
+export async function getRoutingStats() {
+    const r = await fetch(`${API_BASE_URL}/api/ticketservice/stats`);
+    if (!r.ok) throw new Error("Kunne ikke hente stats");
+    return await r.json();
 }
