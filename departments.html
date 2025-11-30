@@ -2,66 +2,378 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Departments</title>
+    <title>Departments – Ticket Routing Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- JS til departments-siden -->
     <script type="module" src=".idea/js/departments.js"></script>
 
     <style>
+        :root {
+            /* Samme ITM8 palette som index.html */
+            --accent: #5f259e;
+            --accent-soft: #f4effb;
+
+            --danger: #b91c1c;
+            --danger-soft: #fee2e2;
+
+            --text: #111827;
+            --text-muted: #6b7280;
+
+            --surface: #ffffff;
+            --surface-alt: #fafafa;
+            --border: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Inter, sans-serif;
-            background: #f3f4f6;
             margin: 0;
-            padding: 40px;
+            background: #f3f4f6;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+        }
+
+        .app-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== HEADER – IDENTISK MED index.html ===== */
+
+        .topbar {
+            background: #ffffff;
+            border-bottom: 1px solid rgba(229,231,235,0.9);
+            box-shadow: 0 2px 4px rgba(15,23,42,0.04);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .topbar-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-logo {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .brand-text-main {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-title {
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .brand-pill {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(95,37,158,0.25);
+            color: #5f259e;
+            background: #f8f5ff;
+        }
+
+        .brand-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .topbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link {
+            font-size: 0.85rem;
+            padding: 6px 14px;
+            border-radius: 999px;
+            text-decoration: none;
+            color: var(--text-muted);
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link span.dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: transparent;
+        }
+
+        .nav-link:hover {
+            background: #f4f4fb;
+            color: var(--text);
+        }
+
+        .nav-link-active {
+            background: rgba(95,37,158,0.06);
+            border-color: rgba(95,37,158,0.28);
+            color: #231529;
+        }
+
+        .nav-link-active span.dot {
+            background: #5f259e;
+        }
+
+        /* ===== PAGE CONTENT ===== */
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 16px 40px;
+            flex: 1;
+        }
+
+        .heading {
+            margin-bottom: 18px;
+        }
+
+        .heading h1 {
+            font-size: 1.6rem;
+            margin: 0 0 4px;
+        }
+
+        .heading p {
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--accent);
+            cursor: pointer;
+            margin-bottom: 10px;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+
+        .back:hover {
+            background: rgba(95,37,158,0.06);
         }
 
         .card {
-            background: white;
-            padding: 20px;
+            background: var(--surface);
             border-radius: 12px;
-            max-width: 900px;
-            margin: auto;
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--border);
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(15,23,42,0.05);
+        }
+
+        /* Departments-liste */
+
+        #department-output {
+            margin-top: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.9rem;
         }
 
         .department-item {
-            padding: 12px;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 12px;
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
             border-radius: 8px;
-            margin-bottom: 10px;
             cursor: pointer;
+            transition:
+                    background 0.12s ease-out,
+                    border-color 0.12s ease-out,
+                    box-shadow 0.12s ease-out,
+                    transform 0.05s ease-out;
         }
 
         .department-item:hover {
-            background: #e5e7eb;
+            background: #fdfbff;
+            border-color: var(--accent);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+            transform: translateY(-1px);
+        }
+
+        .department-main {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
         }
 
         .department-title {
             font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
         }
 
-        .back {
-            color: #16a34a;
-            cursor: pointer;
-            margin-bottom: 20px;
-            display: inline-block;
+        .department-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .department-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .department-chip {
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .department-item::after {
+            content: "→";
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+
+        /* ===== FOOTER – IDENTISK MED index.html ===== */
+
+        .footer {
+            border-top: 1px solid rgba(229, 231, 235, 0.9);
+            padding: 12px 16px 16px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            background: #ffffff;
+        }
+
+        .footer-divider {
+            opacity: 0.6;
+        }
+
+        @media (max-width: 800px) {
+            .topbar-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .topbar-nav {
+                width: 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .page {
+                padding-top: 18px;
+            }
         }
     </style>
 </head>
+
 <body>
+<div class="app-shell">
 
-<div class="card">
-    <div class="back" onclick="window.location.href='index.html'">
-        ← Tilbage
-    </div>
+    <!-- HEADER (samme markup som index.html, men Departments aktiv) -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <div class="brand-logo">itm8</div>
+                <div>
+                    <div class="brand-text-main">
+                        <div class="brand-title">Ticket Routing Tool</div>
+                        <span class="brand-pill">Internal</span>
+                    </div>
+                    <div class="brand-subtitle">
+                        Routing performance &amp; kvalitetsoverblik
+                    </div>
+                </div>
+            </div>
 
-    <h1>Departments</h1>
-    <p>Vælg et department for at se alle dets tickets.</p>
+            <nav class="topbar-nav">
+                <a href="./index.html" class="nav-link">
+                    <span class="dot"></span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="./departments.html" class="nav-link nav-link-active">
+                    <span class="dot"></span>
+                    <span>Departments</span>
+                </a>
+            </nav>
+        </div>
+    </header>
 
-    <div id="department-output">Henter departments...</div>
+    <!-- CONTENT -->
+    <main class="page">
+
+        <div class="heading">
+            <div class="back" onclick="window.location.href='index.html'">← Tilbage til dashboard</div>
+            <h1>Departments</h1>
+            <p>Vælg et department for at se dets tickets og routingperformance.</p>
+        </div>
+
+        <div class="card">
+            <div id="department-output">Henter departments...</div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER (samme markup som index.html) -->
+    <footer class="footer">
+        <span>itm8 • Ticket Routing Tool</span>
+        <span class="footer-divider">•</span>
+        <span>Internal dashboard</span>
+    </footer>
+
 </div>
-
 </body>
 </html>

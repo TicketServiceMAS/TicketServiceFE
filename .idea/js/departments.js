@@ -10,17 +10,28 @@ async function loadDepartments() {
         output.innerHTML = departments.map(dep => `
             <div class="department-item"
                  onclick="window.location.href='department.html?id=${dep.id}'">
-                 
-                <div class="department-title">${dep.departmentName}</div>
+
+                <div class="department-main">
+                    <div class="department-title">${dep.departmentName}</div>
+
+                    <div class="department-subtitle">
+                        ${dep.mailAddress ? `Mail: ${dep.mailAddress}` : "Ingen mail"}  
+                    </div>
+                </div>
+
                 <div class="department-meta">
-                    Mail: ${dep.mailAddress}<br>
-                    Category ID: ${dep.categoryID}
+                    <span class="department-chip">
+                        ID: ${dep.categoryID}
+                    </span>
                 </div>
             </div>
         `).join("");
 
     } catch (err) {
-        output.innerHTML = `<p style="color:red;">Fejl: ${err.message}</p>`;
+        output.innerHTML = `
+            <p style="color:#b91c1c; font-weight:500;">
+                Fejl ved indlæsning: ${err.message}
+            </p>`;
     }
 }
 

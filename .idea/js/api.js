@@ -1,3 +1,4 @@
+// .idea/js/api.js
 const API_BASE_URL = "http://localhost:8080";
 
 // Hent alle departments
@@ -14,7 +15,7 @@ export async function getTicketsForDepartment(id) {
     return await r.json();
 }
 
-// Hent stats (du bruger denne på index.html)
+// Hent samlede routing stats
 export async function getRoutingStats() {
     const r = await fetch(`${API_BASE_URL}/api/ticketservice/stats`);
     if (!r.ok) throw new Error("Kunne ikke hente stats");
