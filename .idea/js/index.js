@@ -1,6 +1,7 @@
 // .idea/js/index.js
 import {
     getRoutingStats,
+    getRoutingStatsForDepartment,
     getDepartments,
     getTicketsForDepartment
 } from "./api.js";
@@ -154,6 +155,7 @@ function formatDateTime(isoString) {
 
 /**
  * Hent ALLE tickets/metrics fra backend via departments-endpoints
+ * (brugt kun hvis USE_MOCK = true; ellers får vi stats direkte fra backend)
  */
 async function loadAllTicketsFromBackend() {
     try {
@@ -462,7 +464,7 @@ async function loadStats() {
             SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
 
         if (isDepartmentView) {
-            // --- DEPARTMENT-VIEW: kun tickets for det valgte department ---
+            // --- DEPARTMENT-VIEW ---
             const depId = SELECTED_DEPARTMENT_ID;
             console.log("Loader department view for id", depId);
 
@@ -476,37 +478,26 @@ async function loadStats() {
                         t.departmentId;
                     return String(ticketDeptId) === String(depId);
                 });
-            } else {
-                departmentData = await getTicketsForDepartment(depId);
-                console.log("Data fra backend for dep", depId, departmentData);
+                stats = computeStatsFromTickets(tickets);
 
-                if (Array.isArray(departmentData)) {
-                    tickets = departmentData;
-                } else if (departmentData && Array.isArray(departmentData.tickets)) {
-                    tickets = departmentData.tickets;
-                } else {
-                    console.warn("Ukendt format fra getTicketsForDepartment:", departmentData);
-                    tickets = [];
+                if (tickets.length > 0) {
+                    departmentData = { departmentName: tickets[0].departmentName };
                 }
+            } else {
+                // Hent stats direkte fra backend for det valgte department
+                stats = await getRoutingStatsForDepartment(depId);
+                tickets = []; // ingen ticket-liste fra backend endnu
             }
 
-            stats = computeStatsFromTickets(tickets);
-
-            const inferredName =
-                SELECTED_DEPARTMENT_NAME ||
-                (departmentData &&
+            const inferredName = SELECTED_DEPARTMENT_NAME
+                ? decodeURIComponent(SELECTED_DEPARTMENT_NAME)
+                : (departmentData &&
                     (departmentData.departmentName ||
                         (departmentData.department && departmentData.department.departmentName))) ||
-                (tickets && tickets.length > 0
-                    ? (
-                        (tickets[0].department && tickets[0].department.departmentName) ||
-                        tickets[0].departmentName ||
-                        ""
-                    )
-                    : "");
+                "";
 
             scopeLabel = inferredName
-                ? `Department: ${decodeURIComponent(inferredName)}`
+                ? `Department: ${inferredName}`
                 : `Department #${depId}`;
         } else {
             // --- GLOBALT DASHBOARD: alle departments ---
@@ -515,12 +506,9 @@ async function loadStats() {
                 stats = MOCK_STATS;
                 tickets = MOCK_TICKETS;
             } else {
-                const [statsFromApi, ticketsFromApi] = await Promise.all([
-                    getRoutingStats(),
-                    loadAllTicketsFromBackend()
-                ]);
+                const statsFromApi = await getRoutingStats();
                 stats = statsFromApi;
-                tickets = ticketsFromApi;
+                tickets = []; // ingen globale tickets fra backend endnu
             }
 
             scopeLabel = "Alle departments";
@@ -588,7 +576,7 @@ async function loadStats() {
             `;
         }
 
-        // Fejlstatistik til tekstlig liste
+        // Fejlstatistik til tekstlig liste (kun hvis vi har tickets = MOCK)
         const predictedErrorStats = buildPredictedTeamErrorStats(allTickets);
         const top3PredictedError = predictedErrorStats.slice(0, 3);
 

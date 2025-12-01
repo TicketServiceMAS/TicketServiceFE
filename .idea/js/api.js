@@ -10,7 +10,7 @@ export async function getDepartments() {
     return await r.json();
 }
 
-// Hent alle metrics/tickets for et department
+// Hent alle metrics/tickets for et department (pt. afhænger af jeres backend-format)
 export async function getTicketsForDepartment(id) {
     const r = await fetch(`${API_BASE_URL}/metrics/departments/${id}`);
     if (!r.ok) {
@@ -19,11 +19,20 @@ export async function getTicketsForDepartment(id) {
     return await r.json();
 }
 
-// Hent samlede routing stats
+// Hent samlede routing stats (alle departments)
 export async function getRoutingStats() {
     const r = await fetch(`${API_BASE_URL}/stats`);
     if (!r.ok) {
         throw new Error(`Kunne ikke hente stats (status ${r.status})`);
+    }
+    return await r.json();
+}
+
+// Hent routing stats for ét department
+export async function getRoutingStatsForDepartment(id) {
+    const r = await fetch(`${API_BASE_URL}/stats/${id}`);
+    if (!r.ok) {
+        throw new Error(`Kunne ikke hente stats for department ${id} (status ${r.status})`);
     }
     return await r.json();
 }
