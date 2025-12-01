@@ -9,19 +9,20 @@ async function loadDepartments() {
 
         output.innerHTML = departments.map(dep => `
             <div class="department-item"
-                 onclick="window.location.href='department.html?id=${dep.id}'">
+                 onclick="window.location.href='http://localhost:8080/api/ticketservice/stats/${dep.departmentID}'">
 
                 <div class="department-main">
                     <div class="department-title">${dep.departmentName}</div>
 
                     <div class="department-subtitle">
                         ${dep.mailAddress ? `Mail: ${dep.mailAddress}` : "Ingen mail"}  
+                        
                     </div>
                 </div>
 
                 <div class="department-meta">
                     <span class="department-chip">
-                        ID: ${dep.categoryID}
+                        ID: ${dep.departmentID}
                     </span>
                 </div>
             </div>
