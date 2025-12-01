@@ -235,6 +235,29 @@
             color: var(--text-muted);
         }
 
+        /* Tilbage-knap til departments */
+        .back-button {
+            display: none; /* vises/ændres af index.js i department-view */
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,0.7);
+            background: #ffffff;
+            font-size: 0.8rem;
+            color: #374151;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .back-button:hover {
+            background: #f9fafb;
+        }
+
+        .back-button span.arrow {
+            font-size: 0.9rem;
+        }
+
         /* KORT / CONTENT-KOMPONENTER */
         .card {
             background: var(--surface);
@@ -530,6 +553,12 @@
                     Live data
                 </span>
                 <span class="hero-updated" id="lastUpdated"></span>
+
+                <!-- Tilbage-knap – styres af index.js -->
+                <button id="backToDepartments" class="back-button">
+                    <span class="arrow">←</span>
+                    <span>Tilbage til departments</span>
+                </button>
             </div>
         </section>
 

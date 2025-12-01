@@ -155,7 +155,7 @@ function formatDateTime(isoString) {
 
 /**
  * Hent ALLE tickets/metrics fra backend via departments-endpoints
- * (brugt kun hvis USE_MOCK = true; ellers får vi stats direkte fra backend)
+ * (bruges i global view når USE_MOCK = false)
  */
 async function loadAllTicketsFromBackend() {
     try {
@@ -464,7 +464,7 @@ async function loadStats() {
             SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
 
         if (isDepartmentView) {
-            // --- DEPARTMENT-VIEW ---
+            // --- DEPARTMENT-VIEW: kun tickets/stats for det valgte department ---
             const depId = SELECTED_DEPARTMENT_ID;
             console.log("Loader department view for id", depId);
 
@@ -484,9 +484,25 @@ async function loadStats() {
                     departmentData = { departmentName: tickets[0].departmentName };
                 }
             } else {
-                // Hent stats direkte fra backend for det valgte department
-                stats = await getRoutingStatsForDepartment(depId);
-                tickets = []; // ingen ticket-liste fra backend endnu
+                // Backend: hent både stats og tickets for det valgte department
+                const [statsFromApi, deptData] = await Promise.all([
+                    getRoutingStatsForDepartment(depId),
+                    getTicketsForDepartment(depId)
+                ]);
+
+                stats = statsFromApi;
+                departmentData = deptData;
+
+                if (Array.isArray(deptData)) {
+                    // Hvis endpointet returnerer direkte en liste af metrics
+                    tickets = deptData;
+                } else if (deptData && Array.isArray(deptData.tickets)) {
+                    // Hvis endpointet returnerer { departmentName, tickets: [...] }
+                    tickets = deptData.tickets;
+                } else {
+                    console.warn("Ukendt format fra getTicketsForDepartment:", deptData);
+                    tickets = [];
+                }
             }
 
             const inferredName = SELECTED_DEPARTMENT_NAME
@@ -506,9 +522,12 @@ async function loadStats() {
                 stats = MOCK_STATS;
                 tickets = MOCK_TICKETS;
             } else {
-                const statsFromApi = await getRoutingStats();
+                const [statsFromApi, ticketsFromApi] = await Promise.all([
+                    getRoutingStats(),
+                    loadAllTicketsFromBackend()
+                ]);
                 stats = statsFromApi;
-                tickets = []; // ingen globale tickets fra backend endnu
+                tickets = ticketsFromApi;
             }
 
             scopeLabel = "Alle departments";
@@ -576,7 +595,7 @@ async function loadStats() {
             `;
         }
 
-        // Fejlstatistik til tekstlig liste (kun hvis vi har tickets = MOCK)
+        // Fejlstatistik til tekstlig liste
         const predictedErrorStats = buildPredictedTeamErrorStats(allTickets);
         const top3PredictedError = predictedErrorStats.slice(0, 3);
 
@@ -922,5 +941,21 @@ async function loadStats() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+    // Tilbage-knap i department-view (hvis knappen findes i HTML)
+    const backBtn = document.getElementById("backToDepartments");
+    const isDepartmentView =
+        SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
+
+    if (backBtn) {
+        if (isDepartmentView) {
+            backBtn.style.display = "inline-flex";
+            backBtn.addEventListener("click", () => {
+                window.location.href = "./departments.html";
+            });
+        } else {
+            backBtn.style.display = "none";
+        }
+    }
+
     loadStats();
 });

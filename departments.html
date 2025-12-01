@@ -200,8 +200,99 @@
             background: var(--surface);
             border-radius: 12px;
             border: 1px solid var(--border);
-            padding: 20px;
+            padding: 18px 18px 16px;
             box-shadow: 0 10px 25px rgba(15,23,42,0.05);
+        }
+
+        /* ==== Card header: “user management”-agtig toolbar ==== */
+
+        .card-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .card-header-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 2px;
+        }
+
+        .card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-search {
+            position: relative;
+        }
+
+        .toolbar-search input {
+            padding: 7px 10px 7px 26px;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            font-size: 0.85rem;
+            min-width: 180px;
+            outline: none;
+            background: #f9fafb;
+        }
+
+        .toolbar-search input:focus {
+            border-color: var(--accent);
+            background: #ffffff;
+        }
+
+        .toolbar-search-icon {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .toolbar-chip {
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            border: 1px solid rgba(148,163,184,0.5);
+            color: #4b5563;
+            background: #f9fafb;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-chip span.dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: #e5e7eb;
+        }
+
+        .toolbar-chip-active {
+            border-color: rgba(95,37,158,0.4);
+            background: #f4effb;
+            color: #4b1c82;
+        }
+
+        .toolbar-chip-active span.dot {
+            background: #5f259e;
         }
 
         /* Departments-liste */
@@ -219,7 +310,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            padding: 12px 12px;
+            padding: 10px 12px;
             background: var(--surface-alt);
             border: 1px solid var(--border);
             border-radius: 8px;
@@ -276,6 +367,28 @@
             font-weight: 500;
         }
 
+        .department-badge {
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .department-badge-good {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .department-badge-ok {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .department-badge-bad {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
         .department-item::after {
             content: "→";
             font-size: 0.85rem;
@@ -315,6 +428,16 @@
 
             .page {
                 padding-top: 18px;
+            }
+
+            .card-header-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .toolbar {
+                width: 100%;
+                justify-content: flex-start;
             }
         }
     </style>
@@ -358,10 +481,46 @@
         <div class="heading">
             <div class="back" onclick="window.location.href='index.html'">← Tilbage til dashboard</div>
             <h1>Departments</h1>
-            <p>Vælg et department for at se dets tickets og routingperformance.</p>
+            <p>Administration af departments og overblik over routingperformance.</p>
         </div>
 
         <div class="card">
+            <div class="card-header-row">
+                <div class="card-header-text">
+                    <div class="card-title">Department-oversigt</div>
+                    <div class="card-subtitle">
+                        Klik på et department for at åbne dets routingdashboard.
+                    </div>
+                </div>
+
+                <div class="toolbar">
+                    <!-- Søgefelt – hvis du vil bruge det i JS, giv det fx id="departmentSearch" -->
+                    <div class="toolbar-search">
+                        <span class="toolbar-search-icon">🔍</span>
+                        <input
+                                id="departmentSearch"
+                                type="text"
+                                placeholder="Søg efter department..."
+                        />
+                    </div>
+
+                    <!-- Filter-chips – kan bruges senere i JS hvis du vil -->
+                    <button class="toolbar-chip toolbar-chip-active" type="button">
+                        <span class="dot"></span>
+                        Alle
+                    </button>
+                    <button class="toolbar-chip" type="button">
+                        <span class="dot"></span>
+                        Høj accuracy
+                    </button>
+                    <button class="toolbar-chip" type="button">
+                        <span class="dot"></span>
+                        Lav accuracy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Her skriver departments.js stadig listen ind -->
             <div id="department-output">Henter departments...</div>
         </div>
 
