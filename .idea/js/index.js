@@ -8,7 +8,7 @@ import {
 /**
  * MOCKDATA – sæt USE_MOCK = false når backend-data er klar
  */
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 const MOCK_STATS = {
     totalTickets: 30,
@@ -68,7 +68,46 @@ const MOCK_TICKETS = [
 let chartInstance = null;              // donut
 let predictionChartInstance = null;    // line chart (forecast)
 let liveUpdatedInterval = null;        // live-timeren
-let allTickets = [];                   // alle tickets (MetricsDepartment) på tværs af departments
+let allTickets = [];                   // alle tickets/metrics på tværs af departments
+
+// Læs evt. valgt department fra URL’en
+const urlParams = new URLSearchParams(window.location.search);
+const SELECTED_DEPARTMENT_ID = urlParams.get("departmentId")
+    ? parseInt(urlParams.get("departmentId"), 10)
+    : null;
+const SELECTED_DEPARTMENT_NAME = urlParams.get("departmentName");
+
+/**
+ * Hjælper til at udregne stats ud fra en liste af tickets/metrics
+ */
+function computeStatsFromTickets(tickets) {
+    const result = {
+        totalTickets: 0,
+        successCount: 0,
+        failureCount: 0,
+        defaultedCount: 0
+    };
+
+    if (!Array.isArray(tickets) || tickets.length === 0) {
+        return result;
+    }
+
+    result.totalTickets = tickets.length;
+
+    for (const t of tickets) {
+        const status = (t.status ?? t.routingStatus ?? "").toUpperCase();
+
+        if (status === "SUCCESS") {
+            result.successCount++;
+        } else if (status === "FAILURE") {
+            result.failureCount++;
+        } else if (status === "DEFAULTED") {
+            result.defaultedCount++;
+        }
+    }
+
+    return result;
+}
 
 function startLiveUpdatedLabel(element, timestamp) {
     if (!element || !timestamp) return;
@@ -114,7 +153,7 @@ function formatDateTime(isoString) {
 }
 
 /**
- * Hent ALLE tickets fra backend via departments-endpoints
+ * Hent ALLE tickets/metrics fra backend via departments-endpoints
  */
 async function loadAllTicketsFromBackend() {
     try {
@@ -125,17 +164,33 @@ async function loadAllTicketsFromBackend() {
         }
 
         const ids = departments
-            .map(d => d.categoryID ?? d.id)
+            .map(d => d.departmentID ?? d.categoryID ?? d.id)
             .filter(id => id != null);
 
-        const promises = ids.map(id =>
-            getTicketsForDepartment(id).catch(e => {
-                console.warn("Kunne ikke hente tickets for department", id, e);
-                return [];
+        const perDept = await Promise.all(
+            ids.map(async id => {
+                try {
+                    const data = await getTicketsForDepartment(id);
+
+                    // Backend kan returnere:
+                    // 1) Et array af metrics/tickets
+                    // 2) Et objekt fx { departmentName, tickets: [...] }
+                    if (Array.isArray(data)) {
+                        return data;
+                    }
+                    if (data && Array.isArray(data.tickets)) {
+                        return data.tickets;
+                    }
+
+                    console.warn("Ukendt dataformat fra getTicketsForDepartment for id", id, data);
+                    return [];
+                } catch (e) {
+                    console.warn("Kunne ikke hente tickets for department", id, e);
+                    return [];
+                }
             })
         );
 
-        const perDept = await Promise.all(promises);
         return perDept.flat();
     } catch (e) {
         console.error("Fejl ved hentning af alle tickets:", e);
@@ -401,18 +456,74 @@ async function loadStats() {
 
         let stats;
         let tickets;
+        let scopeLabel;
 
-        if (USE_MOCK) {
-            console.log("Bruger MOCK_DATA – sæt USE_MOCK = false for at bruge backend.");
-            stats = MOCK_STATS;
-            tickets = MOCK_TICKETS;
+        const isDepartmentView =
+            SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
+
+        if (isDepartmentView) {
+            // --- DEPARTMENT-VIEW: kun tickets for det valgte department ---
+            const depId = SELECTED_DEPARTMENT_ID;
+            console.log("Loader department view for id", depId);
+
+            let departmentData = null;
+
+            if (USE_MOCK) {
+                tickets = MOCK_TICKETS.filter(t => {
+                    const ticketDeptId =
+                        t.metricsDepartmentID ??
+                        t.departmentID ??
+                        t.departmentId;
+                    return String(ticketDeptId) === String(depId);
+                });
+            } else {
+                departmentData = await getTicketsForDepartment(depId);
+                console.log("Data fra backend for dep", depId, departmentData);
+
+                if (Array.isArray(departmentData)) {
+                    tickets = departmentData;
+                } else if (departmentData && Array.isArray(departmentData.tickets)) {
+                    tickets = departmentData.tickets;
+                } else {
+                    console.warn("Ukendt format fra getTicketsForDepartment:", departmentData);
+                    tickets = [];
+                }
+            }
+
+            stats = computeStatsFromTickets(tickets);
+
+            const inferredName =
+                SELECTED_DEPARTMENT_NAME ||
+                (departmentData &&
+                    (departmentData.departmentName ||
+                        (departmentData.department && departmentData.department.departmentName))) ||
+                (tickets && tickets.length > 0
+                    ? (
+                        (tickets[0].department && tickets[0].department.departmentName) ||
+                        tickets[0].departmentName ||
+                        ""
+                    )
+                    : "");
+
+            scopeLabel = inferredName
+                ? `Department: ${decodeURIComponent(inferredName)}`
+                : `Department #${depId}`;
         } else {
-            const [statsFromApi, ticketsFromApi] = await Promise.all([
-                getRoutingStats(),
-                loadAllTicketsFromBackend()
-            ]);
-            stats = statsFromApi;
-            tickets = ticketsFromApi;
+            // --- GLOBALT DASHBOARD: alle departments ---
+            if (USE_MOCK) {
+                console.log("Bruger MOCK_DATA – sæt USE_MOCK = false for at bruge backend.");
+                stats = MOCK_STATS;
+                tickets = MOCK_TICKETS;
+            } else {
+                const [statsFromApi, ticketsFromApi] = await Promise.all([
+                    getRoutingStats(),
+                    loadAllTicketsFromBackend()
+                ]);
+                stats = statsFromApi;
+                tickets = ticketsFromApi;
+            }
+
+            scopeLabel = "Alle departments";
         }
 
         allTickets = tickets || [];
@@ -505,7 +616,12 @@ async function loadStats() {
         output.innerHTML = `
             <section class="card fade-in">
                 <div class="card-header">
-                    <h2>Routing accuracy</h2>
+                    <div>
+                        <h2>Routing accuracy</h2>
+                        <div class="card-header-sub">
+                            ${scopeLabel}
+                        </div>
+                    </div>
                     <span class="badge ${badgeClass}">
                         ${accuracyRounded}% korrekt
                     </span>
