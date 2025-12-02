@@ -10,7 +10,75 @@ export async function getDepartments() {
     return await r.json();
 }
 
-// Hent alle metrics/tickets for et department (pt. afhænger af jeres backend-format)
+// Opret nyt department
+export async function createDepartment(payload) {
+    const r = await fetch(`${API_BASE_URL}/departments`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!r.ok) {
+        let msg = `Kunne ikke oprette department (status ${r.status})`;
+        try {
+            const errBody = await r.json();
+            if (errBody && errBody.message) {
+                msg += `: ${errBody.message}`;
+            }
+        } catch (_) {}
+        throw new Error(msg);
+    }
+
+    return await r.json();
+}
+
+// Opdater department
+export async function updateDepartment(id, payload) {
+    const r = await fetch(`${API_BASE_URL}/departments/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!r.ok) {
+        let msg = `Kunne ikke opdatere department (status ${r.status})`;
+        try {
+            const errBody = await r.json();
+            if (errBody && errBody.message) {
+                msg += `: ${errBody.message}`;
+            }
+        } catch (_) {}
+        throw new Error(msg);
+    }
+
+    return await r.json();
+}
+
+// Slet department
+export async function deleteDepartment(id) {
+    const r = await fetch(`${API_BASE_URL}/departments/${id}`, {
+        method: "DELETE"
+    });
+
+    if (!r.ok) {
+        let msg = `Kunne ikke slette department (status ${r.status})`;
+        try {
+            const errBody = await r.json();
+            if (errBody && errBody.message) {
+                msg += `: ${errBody.message}`;
+            }
+        } catch (_) {}
+        throw new Error(msg);
+    }
+
+    return true;
+}
+
+// Hent alle metrics/tickets for et department
 export async function getTicketsForDepartment(id) {
     const r = await fetch(`${API_BASE_URL}/metrics/departments/${id}`);
     if (!r.ok) {
