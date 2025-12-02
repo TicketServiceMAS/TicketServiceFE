@@ -1,4 +1,3 @@
-// .idea/js/api.js
 const API_BASE_URL = "http://localhost:8080/api/ticketservice";
 
 // Hent alle departments
@@ -33,7 +32,56 @@ export async function createDepartment(payload) {
         throw new Error(msg);
     }
 
-    return await r.json(); // forventer at backend returnerer det oprettede department
+    return await r.json(); // Controller returnerer Department-entity
+}
+
+// Opdater et eksisterende department
+export async function updateDepartment(id, payload) {
+    const r = await fetch(`${API_BASE_URL}/departments/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!r.ok) {
+        let msg = `Kunne ikke opdatere department (id ${id}, status ${r.status})`;
+        try {
+            const errBody = await r.json();
+            if (errBody && errBody.message) {
+                msg += `: ${errBody.message}`;
+            }
+        } catch (_) {
+            // ignore JSON parse fejl
+        }
+        throw new Error(msg);
+    }
+
+    return await r.json(); // Controller returnerer det opdaterede Department
+}
+
+// Slet et department
+export async function deleteDepartment(id) {
+    const r = await fetch(`${API_BASE_URL}/departments/${id}`, {
+        method: "DELETE"
+    });
+
+    if (!r.ok) {
+        let msg = `Kunne ikke slette department (id ${id}, status ${r.status})`;
+        try {
+            const errBody = await r.json();
+            if (errBody && errBody.message) {
+                msg += `: ${errBody.message}`;
+            }
+        } catch (_) {
+            // ignore JSON parse fejl
+        }
+        throw new Error(msg);
+    }
+
+    // Backend returnerer kun en tekst ("Department deleted"), vi behøver den ikke.
+    return true;
 }
 
 // Hent alle metrics/tickets for et department

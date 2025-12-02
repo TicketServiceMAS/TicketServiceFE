@@ -313,7 +313,7 @@
             background: #4a1d7b;
         }
 
-        /* Add department form */
+        /* Add / Edit department forms */
 
         .add-department-container {
             margin-bottom: 12px;
@@ -483,6 +483,42 @@
             font-weight: 500;
         }
 
+        .department-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .department-action {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .department-action-edit {
+            border-color: #d1d5db;
+            background: #ffffff;
+            color: #374151;
+        }
+
+        .department-action-edit:hover {
+            background: #f3f4f6;
+        }
+
+        .department-action-delete {
+            border-color: rgba(185, 28, 28, 0.2);
+            background: var(--danger-soft);
+            color: #b91c1c;
+        }
+
+        .department-action-delete:hover {
+            border-color: rgba(185, 28, 28, 0.4);
+            background: #fecaca;
+        }
+
         .department-item::after {
             content: "→";
             font-size: 0.85rem;
@@ -615,7 +651,7 @@
                         Lav accuracy
                     </button>
 
-                    <!-- Ny: knap til at åbne add-department form -->
+                    <!-- Knap til at åbne add-department form -->
                     <button id="toggleAddDepartment" class="toolbar-button-primary" type="button">
                         <span>＋</span>
                         <span>Nyt department</span>
@@ -623,7 +659,7 @@
                 </div>
             </div>
 
-            <!-- Ny: Add department form (skjult som udgangspunkt) -->
+            <!-- Add department form (skjult som udgangspunkt) -->
             <div id="addDepartmentContainer" class="add-department-container hidden">
                 <div class="add-department-title">Tilføj nyt department</div>
 
@@ -644,13 +680,14 @@
 
                         <div class="add-department-field">
                             <label for="newDepartmentMail" class="add-department-label">
-                                Mailadresse
+                                Mailadresse <span style="color:#b91c1c">*</span>
                             </label>
                             <input
                                     id="newDepartmentMail"
                                     type="email"
                                     class="add-department-input"
                                     placeholder="fx servicedesk@itm8.com"
+                                    required
                             />
                         </div>
 
@@ -668,24 +705,48 @@
                 </form>
             </div>
 
-            <!-- Department routing dashboard -->
-            <div class="card" style="margin-bottom: 20px;">
+            <!-- Edit department form (skjult, vises når man vælger "Rediger") -->
+            <div id="editDepartmentContainer" class="add-department-container hidden">
+                <div class="add-department-title">Rediger department</div>
 
-                <div class="card-header-row">
-                    <div class="card-header-text">
-                        <div class="card-title" id="deptName">Department navn indlæses...</div>
-                        <div class="card-subtitle">Routing performance for dette department</div>
+                <form id="editDepartmentForm">
+                    <div class="add-department-grid">
+                        <div class="add-department-field">
+                            <label for="editDepartmentName" class="add-department-label">
+                                Navn <span style="color:#b91c1c">*</span>
+                            </label>
+                            <input
+                                    id="editDepartmentName"
+                                    type="text"
+                                    class="add-department-input"
+                                    required
+                            />
+                        </div>
+
+                        <div class="add-department-field">
+                            <label for="editDepartmentMail" class="add-department-label">
+                                Mailadresse <span style="color:#b91c1c">*</span>
+                            </label>
+                            <input
+                                    id="editDepartmentMail"
+                                    type="email"
+                                    class="add-department-input"
+                                    required
+                            />
+                        </div>
+
+                        <div class="add-department-actions">
+                            <button type="submit" id="updateDepartmentBtn" class="btn-primary">
+                                Gem ændringer
+                            </button>
+                            <button type="button" id="cancelEditDepartment" class="btn-ghost">
+                                Annullér
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="chart-wrapper">
-                    <canvas id="accuracyChart"></canvas>
-                    <div class="chart-caption">
-                        Fordeling af korrekte, fejlede og defaulted tickets
-                    </div>
-                </div>
-
-                <div id="ticket-output" style="margin-top: 20px;"></div>
+                    <div id="editDepartmentMessage" class="add-department-error hidden"></div>
+                </form>
             </div>
 
             <!-- Her skriver departments.js stadig listen ind -->
