@@ -7,26 +7,33 @@ async function loadDepartments() {
     try {
         const departments = await getDepartments();
 
-        output.innerHTML = departments.map(dep => `
-            <div class="department-item"
-                 onclick="window.location.href='http://localhost:8080/api/ticketservice/stats/${dep.departmentID}'">
+        output.innerHTML = departments.map(dep => {
+            const id = dep.departmentID;
+            const name = dep.departmentName ?? "Ukendt department";
+            const mail = dep.mailAddress || "Ingen mail";
 
-                <div class="department-main">
-                    <div class="department-title">${dep.departmentName}</div>
+            const encodedName = encodeURIComponent(name);
 
-                    <div class="department-subtitle">
-                        ${dep.mailAddress ? `Mail: ${dep.mailAddress}` : "Ingen mail"}  
-                        
+            return `
+                <div class="department-item"
+                     onclick="window.location.href='index.html?departmentId=${id}&departmentName=${encodedName}'">
+
+                    <div class="department-main">
+                        <div class="department-title">${name}</div>
+
+                        <div class="department-subtitle">
+                            Mail: ${mail}
+                        </div>
+                    </div>
+
+                    <div class="department-meta">
+                        <span class="department-chip">
+                            ID: ${id}
+                        </span>
                     </div>
                 </div>
-
-                <div class="department-meta">
-                    <span class="department-chip">
-                        ID: ${dep.departmentID}
-                    </span>
-                </div>
-            </div>
-        `).join("");
+            `;
+        }).join("");
 
     } catch (err) {
         output.innerHTML = `
