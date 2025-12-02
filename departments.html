@@ -295,6 +295,122 @@
             background: #5f259e;
         }
 
+        /* Add department button */
+        .toolbar-button-primary {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            border: 1px solid rgba(95,37,158,0.5);
+            background: #5f259e;
+            color: #ffffff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-button-primary:hover {
+            background: #4a1d7b;
+        }
+
+        /* Add department form */
+
+        .add-department-container {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f9fafb;
+            border: 1px dashed #d1d5db;
+        }
+
+        .add-department-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .add-department-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .add-department-field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 180px;
+            flex: 1;
+        }
+
+        .add-department-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .add-department-input {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 0.85rem;
+            background: #ffffff;
+        }
+
+        .add-department-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .add-department-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            padding: 7px 12px;
+            border-radius: 999px;
+            border: none;
+            background: #5f259e;
+            color: #ffffff;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #4a1d7b;
+        }
+
+        .btn-ghost {
+            padding: 7px 12px;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            color: #4b5563;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .btn-ghost:hover {
+            background: #f3f4f6;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .add-department-error {
+            margin-top: 6px;
+            font-size: 0.78rem;
+            color: #b91c1c;
+        }
+
+        .add-department-success {
+            margin-top: 6px;
+            font-size: 0.78rem;
+            color: #166534;
+        }
+
         /* Departments-liste */
 
         #department-output {
@@ -367,28 +483,6 @@
             font-weight: 500;
         }
 
-        .department-badge {
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .department-badge-good {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .department-badge-ok {
-            background: #fef9c3;
-            color: #854d0e;
-        }
-
-        .department-badge-bad {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
         .department-item::after {
             content: "→";
             font-size: 0.85rem;
@@ -439,6 +533,11 @@
                 width: 100%;
                 justify-content: flex-start;
             }
+
+            .add-department-grid {
+                flex-direction: column;
+                align-items: stretch;
+            }
         }
     </style>
 </head>
@@ -446,7 +545,7 @@
 <body>
 <div class="app-shell">
 
-    <!-- HEADER (samme markup som index.html, men Departments aktiv) -->
+    <!-- HEADER -->
     <header class="topbar">
         <div class="topbar-inner">
             <div class="brand">
@@ -494,7 +593,6 @@
                 </div>
 
                 <div class="toolbar">
-                    <!-- Søgefelt – hvis du vil bruge det i JS, giv det fx id="departmentSearch" -->
                     <div class="toolbar-search">
                         <span class="toolbar-search-icon">🔍</span>
                         <input
@@ -504,7 +602,6 @@
                         />
                     </div>
 
-                    <!-- Filter-chips – kan bruges senere i JS hvis du vil -->
                     <button class="toolbar-chip toolbar-chip-active" type="button">
                         <span class="dot"></span>
                         Alle
@@ -517,7 +614,58 @@
                         <span class="dot"></span>
                         Lav accuracy
                     </button>
+
+                    <!-- Ny: knap til at åbne add-department form -->
+                    <button id="toggleAddDepartment" class="toolbar-button-primary" type="button">
+                        <span>＋</span>
+                        <span>Nyt department</span>
+                    </button>
                 </div>
+            </div>
+
+            <!-- Ny: Add department form (skjult som udgangspunkt) -->
+            <div id="addDepartmentContainer" class="add-department-container hidden">
+                <div class="add-department-title">Tilføj nyt department</div>
+
+                <form id="addDepartmentForm">
+                    <div class="add-department-grid">
+                        <div class="add-department-field">
+                            <label for="newDepartmentName" class="add-department-label">
+                                Navn <span style="color:#b91c1c">*</span>
+                            </label>
+                            <input
+                                    id="newDepartmentName"
+                                    type="text"
+                                    class="add-department-input"
+                                    placeholder="F.eks. Service Desk DK"
+                                    required
+                            />
+                        </div>
+
+                        <div class="add-department-field">
+                            <label for="newDepartmentMail" class="add-department-label">
+                                Mailadresse
+                            </label>
+                            <input
+                                    id="newDepartmentMail"
+                                    type="email"
+                                    class="add-department-input"
+                                    placeholder="fx servicedesk@itm8.com"
+                            />
+                        </div>
+
+                        <div class="add-department-actions">
+                            <button type="submit" id="saveDepartmentBtn" class="btn-primary">
+                                Gem
+                            </button>
+                            <button type="button" id="cancelAddDepartment" class="btn-ghost">
+                                Annullér
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="addDepartmentMessage" class="add-department-error hidden"></div>
+                </form>
             </div>
 
             <!-- Her skriver departments.js stadig listen ind -->
@@ -526,7 +674,7 @@
 
     </main>
 
-    <!-- FOOTER (samme markup som index.html) -->
+    <!-- FOOTER -->
     <footer class="footer">
         <span>itm8 • Ticket Routing Tool</span>
         <span class="footer-divider">•</span>
