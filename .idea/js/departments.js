@@ -1,7 +1,7 @@
 // .idea/js/departments.js
-import { getDepartments } from "./api.js";
+import { getDepartments, createDepartment } from "./api.js";
 
-let allDepartments = []; // gemmer alle departments så vi kan søge i dem
+let allDepartments = []; // gemmer alle departments så vi kan søge/opdatere lokalt
 
 /** ------------------------------
  *  Render departments i output
@@ -12,7 +12,7 @@ function renderDepartments(list) {
     if (!list || list.length === 0) {
         output.innerHTML = `
             <p style="color:#6b7280; font-size:0.9rem;">
-                Ingen departments matcher din søgning.
+                Ingen departments fundet.
             </p>`;
         return;
     }
@@ -52,8 +52,8 @@ async function loadDepartments() {
 
     try {
         const departments = await getDepartments();
-        allDepartments = departments;     // gem alle
-        renderDepartments(allDepartments); // vis alle
+        allDepartments = departments || [];
+        renderDepartments(allDepartments);
     } catch (err) {
         output.innerHTML = `
             <p style="color:#b91c1c; font-weight:500;">
@@ -94,9 +94,121 @@ function setupSearch() {
 }
 
 /** ------------------------------
+ *  Add department UI helpers
+ * ------------------------------ */
+function showAddForm(show) {
+    const container = document.getElementById("addDepartmentContainer");
+    const msgEl = document.getElementById("addDepartmentMessage");
+    if (!container) return;
+
+    if (show) {
+        container.classList.remove("hidden");
+    } else {
+        container.classList.add("hidden");
+        // ryd form + beskeder
+        const form = document.getElementById("addDepartmentForm");
+        const nameInput = document.getElementById("newDepartmentName");
+        const mailInput = document.getElementById("newDepartmentMail");
+        if (form) form.reset();
+        if (nameInput) nameInput.value = "";
+        if (mailInput) mailInput.value = "";
+        if (msgEl) {
+            msgEl.textContent = "";
+            msgEl.classList.add("hidden");
+            msgEl.classList.remove("add-department-error", "add-department-success");
+        }
+    }
+}
+
+function setAddFormMessage(type, text) {
+    const msgEl = document.getElementById("addDepartmentMessage");
+    if (!msgEl) return;
+
+    msgEl.textContent = text;
+    msgEl.classList.remove("hidden", "add-department-error", "add-department-success");
+
+    if (type === "error") {
+        msgEl.classList.add("add-department-error");
+    } else if (type === "success") {
+        msgEl.classList.add("add-department-success");
+    }
+}
+
+/** ------------------------------
+ *  Opsæt add department form
+ * ------------------------------ */
+function setupAddDepartment() {
+    const toggleBtn = document.getElementById("toggleAddDepartment");
+    const cancelBtn = document.getElementById("cancelAddDepartment");
+    const form = document.getElementById("addDepartmentForm");
+    const saveBtn = document.getElementById("saveDepartmentBtn");
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+            const container = document.getElementById("addDepartmentContainer");
+            if (!container) return;
+            const isHidden = container.classList.contains("hidden");
+            showAddForm(isHidden);
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => {
+            showAddForm(false);
+        });
+    }
+
+    if (form) {
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const nameInput = document.getElementById("newDepartmentName");
+            const mailInput = document.getElementById("newDepartmentMail");
+
+            const departmentName = nameInput?.value.trim();
+            const mailAddress = mailInput?.value.trim() || null;
+
+            if (!departmentName) {
+                setAddFormMessage("error", "Navn er obligatorisk.");
+                return;
+            }
+
+            try {
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = "Gemmer...";
+                }
+                setAddFormMessage(null, "");
+                const payload = { departmentName, mailAddress };
+
+                const created = await createDepartment(payload);
+
+                // Tilføj det nye department til lokal liste og re-render
+                allDepartments = [...allDepartments, created];
+                renderDepartments(allDepartments);
+
+                setAddFormMessage("success", "Department oprettet.");
+                // Luk formen efter kort delay
+                setTimeout(() => {
+                    showAddForm(false);
+                }, 600);
+            } catch (err) {
+                setAddFormMessage("error", err.message || "Der opstod en fejl under oprettelse.");
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = "Gem";
+                }
+            }
+        });
+    }
+}
+
+/** ------------------------------
  *  Init
  * ------------------------------ */
 window.addEventListener("DOMContentLoaded", () => {
     loadDepartments();
     setupSearch();
+    setupAddDepartment();
 });
