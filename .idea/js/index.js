@@ -169,31 +169,31 @@ async function loadAllTicketsFromBackend() {
             .map(d => d.departmentID ?? d.categoryID ?? d.id)
             .filter(id => id != null);
 
-        const perDept = await Promise.all(
+        const results = await Promise.all(
             ids.map(async id => {
                 try {
                     const data = await getTicketsForDepartment(id);
 
-                    // Backend kan returnere:
-                    // 1) Et array af metrics/tickets
-                    // 2) Et objekt fx { departmentName, tickets: [...] }
-                    if (Array.isArray(data)) {
-                        return data;
-                    }
-                    if (data && Array.isArray(data.tickets)) {
-                        return data.tickets;
+                    // Forventer nu et objekt med ticket-statistikker.
+                    if (data && typeof data === "object") {
+                        return {
+                            departmentId: id,
+                            ...data
+                        };
                     }
 
-                    console.warn("Ukendt dataformat fra getTicketsForDepartment for id", id, data);
-                    return [];
+                    console.warn("Ukendt dataformat fra getTicketsForDepartment:", id, data);
+                    return null;
                 } catch (e) {
                     console.warn("Kunne ikke hente tickets for department", id, e);
-                    return [];
+                    return null;
                 }
             })
         );
 
-        return perDept.flat();
+        // Fjern nulls, returner liste af objekter
+        return results.filter(Boolean);
+
     } catch (e) {
         console.error("Fejl ved hentning af alle tickets:", e);
         return [];
@@ -532,6 +532,8 @@ async function loadStats() {
 
             scopeLabel = "Alle departments";
         }
+
+
 
         allTickets = tickets || [];
 

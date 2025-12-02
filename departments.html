@@ -668,6 +668,26 @@
                 </form>
             </div>
 
+            <!-- Department routing dashboard -->
+            <div class="card" style="margin-bottom: 20px;">
+
+                <div class="card-header-row">
+                    <div class="card-header-text">
+                        <div class="card-title" id="deptName">Department navn indlæses...</div>
+                        <div class="card-subtitle">Routing performance for dette department</div>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper">
+                    <canvas id="accuracyChart"></canvas>
+                    <div class="chart-caption">
+                        Fordeling af korrekte, fejlede og defaulted tickets
+                    </div>
+                </div>
+
+                <div id="ticket-output" style="margin-top: 20px;"></div>
+            </div>
+
             <!-- Her skriver departments.js stadig listen ind -->
             <div id="department-output">Henter departments...</div>
         </div>
