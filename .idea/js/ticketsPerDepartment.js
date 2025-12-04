@@ -1,4 +1,4 @@
-import { getTicketsForDepartment } from "./api.js";
+import { getTicketsForDepartment, getAllTicketsForDepartment } from "./api.js";
 
 const params = new URLSearchParams(window.location.search);
 const departmentName = params.get("departmentName");
