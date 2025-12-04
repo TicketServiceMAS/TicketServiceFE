@@ -93,6 +93,15 @@ export async function getTicketsForDepartment(id) {
     return await r.json();
 }
 
+export async function getDepartmentTicketList(id) {
+    const r = await fetch(`${API_BASE_URL}/departments/tickets/${id}`);
+    if (!r.ok) {
+        throw new Error(`Kunne ikke hente metrics/tickets for department ${id} (status ${r.status})`);
+    }
+    return await r.json();
+}
+
+
 // Hent samlede routing stats (alle departments)
 export async function getRoutingStats() {
     const r = await fetch(`${API_BASE_URL}/stats`);
