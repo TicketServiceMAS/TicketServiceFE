@@ -28,7 +28,6 @@ function renderDepartments(list) {
             </p>`;
         return;
     }
-
     output.innerHTML = list
         .map(dep => {
             const id = dep.departmentID;
@@ -65,6 +64,7 @@ function renderDepartments(list) {
             `;
         })
         .join("");
+
 
     attachDepartmentItemHandlers();
 }

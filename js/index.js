@@ -3,8 +3,9 @@ import {
     getRoutingStats,
     getRoutingStatsForDepartment,
     getDepartments,
-    getTicketsForDepartment
+    getTicketsForDepartment,
 } from "./api.js";
+import { loadTicketList} from "./tickets.js";
 
 /**
  * MOCKDATA – sæt USE_MOCK = false når backend-data er klar
@@ -166,13 +167,16 @@ async function loadAllTicketsFromBackend() {
         }
 
         const ids = departments
-            .map(d => d.departmentID ?? d.categoryID ?? d.id)
+            .map(d => d.departmentID ?? d.id)
             .filter(id => id != null);
+
 
         const results = await Promise.all(
             ids.map(async id => {
                 try {
-                    const data = await getTicketsForDepartment(id);
+                    const [data, list] = await Promise.all([
+                        getTicketsForDepartment(id),
+                    ]);
 
                     // Forventer nu et objekt med ticket-statistikker.
                     if (data && typeof data === "object") {
@@ -491,6 +495,7 @@ async function loadStats() {
                     console.warn("Ukendt format fra getTicketsForDepartment:", deptData);
                     tickets = [];
                 }
+                await loadTicketList(depId)
             }
 
             const inferredName = SELECTED_DEPARTMENT_NAME

@@ -4,7 +4,7 @@ const params = new URLSearchParams(window.location.search);
 const departmentName = params.get("departmentName");
 const departmentId = params.get("departmentId");
 
-let donutChartInstance = null; // Gem chart-instance, så vi kan destroye den ved reload
+let donutChartInstance = null;
 
 async function loadTickets() {
     const title = document.getElementById("deptName");
@@ -12,7 +12,6 @@ async function loadTickets() {
 
     output.textContent = "Henter data...";
 
-    // Sæt titel fra URL
     title.textContent = decodeURIComponent(departmentName);
 
     try {
@@ -29,7 +28,7 @@ async function loadTickets() {
         const defaulted = stats.defaultedCount ?? 0;
         const accuracy = totalTickets > 0 ? (success / totalTickets) * 100 : 0;
 
-        // Render ticket stats
+        // --- UPDATED: Added <div id="ticket-list"></div> ---
         output.innerHTML = `
             <div class="ticket-stats">
                 <p><strong>Total tickets:</strong> ${totalTickets}</p>
@@ -38,13 +37,17 @@ async function loadTickets() {
                 <p><strong>Defaulted:</strong> ${defaulted}</p>
                 <p><strong>Accuracy:</strong> ${accuracy.toFixed(1)}%</p>
             </div>
+
             <canvas id="donutChart" style="max-width:400px; margin-top:20px;"></canvas>
+
+            <h2 style="margin-top:30px;">Ticket List</h2>
+            <div id="ticket-list">Henter tickets...</div>
         `;
 
         const ctx = document.getElementById("donutChart").getContext("2d");
 
         if (donutChartInstance) {
-            donutChartInstance.destroy(); // Undgå multiple chart-instans
+            donutChartInstance.destroy();
         }
 
         donutChartInstance = new Chart(ctx, {
@@ -61,14 +64,7 @@ async function loadTickets() {
             options: {
                 cutout: "60%",
                 plugins: {
-                    legend: {
-                        position: "bottom",
-                        labels: {
-                            boxWidth: 14,
-                            boxHeight: 14,
-                            padding: 16
-                        }
-                    },
+                    legend: { position: "bottom" },
                     tooltip: {
                         callbacks: {
                             label: function (context) {
@@ -82,8 +78,43 @@ async function loadTickets() {
             }
         });
 
+        // --- NEW: Load all tickets after stats ---
+        loadAllTickets();
+
     } catch (err) {
         output.innerHTML = `<p style="color:red;">Fejl: ${err.message}</p>`;
+    }
+}
+
+/* ---------------------------------------------------------
+   NEW FUNCTION: Fetch and render all tickets for the department
+--------------------------------------------------------- */
+async function loadAllTickets() {
+    const listContainer = document.getElementById("ticket-list");
+
+    try {
+        const tickets = await getAllTicketsForDepartment(departmentId);
+
+        if (!tickets || tickets.length === 0) {
+            listContainer.innerHTML = "<p>Ingen tickets fundet.</p>";
+            return;
+        }
+
+        // Build list HTML
+        const html = tickets.map(t => `
+            <div class="ticket-item">
+                <p><strong>ID:</strong> ${t.id}</p>
+                <p><strong>Status:</strong> ${t.status}</p>
+                <p><strong>Created:</strong> ${t.createdAt}</p>
+                <p><strong>Description:</strong> ${t.description}</p>
+                <hr>
+            </div>
+        `).join("");
+
+        listContainer.innerHTML = html;
+
+    } catch (err) {
+        listContainer.innerHTML = `<p style="color:red;">Fejl ved hentning af tickets: ${err.message}</p>`;
     }
 }
 
