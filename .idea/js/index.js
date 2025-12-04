@@ -203,7 +203,7 @@ async function loadAllTicketsFromBackend() {
 /**
  * Fejlstatistik pr. "predicted team"
  */
-function buildPredictedTeamErrorStats(tickets) {
+/*function buildPredictedTeamErrorStats(tickets) {
     const map = new Map();
 
     for (const t of tickets) {
@@ -240,7 +240,7 @@ function buildPredictedTeamErrorStats(tickets) {
             errorRate: (c.incorrect / c.total) * 100
         }))
         .sort((a, b) => b.errorRate - a.errorRate);
-}
+}*/
 
 /**
  * Byg en tidsserie med daglig accuracy (% SUCCESS) ud fra tickets.
@@ -384,7 +384,7 @@ function renderTicketList(status, label) {
             "Ukendt ID";
 
         const subject = t.subject ?? t.title ?? "(ingen subject)";
-        const created = t.createdAt ?? t.created_at ?? t.timestamp;
+        const created = t.createdAt ?? t.created_at ?? t.date;
         const createdText = created ? formatDateTime(created) : "-";
 
         const deptName =
@@ -392,15 +392,6 @@ function renderTicketList(status, label) {
             t.departmentName ??
             "";
 
-        const predictedTeam =
-            t.predictedTeam ??
-            t.predicted_team ??
-            deptName;
-
-        const actualTeam =
-            t.actualTeam ??
-            t.actual_team ??
-            "";
 
         const statusVal = t.status ?? t.routingStatus ?? "";
 
@@ -409,9 +400,7 @@ function renderTicketList(status, label) {
                 <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${id}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${subject}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${createdText}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${deptName}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${predictedTeam}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${actualTeam}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${deptName}</td> 
                 <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${statusVal}</td>
             </tr>
         `;
@@ -432,8 +421,7 @@ function renderTicketList(status, label) {
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Subject</th>
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Oprettet</th>
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Department</th>
-                        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Predicted team</th>
-                        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Actual team</th>
+      
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Status</th>
                     </tr>
                 </thead>
@@ -598,10 +586,10 @@ async function loadStats() {
         }
 
         // Fejlstatistik til tekstlig liste
-        const predictedErrorStats = buildPredictedTeamErrorStats(allTickets);
+        /* const predictedErrorStats = buildPredictedTeamErrorStats(allTickets);
         const top3PredictedError = predictedErrorStats.slice(0, 3);
 
-        let topPredictedHtml = "";
+       let topPredictedHtml = "";
         if (top3PredictedError.length > 0) {
             topPredictedHtml = `
                 <div style="margin-top:16px;">
@@ -619,7 +607,7 @@ async function loadStats() {
                     </ol>
                 </div>
             `;
-        }
+        }*/
 
         // Byg UI
         output.innerHTML = `
@@ -670,7 +658,7 @@ async function loadStats() {
                             </div>
                         </div>
 
-                        ${topPredictedHtml}
+                     
 
                         <div id="ticketList" style="margin-top:20px;font-size:0.85rem;">
                             <div style="font-size:0.85rem;color:#6b7280;">
