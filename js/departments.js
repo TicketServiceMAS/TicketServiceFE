@@ -2,11 +2,16 @@ import {
     getDepartments,
     createDepartment,
     updateDepartment,
-    deleteDepartment
+    deleteDepartment,
+    getRoutingStatsForDepartment, // NYT
 } from "./api.js";
 
 let allDepartments = [];          // gemmer alle departments så vi kan søge/opdatere lokalt
 let editingDepartmentId = null;   // track hvilket department der redigeres lige nu
+
+// filter / sort state
+let currentFilter = "all";        // "all" | "high" | "low"
+let currentSearchQuery = "";      // søgetekst
 
 // Simpel email-validering – matcher backend regex ret tæt
 function isValidEmail(email) {
@@ -18,8 +23,34 @@ function isValidEmail(email) {
 /** ------------------------------
  *  Render departments i output
  * ------------------------------ */
-function renderDepartments(list) {
+function renderDepartments() {
     const output = document.getElementById("department-output");
+
+    let list = [...allDepartments];
+
+    // 1) filtrér på søgning
+    const q = currentSearchQuery.trim().toLowerCase();
+    if (q !== "") {
+        list = list.filter(dep => {
+            const name = (dep.departmentName || "").toLowerCase();
+            const mail = (dep.mailAddress || "").toLowerCase();
+            const idStr = String(dep.departmentID ?? "");
+            return (
+                name.includes(q) ||
+                mail.includes(q) ||
+                idStr.includes(q)
+            );
+        });
+    }
+
+    // 2) sortér efter valgt chip (accuracy ligger på dep.accuracy)
+    if (currentFilter === "high") {
+        list.sort((a, b) => (b.accuracy || 0) - (a.accuracy || 0));
+    } else if (currentFilter === "low") {
+        list.sort((a, b) => (a.accuracy || 0) - (b.accuracy || 0));
+    } else {
+        // "all" → behold rækkefølgen fra backend (ingen ekstra sortering)
+    }
 
     if (!list || list.length === 0) {
         output.innerHTML = `
@@ -28,6 +59,7 @@ function renderDepartments(list) {
             </p>`;
         return;
     }
+
     output.innerHTML = list
         .map(dep => {
             const id = dep.departmentID;
@@ -64,7 +96,6 @@ function renderDepartments(list) {
             `;
         })
         .join("");
-
 
     attachDepartmentItemHandlers();
 }
@@ -119,7 +150,7 @@ function attachDepartmentItemHandlers() {
 }
 
 /** ------------------------------
- *  Hent departments fra API
+ *  Hent departments + metrics fra API
  * ------------------------------ */
 async function loadDepartments() {
     const output = document.getElementById("department-output");
@@ -127,8 +158,35 @@ async function loadDepartments() {
 
     try {
         const departments = await getDepartments();
-        allDepartments = departments || [];
-        renderDepartments(allDepartments);
+
+        // Hent stats for hvert department, så vi kan sortere på accuracy
+        const withStats = await Promise.all(
+            (departments || []).map(async (dep) => {
+                const id = dep.departmentID ?? dep.id;
+                let accuracy = 0;
+
+                try {
+                    const stats = await getRoutingStatsForDepartment(id);
+                    const total = stats.totalTickets ?? 0;
+                    const success = stats.successCount ?? 0;
+                    const accPct =
+                        stats.accuracy != null
+                            ? stats.accuracy * 100
+                            : (total > 0 ? (success / total) * 100 : 0);
+                    accuracy = accPct;
+                } catch (err) {
+                    console.warn("Kunne ikke hente stats for department", id, err);
+                }
+
+                return {
+                    ...dep,
+                    accuracy, // gemmes til sortering
+                };
+            })
+        );
+
+        allDepartments = withStats;
+        renderDepartments();
     } catch (err) {
         output.innerHTML = `
             <p style="color:#b91c1c; font-weight:500;">
@@ -145,26 +203,36 @@ function setupSearch() {
     if (!searchInput) return;
 
     searchInput.addEventListener("input", () => {
-        const q = searchInput.value.trim().toLowerCase();
+        currentSearchQuery = searchInput.value || "";
+        renderDepartments();
+    });
+}
 
-        if (q === "") {
-            renderDepartments(allDepartments);
-            return;
-        }
+/** ------------------------------
+ *  Filter-chips (Alle / Høj / Lav accuracy)
+ * ------------------------------ */
+function setupFilterChips() {
+    const chips = document.querySelectorAll(".toolbar-chip");
+    if (!chips.length) return;
 
-        const filtered = allDepartments.filter(dep => {
-            const name = (dep.departmentName || "").toLowerCase();
-            const mail = (dep.mailAddress || "").toLowerCase();
-            const idStr = String(dep.departmentID ?? "");
+    chips.forEach(chip => {
+        chip.addEventListener("click", () => {
+            // toggle aktiv klasse
+            chips.forEach(c => c.classList.remove("toolbar-chip-active"));
+            chip.classList.add("toolbar-chip-active");
 
-            return (
-                name.includes(q) ||
-                mail.includes(q) ||
-                idStr.includes(q)
-            );
+            const text = chip.textContent.toLowerCase();
+
+            if (text.includes("høj")) {
+                currentFilter = "high";
+            } else if (text.includes("lav")) {
+                currentFilter = "low";
+            } else {
+                currentFilter = "all";
+            }
+
+            renderDepartments();
         });
-
-        renderDepartments(filtered);
     });
 }
 
@@ -307,7 +375,7 @@ async function handleDeleteDepartment(departmentId) {
             showEditForm(false);
         }
 
-        renderDepartments(allDepartments);
+        renderDepartments();
     } catch (err) {
         alert(err.message || "Der opstod en fejl under sletning.");
     }
@@ -374,17 +442,15 @@ function setupAddDepartment() {
                 const created = await createDepartment(payload);
 
                 if (!created) {
-                    // backend kan returnere null hvis email er invalid
                     setAddFormMessage("error", "Backend oprettede ikke department (tjek mailadresse).");
                     return;
                 }
 
                 // Tilføj det nye department til lokal liste og re-render
-                allDepartments = [...allDepartments, created];
-                renderDepartments(allDepartments);
+                allDepartments = [...allDepartments, { ...created, accuracy: 0 }];
+                renderDepartments();
 
                 setAddFormMessage("success", "Department oprettet.");
-                // Luk formen efter kort delay
                 setTimeout(() => {
                     showAddForm(false);
                 }, 600);
@@ -454,12 +520,14 @@ function setupEditDepartment() {
                 const payload = { departmentName, mailAddress };
                 const updated = await updateDepartment(editingDepartmentId, payload);
 
-                // Opdater lokalt array
+                // Opdater lokalt array (behold gammel accuracy)
                 allDepartments = allDepartments.map(dep =>
-                    String(dep.departmentID) === String(editingDepartmentId) ? updated : dep
+                    String(dep.departmentID) === String(editingDepartmentId)
+                        ? { ...dep, ...updated }
+                        : dep
                 );
 
-                renderDepartments(allDepartments);
+                renderDepartments();
                 setEditFormMessage("success", "Department opdateret.");
 
                 setTimeout(() => {
@@ -483,6 +551,7 @@ function setupEditDepartment() {
 window.addEventListener("DOMContentLoaded", () => {
     loadDepartments();
     setupSearch();
+    setupFilterChips();   // NYT
     setupAddDepartment();
     setupEditDepartment();
 });

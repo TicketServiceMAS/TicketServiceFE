@@ -1,15 +1,11 @@
-// .idea/js/index.js
 import {
     getRoutingStats,
     getRoutingStatsForDepartment,
     getDepartments,
     getTicketsForDepartment,
 } from "./api.js";
-import { loadTicketList} from "./tickets.js";
+import { loadTicketList } from "./tickets.js";
 
-/**
- * MOCKDATA – sæt USE_MOCK = false når backend-data er klar
- */
 const USE_MOCK = false;
 
 const MOCK_STATS = {
@@ -17,7 +13,7 @@ const MOCK_STATS = {
     successCount: 23,
     failureCount: 5,
     defaultedCount: 2,
-    accuracy: 23 / 30 // ca. 76,7%
+    accuracy: 23 / 30
 };
 
 const today = new Date();
@@ -28,7 +24,6 @@ function daysAgo(n) {
 }
 
 const MOCK_TICKETS = [
-    // SUCCES-tickets fordelt over 7 dage
     { metricsDepartmentID: 1, subject: "Login issue", createdAt: daysAgo(7), status: "SUCCESS", departmentName: "Support", predictedTeam: "Support Team" },
     { metricsDepartmentID: 2, subject: "Order #1234", createdAt: daysAgo(7), status: "SUCCESS", departmentName: "Sales", predictedTeam: "Sales Team" },
     { metricsDepartmentID: 3, subject: "Billing question", createdAt: daysAgo(6), status: "SUCCESS", departmentName: "Finance", predictedTeam: "Finance Team" },
@@ -45,19 +40,13 @@ const MOCK_TICKETS = [
     { metricsDepartmentID: 14, subject: "Latency spike", createdAt: daysAgo(1), status: "SUCCESS", departmentName: "Tech", predictedTeam: "Tech Team" },
     { metricsDepartmentID: 15, subject: "Slow UI", createdAt: daysAgo(0), status: "SUCCESS", departmentName: "Support", predictedTeam: "Support Team" },
     { metricsDepartmentID: 16, subject: "Export data", createdAt: daysAgo(0), status: "SUCCESS", departmentName: "Tech", predictedTeam: "Tech Team" },
-
-    // FAILURE-tickets
     { metricsDepartmentID: 17, subject: "Wrong routing 1", createdAt: daysAgo(6), status: "FAILURE", departmentName: "Support", predictedTeam: "Sales Team" },
     { metricsDepartmentID: 18, subject: "Wrong routing 2", createdAt: daysAgo(5), status: "FAILURE", departmentName: "Sales", predictedTeam: "Support Team" },
     { metricsDepartmentID: 19, subject: "Wrong routing 3", createdAt: daysAgo(3), status: "FAILURE", departmentName: "Finance", predictedTeam: "Support Team" },
     { metricsDepartmentID: 20, subject: "Wrong routing 4", createdAt: daysAgo(2), status: "FAILURE", departmentName: "Tech", predictedTeam: "Finance Team" },
     { metricsDepartmentID: 21, subject: "Wrong routing 5", createdAt: daysAgo(1), status: "FAILURE", departmentName: "Finance", predictedTeam: "Sales Team" },
-
-    // DEFAULTED-tickets
     { metricsDepartmentID: 22, subject: "Fallback 1", createdAt: daysAgo(4), status: "DEFAULTED", departmentName: "Support", predictedTeam: "Default Queue" },
     { metricsDepartmentID: 23, subject: "Fallback 2", createdAt: daysAgo(2), status: "DEFAULTED", departmentName: "Sales", predictedTeam: "Default Queue" },
-
-    // Et par ekstra for at få 30 i alt
     { metricsDepartmentID: 24, subject: "Extra success 1", createdAt: daysAgo(3), status: "SUCCESS", departmentName: "Support", predictedTeam: "Support Team" },
     { metricsDepartmentID: 25, subject: "Extra success 2", createdAt: daysAgo(2), status: "SUCCESS", departmentName: "Tech", predictedTeam: "Tech Team" },
     { metricsDepartmentID: 26, subject: "Extra success 3", createdAt: daysAgo(1), status: "SUCCESS", departmentName: "Finance", predictedTeam: "Finance Team" },
@@ -67,21 +56,17 @@ const MOCK_TICKETS = [
     { metricsDepartmentID: 30, subject: "Extra success 7", createdAt: daysAgo(2), status: "SUCCESS", departmentName: "Finance", predictedTeam: "Finance Team" }
 ];
 
-let chartInstance = null;              // donut
-let predictionChartInstance = null;    // line chart (forecast)
-let liveUpdatedInterval = null;        // live-timeren
-let allTickets = [];                   // alle tickets/metrics på tværs af departments
+let chartInstance = null;
+let predictionChartInstance = null;
+let liveUpdatedInterval = null;
+let allTickets = [];
 
-// Læs evt. valgt department fra URL’en
 const urlParams = new URLSearchParams(window.location.search);
 const SELECTED_DEPARTMENT_ID = urlParams.get("departmentId")
     ? parseInt(urlParams.get("departmentId"), 10)
     : null;
 const SELECTED_DEPARTMENT_NAME = urlParams.get("departmentName");
 
-/**
- * Hjælper til at udregne stats ud fra en liste af tickets/metrics
- */
 function computeStatsFromTickets(tickets) {
     const result = {
         totalTickets: 0,
@@ -154,10 +139,6 @@ function formatDateTime(isoString) {
     return d.toLocaleString("da-DK");
 }
 
-/**
- * Hent ALLE tickets/metrics fra backend via departments-endpoints
- * (bruges i global view når USE_MOCK = false)
- */
 async function loadAllTicketsFromBackend() {
     try {
         const departments = await getDepartments();
@@ -170,7 +151,6 @@ async function loadAllTicketsFromBackend() {
             .map(d => d.departmentID ?? d.id)
             .filter(id => id != null);
 
-
         const results = await Promise.all(
             ids.map(async id => {
                 try {
@@ -178,7 +158,6 @@ async function loadAllTicketsFromBackend() {
                         getTicketsForDepartment(id),
                     ]);
 
-                    // Forventer nu et objekt med ticket-statistikker.
                     if (data && typeof data === "object") {
                         return {
                             departmentId: id,
@@ -195,7 +174,6 @@ async function loadAllTicketsFromBackend() {
             })
         );
 
-        // Fjern nulls, returner liste af objekter
         return results.filter(Boolean);
 
     } catch (e) {
@@ -204,51 +182,6 @@ async function loadAllTicketsFromBackend() {
     }
 }
 
-/**
- * Fejlstatistik pr. "predicted team"
- */
-/*function buildPredictedTeamErrorStats(tickets) {
-    const map = new Map();
-
-    for (const t of tickets) {
-        const deptName =
-            (t.department && t.department.departmentName) ??
-            t.departmentName ??
-            "";
-
-        const predictedRaw =
-            t.predictedTeam ??
-            t.predicted_team ??
-            deptName;
-
-        const predicted = (predictedRaw || "Ukendt team").trim();
-
-        let entry = map.get(predicted);
-        if (!entry) {
-            entry = { predictedTeam: predicted, total: 0, incorrect: 0 };
-            map.set(predicted, entry);
-        }
-
-        entry.total++;
-
-        const status = (t.status ?? t.routingStatus ?? "").toUpperCase();
-        if (status && status !== "SUCCESS") {
-            entry.incorrect++;
-        }
-    }
-
-    return Array.from(map.values())
-        .filter(c => c.total > 0 && c.incorrect > 0)
-        .map(c => ({
-            ...c,
-            errorRate: (c.incorrect / c.total) * 100
-        }))
-        .sort((a, b) => b.errorRate - a.errorRate);
-}*/
-
-/**
- * Byg en tidsserie med daglig accuracy (% SUCCESS) ud fra tickets.
- */
 function buildDailyAccuracySeries(tickets) {
     const map = new Map();
 
@@ -259,7 +192,7 @@ function buildDailyAccuracySeries(tickets) {
         const d = new Date(created);
         if (Number.isNaN(d.getTime())) continue;
 
-        const key = d.toISOString().slice(0, 10); // YYYY-MM-DD
+        const key = d.toISOString().slice(0, 10);
 
         let entry = map.get(key);
         if (!entry) {
@@ -291,9 +224,6 @@ function buildDailyAccuracySeries(tickets) {
     });
 }
 
-/**
- * Simpel forecast: lineær trend fra historiske data, projiceret N dage frem.
- */
 function buildAccuracyPrediction(dailySeries, horizonDays = 7) {
     if (!dailySeries || dailySeries.length === 0) return [];
 
@@ -322,7 +252,7 @@ function buildAccuracyPrediction(dailySeries, horizonDays = 7) {
     const last = dailySeries[dailySeries.length - 1];
     const n = dailySeries.length;
 
-    const slope = (last.accuracy - first.accuracy) / (n - 1); // pct-point pr. dag
+    const slope = (last.accuracy - first.accuracy) / (n - 1);
     const baseDate = new Date(last.date);
     const result = [];
 
@@ -347,9 +277,6 @@ function buildAccuracyPrediction(dailySeries, horizonDays = 7) {
     return result;
 }
 
-/**
- * Render ticket-liste baseret på status (SUCCESS / FAILURE / DEFAULTED)
- */
 function renderTicketList(status, label) {
     const container = document.getElementById("ticketList");
     if (!container) return;
@@ -396,7 +323,6 @@ function renderTicketList(status, label) {
             t.departmentName ??
             "";
 
-
         const statusVal = t.status ?? t.routingStatus ?? "";
 
         return `
@@ -425,7 +351,6 @@ function renderTicketList(status, label) {
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Subject</th>
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Oprettet</th>
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Department</th>
-      
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Status</th>
                     </tr>
                 </thead>
@@ -456,7 +381,6 @@ async function loadStats() {
             SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
 
         if (isDepartmentView) {
-            // --- DEPARTMENT-VIEW: kun tickets/stats for det valgte department ---
             const depId = SELECTED_DEPARTMENT_ID;
             console.log("Loader department view for id", depId);
 
@@ -476,7 +400,6 @@ async function loadStats() {
                     departmentData = { departmentName: tickets[0].departmentName };
                 }
             } else {
-                // Backend: hent både stats og tickets for det valgte department
                 const [statsFromApi, deptData] = await Promise.all([
                     getRoutingStatsForDepartment(depId),
                     getTicketsForDepartment(depId)
@@ -486,16 +409,14 @@ async function loadStats() {
                 departmentData = deptData;
 
                 if (Array.isArray(deptData)) {
-                    // Hvis endpointet returnerer direkte en liste af metrics
                     tickets = deptData;
                 } else if (deptData && Array.isArray(deptData.tickets)) {
-                    // Hvis endpointet returnerer { departmentName, tickets: [...] }
                     tickets = deptData.tickets;
                 } else {
                     console.warn("Ukendt format fra getTicketsForDepartment:", deptData);
                     tickets = [];
                 }
-                await loadTicketList(depId)
+                await loadTicketList(depId);
             }
 
             const inferredName = SELECTED_DEPARTMENT_NAME
@@ -509,7 +430,6 @@ async function loadStats() {
                 ? `Department: ${inferredName}`
                 : `Department #${depId}`;
         } else {
-            // --- GLOBALT DASHBOARD: alle departments ---
             if (USE_MOCK) {
                 console.log("Bruger MOCK_DATA – sæt USE_MOCK = false for at bruge backend.");
                 stats = MOCK_STATS;
@@ -525,8 +445,6 @@ async function loadStats() {
 
             scopeLabel = "Alle departments";
         }
-
-
 
         allTickets = tickets || [];
 
@@ -551,7 +469,6 @@ async function loadStats() {
             badgeClass = "ok";
         }
 
-        // Trend-indikator
         let trendHtml = "";
         const lastAccuracyRaw = window.localStorage.getItem("routingAccuracyLast");
         const lastAccuracy = lastAccuracyRaw != null ? parseFloat(lastAccuracyRaw) : null;
@@ -590,120 +507,109 @@ async function loadStats() {
             `;
         }
 
-        // Fejlstatistik til tekstlig liste
-        /* const predictedErrorStats = buildPredictedTeamErrorStats(allTickets);
-        const top3PredictedError = predictedErrorStats.slice(0, 3);
-
-       let topPredictedHtml = "";
-        if (top3PredictedError.length > 0) {
-            topPredictedHtml = `
-                <div style="margin-top:16px;">
-                    <div class="stat-label" style="margin-bottom:6px;">Mest fejlende predicted teams</div>
-                    <ol style="margin:0;padding-left:18px;font-size:0.85rem;color:#374151;">
-                        ${top3PredictedError.map(c => `
-                            <li style="margin-bottom:4px;">
-                                <span style="font-weight:500;">${c.predictedTeam}</span>
-                                <span style="color:#6b7280;">
-                                    &nbsp;· ${c.errorRate.toFixed(1)}% fejl
-                                    &nbsp;· ${c.incorrect}/${c.total} tickets
-                                </span>
-                            </li>
-                        `).join("")}
-                    </ol>
-                </div>
+        if (isDepartmentView) {
+            output.innerHTML = `
+                <section class="card fade-in">
+                    <div class="card-header">
+                        <div>
+                            <h2>Tickets</h2>
+                            <div class="card-header-sub">
+                                ${scopeLabel} – alle tickets for dette department vises nedenfor.
+                            </div>
+                        </div>
+                    </div>
+                </section>
             `;
-        }*/
-
-        // Byg UI
-        output.innerHTML = `
-            <section class="card fade-in">
-                <div class="card-header">
-                    <div>
-                        <h2>Routing accuracy</h2>
-                        <div class="card-header-sub">
-                            ${scopeLabel}
+        } else {
+            output.innerHTML = `
+                <section class="card fade-in">
+                    <div class="card-header">
+                        <div>
+                            <h2>Routing accuracy</h2>
+                            <div class="card-header-sub">
+                                ${scopeLabel}
+                            </div>
                         </div>
+                        <span class="badge ${badgeClass}">
+                            ${accuracyRounded}% korrekt
+                        </span>
                     </div>
-                    <span class="badge ${badgeClass}">
-                        ${accuracyRounded}% korrekt
-                    </span>
-                </div>
 
-                <div class="content-layout">
-                    <div>
-                        <div class="accuracy-main">${accuracyRounded}%</div>
-                        ${trendHtml}
-                        <div class="accuracy-sub">af tickets er routet korrekt.</div>
+                    <div class="content-layout">
+                        <div>
+                            <div class="accuracy-main">${accuracyRounded}%</div>
+                            ${trendHtml}
+                            <div class="accuracy-sub">af tickets er routet korrekt.</div>
 
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-label">Total tickets</div>
-                                <div class="stat-value">${total}</div>
-                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-label">Total tickets</div>
+                                    <div class="stat-value">${total}</div>
+                                </div>
 
-                            <div class="stat-card">
-                                <div class="stat-label">Korrekte (SUCCESS)</div>
-                                <div class="stat-value">${success}</div>
-                            </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Korrekte (SUCCESS)</div>
+                                    <div class="stat-value">${success}</div>
+                                </div>
 
-                            <div class="stat-card">
-                                <div class="stat-label">Forkerte (FAILURE + DEFAULTED)</div>
-                                <div class="stat-value">${incorrect}</div>
-                                <div class="stat-extra">
-                                    Failure: ${failure} · Defaulted: ${defaulted}
+                                <div class="stat-card">
+                                    <div class="stat-label">Forkerte (FAILURE + DEFAULTED)</div>
+                                    <div class="stat-value">${incorrect}</div>
+                                    <div class="stat-extra">
+                                        Failure: ${failure} · Defaulted: ${defaulted}
+                                    </div>
+                                </div>
+
+                                <div class="stat-card">
+                                    <div class="stat-label">Defaulted</div>
+                                    <div class="stat-value">${defaulted}</div>
+                                    <div class="stat-extra">
+                                        Tickets der er havnet i fallback-routing
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="stat-card">
-                                <div class="stat-label">Defaulted</div>
-                                <div class="stat-value">${defaulted}</div>
-                                <div class="stat-extra">
-                                    Tickets der er havnet i fallback-routing
+                            <div id="ticketList" style="margin-top:20px;font-size:0.85rem;">
+                                <div style="font-size:0.85rem;color:#6b7280;">
+                                    Klik på den grønne, røde eller grå del af donut-grafen for at se de tilhørende tickets.
                                 </div>
                             </div>
                         </div>
 
-                     
+                        <div class="chart-wrapper">
+                            <canvas id="accuracyChart"></canvas>
+                            <div class="chart-caption">
+                                Fordeling af korrekte, forkerte og defaulted tickets
+                            </div>
 
-                        <div id="ticketList" style="margin-top:20px;font-size:0.85rem;">
-                            <div style="font-size:0.85rem;color:#6b7280;">
-                                Klik på den grønne, røde eller grå del af donut-grafen for at se de tilhørende tickets.
+                            <div style="margin-top:18px; padding-top:8px; border-top:1px solid #e5e7eb; height:260px;">
+                                <canvas id="statusBarChart"></canvas>
+                                <div class="chart-caption" id="statusBarChartCaption" style="margin-top:10px;">
+                                    Udvikling i routing accuracy (historisk + simpel forecast)
+                                </div>
                             </div>
                         </div>
                     </div>
+                </section>
+            `;
+        }
 
-                    <div class="chart-wrapper">
-                        <canvas id="accuracyChart"></canvas>
-                        <div class="chart-caption">
-                            Fordeling af korrekte, forkerte og defaulted tickets
-                        </div>
-
-                        <div style="margin-top:18px; padding-top:8px; border-top:1px solid #e5e7eb; height:260px;">
-                            <canvas id="statusBarChart"></canvas>
-                            <div class="chart-caption" id="statusBarChartCaption" style="margin-top:10px;">
-                                Udvikling i routing accuracy (historisk + simpel forecast)
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        `;
-
-        // Gem nuværende accuracy til næste load (trend)
         try {
             window.localStorage.setItem("routingAccuracyLast", String(accuracyPercent));
         } catch (e) {
             console.warn("Kunne ikke gemme routingAccuracyLast i localStorage:", e);
         }
 
-        // Live "sidst opdateret"
         const updatedEl = document.getElementById("lastUpdated");
         if (updatedEl) {
             const ts = new Date();
             startLiveUpdatedLabel(updatedEl, ts);
         }
 
-        // DONUT-graf
+        if (isDepartmentView) {
+            return;
+        }
+
         const canvas = document.getElementById("accuracyChart");
         if (!canvas) {
             console.error("Kunne ikke finde canvas-elementet til donut-grafen.");
@@ -784,7 +690,6 @@ async function loadStats() {
             }
         });
 
-        // LINJE-graf: historisk accuracy + simpel forecast
         const lineCanvas = document.getElementById("statusBarChart");
         const captionEl = document.getElementById("statusBarChartCaption");
 
@@ -936,7 +841,6 @@ async function loadStats() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-    // Tilbage-knap i department-view (hvis knappen findes i HTML)
     const backBtn = document.getElementById("backToDepartments");
     const isDepartmentView =
         SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
