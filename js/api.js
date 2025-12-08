@@ -1,6 +1,5 @@
 const API_BASE_URL = "http://localhost:8080/api/ticketservice";
 
-// Hent alle departments
 export async function getDepartments() {
     const r = await fetch(`${API_BASE_URL}/departments`);
     if (!r.ok) {
@@ -9,7 +8,6 @@ export async function getDepartments() {
     return await r.json();
 }
 
-// Opret nyt department
 export async function createDepartment(payload) {
     const r = await fetch(`${API_BASE_URL}/departments`, {
         method: "POST",
@@ -26,16 +24,13 @@ export async function createDepartment(payload) {
             if (errBody && errBody.message) {
                 msg += `: ${errBody.message}`;
             }
-        } catch (_) {
-            // ignore JSON parse fejl
-        }
+        } catch (_) {}
         throw new Error(msg);
     }
 
-    return await r.json(); // Controller returnerer Department-entity
+    return await r.json();
 }
 
-// Opdater et eksisterende department
 export async function updateDepartment(id, payload) {
     const r = await fetch(`${API_BASE_URL}/departments/${id}`, {
         method: "PUT",
@@ -52,16 +47,13 @@ export async function updateDepartment(id, payload) {
             if (errBody && errBody.message) {
                 msg += `: ${errBody.message}`;
             }
-        } catch (_) {
-            // ignore JSON parse fejl
-        }
+        } catch (_) {}
         throw new Error(msg);
     }
 
-    return await r.json(); // Controller returnerer det opdaterede Department
+    return await r.json();
 }
 
-// Slet et department
 export async function deleteDepartment(id) {
     const r = await fetch(`${API_BASE_URL}/departments/${id}`, {
         method: "DELETE"
@@ -74,17 +66,13 @@ export async function deleteDepartment(id) {
             if (errBody && errBody.message) {
                 msg += `: ${errBody.message}`;
             }
-        } catch (_) {
-            // ignore JSON parse fejl
-        }
+        } catch (_) {}
         throw new Error(msg);
     }
 
-    // Backend returnerer kun en tekst ("Department deleted"), vi behøver den ikke.
     return true;
 }
 
-// Hent alle metrics/tickets for et department
 export async function getTicketsForDepartment(id) {
     const r = await fetch(`${API_BASE_URL}/metrics/departments/${id}`);
     if (!r.ok) {
@@ -101,8 +89,6 @@ export async function getDepartmentTicketList(id) {
     return await r.json();
 }
 
-
-// Hent samlede routing stats (alle departments)
 export async function getRoutingStats() {
     const r = await fetch(`${API_BASE_URL}/stats`);
     if (!r.ok) {
@@ -111,11 +97,33 @@ export async function getRoutingStats() {
     return await r.json();
 }
 
-// Hent routing stats for ét department
 export async function getRoutingStatsForDepartment(id) {
     const r = await fetch(`${API_BASE_URL}/stats/${id}`);
     if (!r.ok) {
         throw new Error(`Kunne ikke hente stats for department ${id} (status ${r.status})`);
     }
     return await r.json();
+}
+
+export async function markTicketAsMisrouted(ticketId) {
+    const r = await fetch(`${API_BASE_URL}/tickets/${ticketId}/misrouted`, {
+        method: "POST"
+    });
+
+    if (!r.ok) {
+        let msg = `Kunne ikke markere ticket ${ticketId} som forkert routet (status ${r.status})`;
+        try {
+            const errBody = await r.json();
+            if (errBody && errBody.message) {
+                msg += `: ${errBody.message}`;
+            }
+        } catch (_) {}
+        throw new Error(msg);
+    }
+
+    try {
+        return await r.json();
+    } catch (_) {
+        return null;
+    }
 }
