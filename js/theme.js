@@ -3,6 +3,23 @@
 
 /* ================= TEMA / DARK MODE ================= */
 
+function syncThemeToggleUI(theme) {
+    const statusLabel = document.getElementById("themeStatusLabel");
+    if (statusLabel) {
+        statusLabel.textContent = theme === "dark" ? "Mørkt tema" : "Lyst tema";
+    }
+
+    const toggleInput = document.getElementById("themeToggleInput");
+    if (toggleInput) {
+        toggleInput.checked = theme === "dark";
+    }
+
+    const preview = document.getElementById("themePreview");
+    if (preview) {
+        preview.classList.toggle("dark", theme === "dark");
+    }
+}
+
 export function applyTheme(theme) {
     const body = document.body;
     if (theme === "dark") {
@@ -10,6 +27,8 @@ export function applyTheme(theme) {
     } else {
         body.removeAttribute("data-theme");
     }
+
+    syncThemeToggleUI(theme);
 }
 
 export function initTheme() {
@@ -101,7 +120,9 @@ export function setupSettingsMenu(options = {}) {
                 }
                 break;
             case "theme":
-                toggleTheme();
+                if (e.target.id !== "themeToggleInput") {
+                    toggleTheme();
+                }
                 break;
             case "logout":
                 handleLogout();
@@ -112,6 +133,14 @@ export function setupSettingsMenu(options = {}) {
 
         closeMenu();
     });
+
+    const themeToggleInput = dropdown.querySelector("#themeToggleInput");
+    if (themeToggleInput) {
+        themeToggleInput.addEventListener("change", (e) => {
+            e.stopPropagation();
+            toggleTheme();
+        });
+    }
 
     document.addEventListener("click", () => {
         closeMenu();

@@ -62,9 +62,17 @@
 
                     <div id="settingsDropdown" class="settings-dropdown" aria-label="Settings menu">
                         <div class="settings-group-label">Indstillinger</div>
-                        <button class="settings-item" type="button" data-setting="theme">
-                            Skift tema
-                        </button>
+                        <div class="settings-item settings-item-toggle" data-setting="theme">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Tema</div>
+                                <div class="settings-item-sub" id="themeStatusLabel">Lyst tema</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="themeToggleInput" aria-label="Skift tema">
+                                <span class="slider"></span>
+                            </label>
+                            <div class="theme-preview" id="themePreview" aria-hidden="true"></div>
+                        </div>
                         <button class="settings-item" type="button" data-setting="refresh">
                             Opdater data
                         </button>
@@ -98,6 +106,9 @@
                 <div class="hero-updated">
                     <span class="hero-updated-label">Sidst opdateret</span>
                     <span class="hero-updated-value" id="lastUpdated"></span>
+                    <button id="refreshNowButton" class="hero-refresh" type="button" aria-label="Opdater data nu">
+                        ↻ Opdater nu
+                    </button>
                 </div>
 
                 <!-- Tilbage-knap – styres af index.js -->
@@ -105,6 +116,29 @@
                     <span class="arrow">←</span>
                     <span>Tilbage til departments</span>
                 </button>
+            </div>
+        </section>
+
+        <section class="status-strip" id="statusStrip" aria-live="polite">
+            <div class="status-card">
+                <div class="status-label">Accuracy</div>
+                <div class="status-value" id="statusAccuracy">–</div>
+                <div class="status-sub">Routing performance</div>
+            </div>
+            <div class="status-card">
+                <div class="status-label">Tickets i kø</div>
+                <div class="status-value" id="statusQueue">–</div>
+                <div class="status-sub">Total indkomne</div>
+            </div>
+            <div class="status-card">
+                <div class="status-label">Fejl</div>
+                <div class="status-value" id="statusFailures">–</div>
+                <div class="status-sub">Failure + defaulted</div>
+            </div>
+            <div class="status-card">
+                <div class="status-label">SLA advarsler</div>
+                <div class="status-value" id="statusDefaulted">–</div>
+                <div class="status-sub">Defaulted tickets</div>
             </div>
         </section>
 
@@ -122,6 +156,16 @@
         <!-- Department Ticket List – kun vist i department-view -->
         <section id="departmentTicketListSection">
             <h2>Department Ticket List</h2>
+            <div class="ticket-chip-row" id="ticketChipRow" aria-label="Ticket filtre">
+                <div class="ticket-chip-group">
+                    <span class="chip-label">Status</span>
+                    <div class="ticket-chips" id="statusChipContainer"></div>
+                </div>
+                <div class="ticket-chip-group">
+                    <span class="chip-label">Prioritet</span>
+                    <div class="ticket-chips" id="priorityChipContainer"></div>
+                </div>
+            </div>
             <div id="ticket-list" role="status" aria-live="polite">Loading...</div>
         </section>
 

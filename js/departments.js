@@ -5,6 +5,7 @@ import {
     deleteDepartment,
     getRoutingStatsForDepartment,
 } from "./api.js";
+import { initTheme, setupSettingsMenu } from "./theme.js";
 
 let allDepartments = [];
 let editingDepartmentId = null;
@@ -12,6 +13,44 @@ let editingDepartmentId = null;
 // filter / sort state
 let currentFilter = "all";
 let currentSearchQuery = "";
+let isSkeletonActive = false;
+let renderTimer = null;
+
+function updateResultBadge(value) {
+    const badge = document.getElementById("departmentResultBadge");
+    if (badge) {
+        badge.textContent = value;
+    }
+}
+
+function buildSkeletonPlaceholder() {
+    return `
+        <div class="department-skeleton">
+            ${Array.from({ length: 4 })
+                .map(() => `
+                    <div class="skeleton-row">
+                        <span class="skeleton-line long"></span>
+                        <span class="skeleton-line short"></span>
+                    </div>
+                `)
+                .join("")}
+        </div>
+    `;
+}
+
+function triggerSkeletonRender() {
+    isSkeletonActive = true;
+    renderDepartments();
+
+    if (renderTimer) {
+        clearTimeout(renderTimer);
+    }
+
+    renderTimer = setTimeout(() => {
+        isSkeletonActive = false;
+        renderDepartments();
+    }, 320);
+}
 
 function setDepartmentLiveStatus(message, isBusy = false) {
     const liveRegion = document.getElementById("departmentLiveRegion");
@@ -19,56 +58,6 @@ function setDepartmentLiveStatus(message, isBusy = false) {
 
     liveRegion.textContent = message;
     liveRegion.setAttribute("aria-busy", isBusy ? "true" : "false");
-}
-
-/* ================= TEMA / DARK MODE ================= */
-
-function applyTheme(theme) {
-    const body = document.body;
-    if (theme === "dark") {
-        body.setAttribute("data-theme", "dark");
-    } else {
-        body.removeAttribute("data-theme");
-    }
-}
-
-function initTheme() {
-    let saved = null;
-    try {
-        saved = window.localStorage.getItem("appTheme");
-    } catch (_) {}
-
-    if (saved !== "dark" && saved !== "light") {
-        saved = "light";
-    }
-
-    applyTheme(saved);
-}
-
-function toggleTheme() {
-    let current = "light";
-    try {
-        current = window.localStorage.getItem("appTheme") || "light";
-    } catch (_) {}
-
-    const next = current === "light" ? "dark" : "light";
-
-    try {
-        window.localStorage.setItem("appTheme", next);
-    } catch (_) {}
-
-    applyTheme(next);
-}
-
-/* ================= LOGOUT ================= */
-
-function handleLogout() {
-    try {
-        window.localStorage.removeItem("authToken");
-        window.localStorage.removeItem("currentUser");
-    } catch (_) {}
-
-    window.location.href = "./login.html";
 }
 
 // Simpel email-validering
@@ -81,6 +70,13 @@ function isValidEmail(email) {
 /** Render departments */
 function renderDepartments() {
     const output = document.getElementById("department-output");
+    if (!output) return;
+
+    if (isSkeletonActive) {
+        updateResultBadge("…");
+        output.innerHTML = buildSkeletonPlaceholder();
+        return;
+    }
 
     let list = [...allDepartments];
 
@@ -103,6 +99,8 @@ function renderDepartments() {
     } else if (currentFilter === "low") {
         list.sort((a, b) => (a.accuracy || 0) - (b.accuracy || 0));
     }
+
+    updateResultBadge(list.length);
 
     if (!list || list.length === 0) {
         output.innerHTML = `
@@ -216,9 +214,15 @@ function attachDepartmentItemHandlers() {
 }
 
 /** Hent departments + metrics */
-async function loadDepartments() {
+async function loadDepartments(showSkeleton = false) {
     const output = document.getElementById("department-output");
-    output.textContent = "Henter departments...";
+    if (!output) return;
+
+    if (showSkeleton) {
+        triggerSkeletonRender();
+    } else {
+        output.textContent = "Henter departments...";
+    }
     setDepartmentLiveStatus("Henter departments...", true);
 
     try {
@@ -250,6 +254,7 @@ async function loadDepartments() {
         );
 
         allDepartments = withStats;
+        isSkeletonActive = false;
         renderDepartments();
         setDepartmentLiveStatus(`Indlæste ${withStats.length} departments`, false);
     } catch (err) {
@@ -257,6 +262,8 @@ async function loadDepartments() {
             <p style="color:#b91c1c; font-weight:500;">
                 Fejl ved indlæsning: ${err.message}
             </p>`;
+        isSkeletonActive = false;
+        updateResultBadge(0);
         setDepartmentLiveStatus("Fejl ved indlæsning af departments", false);
     }
 }
@@ -268,7 +275,7 @@ function setupSearch() {
 
     searchInput.addEventListener("input", () => {
         currentSearchQuery = searchInput.value || "";
-        renderDepartments();
+        triggerSkeletonRender();
     });
 }
 
@@ -292,7 +299,7 @@ function setupFilterChips() {
                 currentFilter = "all";
             }
 
-            renderDepartments();
+            triggerSkeletonRender();
         });
     });
 }
@@ -589,66 +596,6 @@ function setupEditDepartment() {
     }
 }
 
-/** SETTINGS MENU */
-function setupSettingsMenu() {
-    const btn = document.getElementById("settingsButton");
-    const dropdown = document.getElementById("settingsDropdown");
-
-    if (!btn || !dropdown) return;
-
-    function openMenu() {
-        dropdown.classList.add("settings-dropdown-open");
-        btn.setAttribute("aria-expanded", "true");
-    }
-
-    function closeMenu() {
-        dropdown.classList.remove("settings-dropdown-open");
-        btn.setAttribute("aria-expanded", "false");
-    }
-
-    function toggleMenu() {
-        const isOpen = dropdown.classList.contains("settings-dropdown-open");
-        if (isOpen) {
-            closeMenu();
-        } else {
-            openMenu();
-        }
-    }
-
-    btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        toggleMenu();
-    });
-
-    dropdown.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const item = e.target.closest(".settings-item");
-        if (!item) return;
-
-        const action = item.dataset.setting;
-
-        switch (action) {
-            case "refresh":
-                window.location.reload();
-                break;
-            case "theme":
-                toggleTheme();
-                break;
-            case "logout":
-                handleLogout();
-                break;
-            default:
-                break;
-        }
-
-        closeMenu();
-    });
-
-    document.addEventListener("click", () => {
-        closeMenu();
-    });
-}
-
 /** Init */
 window.addEventListener("DOMContentLoaded", () => {
     initTheme();
@@ -657,5 +604,5 @@ window.addEventListener("DOMContentLoaded", () => {
     setupFilterChips();
     setupAddDepartment();
     setupEditDepartment();
-    setupSettingsMenu();
+    setupSettingsMenu({ onRefresh: () => loadDepartments(true) });
 });

@@ -61,6 +61,28 @@ function toggleLoadingOverlay(isVisible) {
     }
 }
 
+function renderStatusStrip({ accuracyPercent, totalTickets, incorrect, defaulted }) {
+    const accuracyEl = document.getElementById("statusAccuracy");
+    const queueEl = document.getElementById("statusQueue");
+    const failuresEl = document.getElementById("statusFailures");
+    const defaultedEl = document.getElementById("statusDefaulted");
+
+    const fmt = (val) => new Intl.NumberFormat("da-DK").format(val ?? 0);
+
+    if (accuracyEl) {
+        accuracyEl.textContent = `${(accuracyPercent ?? 0).toFixed(1)}%`;
+    }
+    if (queueEl) {
+        queueEl.textContent = fmt(totalTickets ?? 0);
+    }
+    if (failuresEl) {
+        failuresEl.textContent = fmt(incorrect ?? 0);
+    }
+    if (defaultedEl) {
+        defaultedEl.textContent = fmt(defaulted ?? 0);
+    }
+}
+
 /* ================= HOVED-FUNKTION: loadStats ================= */
 
 async function loadStats(options = {}) {
@@ -178,6 +200,13 @@ async function loadStats(options = {}) {
         } else if (accuracyPercent >= 70) {
             badgeClass = "ok";
         }
+
+        renderStatusStrip({
+            accuracyPercent,
+            totalTickets: total,
+            incorrect,
+            defaulted
+        });
 
         let trendHtml = "";
         const lastAccuracyRaw = window.localStorage.getItem("routingAccuracyLast");
@@ -586,6 +615,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const backBtn = document.getElementById("backToDepartments");
     const ticketSection = document.getElementById("departmentTicketListSection");
+    const refreshNowButton = document.getElementById("refreshNowButton");
 
     const isDepartmentView =
         SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
@@ -612,6 +642,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (ticketSection) {
         ticketSection.style.display = isDepartmentView ? "block" : "none";
+    }
+
+    if (refreshNowButton) {
+        refreshNowButton.addEventListener("click", handleManualRefresh);
     }
 
     loadStats();

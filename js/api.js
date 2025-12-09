@@ -105,6 +105,33 @@ export async function getRoutingStatsForDepartment(id) {
     return await r.json();
 }
 
+export async function updateTicketPriority(ticketId, priority) {
+    const r = await fetch(`${API_BASE_URL}/tickets/${ticketId}/priority`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ priority })
+    });
+
+    if (!r.ok) {
+        let msg = `Kunne ikke opdatere prioritet for ticket ${ticketId} (status ${r.status})`;
+        try {
+            const errBody = await r.json();
+            if (errBody && errBody.message) {
+                msg += `: ${errBody.message}`;
+            }
+        } catch (_) {}
+        throw new Error(msg);
+    }
+
+    try {
+        return await r.json();
+    } catch (_) {
+        return null;
+    }
+}
+
 export async function markTicketAsMisrouted(ticketId) {
     const r = await fetch(`${API_BASE_URL}/tickets/${ticketId}/misrouted`, {
         method: "POST"

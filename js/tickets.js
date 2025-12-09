@@ -1,4 +1,4 @@
-import { getDepartmentTicketList, markTicketAsMisrouted } from "./api.js";
+import { getDepartmentTicketList, markTicketAsMisrouted, updateTicketPriority } from "./api.js";
 import { SELECTED_DEPARTMENT_ID } from "./config.js";
 
 const PAGE_SIZE = 10;
@@ -7,15 +7,38 @@ let filters = {
     search: "",
     status: "",
     routing: "",
+    priority: "",
 };
 let currentPage = 1;
 let currentView = "table";
+
+const PRIORITY_OPTIONS = [
+    { value: "HIGH", label: "Høj" },
+    { value: "NORMAL", label: "Normal" },
+    { value: "LOW", label: "Lav" }
+];
+
+const PRIORITY_LABELS = PRIORITY_OPTIONS.reduce((acc, curr) => {
+    acc[curr.value.toLowerCase()] = curr.label;
+    return acc;
+}, {});
 
 function formatDate(iso) {
     if (!iso) return "";
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
     return d.toLocaleDateString("da-DK");
+}
+
+function normalizePriorityValue(raw) {
+    const str = raw ? String(raw).trim() : "";
+    if (!str) return "NORMAL";
+    return str.toUpperCase();
+}
+
+function formatPriority(raw) {
+    const normalized = normalizePriorityValue(raw).toLowerCase();
+    return PRIORITY_LABELS[normalized] || (normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : "Normal");
 }
 
 export async function loadTicketList(departmentId) {
@@ -47,7 +70,7 @@ export async function loadTicketList(departmentId) {
         }
 
         allTickets = tickets;
-        filters = { search: "", status: "", routing: "" };
+        filters = { search: "", status: "", routing: "", priority: "" };
         currentView = currentView || "table";
         currentPage = 1;
 
@@ -106,6 +129,80 @@ function buildFilterBar(statuses) {
     `;
 }
 
+function renderFilterChips(statuses, priorities) {
+    const statusContainer = document.getElementById("statusChipContainer");
+    const priorityContainer = document.getElementById("priorityChipContainer");
+    const chipRow = document.getElementById("ticketChipRow");
+
+    if (chipRow) {
+        chipRow.style.display = statuses.length ? "flex" : "none";
+    }
+
+    if (statusContainer) {
+        const statusOptions = ["", ...statuses];
+        statusContainer.innerHTML = statusOptions
+            .map(status => {
+                const label = status || "Alle";
+                const isActive = filters.status === status;
+                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="status" data-value="${status}">${label}</button>`;
+            })
+            .join("");
+    }
+
+    if (priorityContainer) {
+        const defaultPriorities = ["Høj", "Normal", "Lav"];
+        const uniquePriorities = Array.from(new Set(["", ...priorities, ...defaultPriorities]));
+        priorityContainer.innerHTML = uniquePriorities
+            .map(priority => {
+                const label = priority || "Alle";
+                const isActive = filters.priority.toLowerCase() === priority.toLowerCase();
+                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="priority" data-value="${priority}">${label}</button>`;
+            })
+            .join("");
+    }
+
+    const chipButtons = document.querySelectorAll("#ticketChipRow .ticket-chip");
+    chipButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const type = btn.getAttribute("data-type");
+            const value = btn.getAttribute("data-value") || "";
+
+            if (type === "status") {
+                filters.status = value;
+            }
+
+            if (type === "priority") {
+                filters.priority = value;
+            }
+
+            currentPage = 1;
+            renderTicketList(document.getElementById("ticket-list"));
+        });
+    });
+}
+
+function renderPrioritySelect(priorityValue, ticketId) {
+    const hasOption = PRIORITY_OPTIONS.some(opt => opt.value === priorityValue);
+    return `
+        <label class="visually-hidden" for="priority-${ticketId}">Prioritet</label>
+        <select class="ticket-priority-select" id="priority-${ticketId}" data-ticket-id="${ticketId}">
+            ${!hasOption ? `<option value="${priorityValue}" selected>${formatPriority(priorityValue)}</option>` : ""}
+            ${PRIORITY_OPTIONS.map(opt => {
+                const selected = priorityValue === opt.value ? "selected" : "";
+                return `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
+            }).join("")}
+        </select>
+        <span class="priority-inline-status" aria-live="polite"></span>
+    `;
+}
+
+function renderPriorityPill(priorityValue) {
+    const normalized = normalizePriorityValue(priorityValue);
+    const label = formatPriority(priorityValue);
+    const priorityClass = normalized ? `priority-pill-${normalized.toLowerCase()}` : "";
+    return `<span class="priority-pill ${priorityClass}">${label}</span>`;
+}
+
 function renderTableRows(tickets) {
     return `
         <table class="ticket-table">
@@ -113,6 +210,7 @@ function renderTableRows(tickets) {
                 <tr>
                     <th>ID</th>
                     <th>Status</th>
+                    <th>Prioritet</th>
                     <th>Subject</th>
                     <th>Dato</th>
                     <th class="ticket-table-actions">Handling</th>
@@ -122,10 +220,17 @@ function renderTableRows(tickets) {
                 ${tickets
                     .map(t => {
                         const isFailure = t.status === "FAILURE";
+                        const priorityValue = t.priorityValue || "NORMAL";
                         return `
                             <tr class="ticket-table-row" data-ticket-id="${t.id}">
                                 <td class="ticket-id">#${t.id}</td>
                                 <td><span class="ticket-status ${isFailure ? "status-failure" : "status-success"}">${t.status}</span></td>
+                                <td>
+                                    <div class="priority-cell">
+                                        ${renderPriorityPill(priorityValue)}
+                                        ${renderPrioritySelect(priorityValue, t.id)}
+                                    </div>
+                                </td>
                                 <td>${t.subject}</td>
                                 <td>${formatDate(t.date)}</td>
                                 <td class="ticket-table-actions">
@@ -150,6 +255,7 @@ function renderCardRows(tickets) {
     return tickets
         .map(t => {
             const isFailure = t.status === "FAILURE";
+            const priorityValue = t.priorityValue || "NORMAL";
             return `
                 <div class="ticket-card" data-ticket-id="${t.id}">
                     <div class="ticket-card-header">
@@ -163,6 +269,13 @@ function renderCardRows(tickets) {
                         </button>
                     </div>
                     <p><strong>Status:</strong> ${t.status}</p>
+                    <div class="priority-card-row">
+                        <div class="priority-card-label">Prioritet</div>
+                        <div class="priority-card-controls">
+                            ${renderPriorityPill(priorityValue)}
+                            ${renderPrioritySelect(priorityValue, t.id)}
+                        </div>
+                    </div>
                     <p><strong>Subject:</strong> ${t.subject}</p>
                     <p><strong>Date:</strong> ${formatDate(t.date)}</p>
                 </div>
@@ -172,6 +285,13 @@ function renderCardRows(tickets) {
 }
 
 function normalizeTicket(ticket) {
+    const priorityValue = normalizePriorityValue(
+        ticket.priority ||
+        ticket.priorityLevel ||
+        ticket.severity ||
+        ticket.priority_name
+    );
+
     return {
         raw: ticket,
         id:
@@ -182,7 +302,9 @@ function normalizeTicket(ticket) {
             "Ukendt",
         status: (ticket.status ?? ticket.routingStatus ?? "").toUpperCase() || "-",
         subject: ticket.subject ?? ticket.title ?? "(ingen subject)",
-        date: ticket.createdAt ?? ticket.created_at ?? ticket.date
+        date: ticket.createdAt ?? ticket.created_at ?? ticket.date,
+        priority: formatPriority(priorityValue),
+        priorityValue
     };
 }
 
@@ -209,7 +331,11 @@ function filterTickets() {
                 ? isMisrouted
                 : true;
 
-        return matchesSearch && matchesStatus && matchesRouting;
+        const matchesPriority = filters.priority
+            ? (t.priority || "Normal").toLowerCase() === filters.priority.toLowerCase()
+            : true;
+
+        return matchesSearch && matchesStatus && matchesRouting && matchesPriority;
     });
 }
 
@@ -232,12 +358,17 @@ function renderTicketList(container) {
     const uniqueStatuses = Array.from(
         new Set(normalizedTickets.map(t => t.status))
     ).filter(Boolean);
+    const uniquePriorities = Array.from(
+        new Set(normalizedTickets.map(t => t.priority))
+    ).filter(Boolean);
 
     const { totalPages, pageTickets } = paginate(filteredTickets);
 
     const resultsHtml = currentView === "table"
         ? renderTableRows(pageTickets)
         : renderCardRows(pageTickets);
+
+    renderFilterChips(uniqueStatuses, uniquePriorities);
 
     container.innerHTML = `
         ${buildFilterBar(uniqueStatuses)}
@@ -251,6 +382,7 @@ function renderTicketList(container) {
 
     wireUpInteractions(container, totalPages);
     attachFlagButtonHandlers(container);
+    attachPriorityChangeHandlers(container);
 }
 
 function wireUpInteractions(container, totalPages) {
@@ -332,6 +464,60 @@ function attachFlagButtonHandlers(container) {
                 btn.disabled = false;
                 btn.textContent = "Marker som forkert routing";
                 alert("Der opstod en fejl ved opdatering af ticketen.");
+            }
+        });
+    });
+}
+
+function updateLocalTicketPriority(ticketId, priorityValue) {
+    const normalizedId = String(ticketId);
+    allTickets = allTickets.map(ticket => {
+        const normalized = normalizeTicket(ticket);
+        if (String(normalized.id) === normalizedId) {
+            return {
+                ...ticket,
+                priority: priorityValue,
+                priorityLevel: priorityValue,
+                priority_name: priorityValue
+            };
+        }
+        return ticket;
+    });
+}
+
+function attachPriorityChangeHandlers(container) {
+    const selects = container.querySelectorAll(".ticket-priority-select");
+
+    selects.forEach(select => {
+        select.addEventListener("change", async event => {
+            const newPriority = event.target.value;
+            const ticketId = event.target.dataset.ticketId;
+            const row = event.target.closest("[data-ticket-id]");
+            const statusEl = row ? row.querySelector(".priority-inline-status") : null;
+
+            if (!ticketId) return;
+
+            try {
+                event.target.disabled = true;
+                if (statusEl) {
+                    statusEl.textContent = "Gemmer...";
+                }
+
+                await updateTicketPriority(ticketId, newPriority);
+                updateLocalTicketPriority(ticketId, newPriority);
+
+                if (statusEl) {
+                    statusEl.textContent = "Opdateret";
+                }
+
+                renderTicketList(container);
+            } catch (e) {
+                console.error("Kunne ikke opdatere prioritet:", e);
+                alert(`Kunne ikke opdatere prioritet for ticket #${ticketId}.`);
+                event.target.disabled = false;
+                if (statusEl) {
+                    statusEl.textContent = "";
+                }
             }
         });
     });
