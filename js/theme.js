@@ -110,9 +110,11 @@ export function setupSettingsMenu(options = {}) {
         if (!item) return;
 
         const action = item.dataset.setting;
+        let shouldClose = false;
 
         switch (action) {
             case "refresh":
+                shouldClose = true;
                 if (typeof onRefresh === "function") {
                     onRefresh();
                 } else {
@@ -120,18 +122,23 @@ export function setupSettingsMenu(options = {}) {
                 }
                 break;
             case "theme":
+                shouldClose = true;
                 if (e.target.id !== "themeToggleInput") {
                     toggleTheme();
                 }
                 break;
             case "logout":
+                shouldClose = true;
                 handleLogout();
                 break;
             default:
+                shouldClose = false;
                 break;
         }
 
-        closeMenu();
+        if (shouldClose) {
+            closeMenu();
+        }
     });
 
     const themeToggleInput = dropdown.querySelector("#themeToggleInput");

@@ -73,6 +73,35 @@
                             </label>
                             <div class="theme-preview" id="themePreview" aria-hidden="true"></div>
                         </div>
+                        <div class="settings-group-label">Auto-refresh</div>
+                        <div class="settings-item settings-item-toggle" id="autoRefreshToggleRow">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Auto-refresh</div>
+                                <div class="settings-item-sub" id="autoRefreshStatusLabel">Aktiveret</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="autoRefreshToggleInput" aria-label="Slå auto-refresh til eller fra">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item settings-item-inline" id="autoRefreshIntervalRow">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Interval</div>
+                                <div class="settings-item-sub">Hvor ofte skal dashboardet opdateres?</div>
+                            </div>
+                            <select id="autoRefreshIntervalSelect" class="settings-select" aria-label="Vælg auto-refresh interval">
+                                <option value="30000">Hvert 30. sekund</option>
+                                <option value="60000" selected>Hvert 1. minut</option>
+                                <option value="120000">Hvert 2. minut</option>
+                                <option value="300000">Hvert 5. minut</option>
+                            </select>
+                        </div>
+                        <div class="settings-item settings-item-static" id="autoRefreshScheduleRow">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Næste auto-refresh</div>
+                                <div class="settings-item-sub" id="autoRefreshNextLabel">Planlægges...</div>
+                            </div>
+                        </div>
                         <button class="settings-item" type="button" data-setting="refresh">
                             Opdater data
                         </button>
@@ -114,6 +143,10 @@
                     <button id="refreshNowButton" class="hero-refresh" type="button" aria-label="Opdater data nu">
                         ↻ Opdater nu
                     </button>
+                </div>
+                <div class="hero-next-refresh" aria-live="polite">
+                    <span class="hero-updated-label">Næste auto-refresh</span>
+                    <span class="hero-updated-value" id="nextRefreshLabel">Planlægges...</span>
                 </div>
 
                 <!-- Tilbage-knap – styres af index.js -->
