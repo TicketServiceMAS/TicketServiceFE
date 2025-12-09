@@ -105,6 +105,14 @@ export async function getRoutingStatsForDepartment(id) {
     return await r.json();
 }
 
+export async function getMetricsHistoryForAllDepartments() {
+    const r = await fetch(`${API_BASE_URL}/metrics/departments`);
+    if (!r.ok) {
+        throw new Error(`Kunne ikke hente historiske metrics (status ${r.status})`);
+    }
+    return await r.json();
+}
+
 export async function markTicketAsMisrouted(ticketId) {
     const r = await fetch(`${API_BASE_URL}/tickets/${ticketId}/misrouted`, {
         method: "POST"
