@@ -4,6 +4,19 @@
 // when it is explicitly provided via `window.TICKET_SERVICE_API_BASE`.
 const API_BASE_PATH = "/api/ticketservice";
 
+function readQueryOverride() {
+    if (typeof window === "undefined" || !window.location || !window.location.search) {
+        return null;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    return (
+        params.get("apiBase") ||
+        params.get("ticketServiceApiBase") ||
+        params.get("ticket_service_api_base")
+    );
+}
+
 function resolveApiBaseUrl() {
     if (typeof window === "undefined") {
         return API_BASE_PATH;
@@ -11,6 +24,21 @@ function resolveApiBaseUrl() {
 
     if (window.TICKET_SERVICE_API_BASE) {
         return window.TICKET_SERVICE_API_BASE;
+    }
+
+    const queryOverride = readQueryOverride();
+    if (queryOverride) {
+        return queryOverride;
+    }
+
+    // When running the static files from e.g. JetBrains' built-in web server (port 63342),
+    // the backend still listens on localhost:8080. Use that as a fallback to avoid the
+    // guaranteed 404s you'd see from the static file server.
+    if (window.location && window.location.hostname === "localhost") {
+        const port = window.location.port;
+        if (port && port !== "8080") {
+            return `http://localhost:8080${API_BASE_PATH}`;
+        }
     }
 
     return API_BASE_PATH;
