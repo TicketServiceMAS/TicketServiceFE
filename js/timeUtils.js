@@ -1,7 +1,11 @@
 // timeUtils.js
 // Tid, formatering og hentning af alle tickets / metrics
 
-import { getDepartments, getTicketsForDepartment } from "./api.js";
+import {
+    getDepartments,
+    getTicketsForDepartment,
+    getMetricsHistoryForAllDepartments
+} from "./api.js";
 
 let liveUpdatedInterval = null;
 
@@ -57,6 +61,15 @@ export function formatDateTime(isoString) {
  */
 export async function loadAllTicketsFromBackend() {
     try {
+        // Brug ny endpoint der returnerer historiske metrics for alle departments.
+        // Dette sikrer at linjegrafen har data selv når tickets ikke er fladet ud per department.
+        const history = await getMetricsHistoryForAllDepartments();
+
+        if (Array.isArray(history)) {
+            return history;
+        }
+
+        // Fallback til gammel strategi hvis backend svarer uventet.
         const departments = await getDepartments();
         if (!Array.isArray(departments) || departments.length === 0) {
             console.warn("Ingen departments fundet");
@@ -72,7 +85,6 @@ export async function loadAllTicketsFromBackend() {
                 try {
                     const data = await getTicketsForDepartment(id);
 
-                    // Acceptér hvad end backend sender, så længe det er et objekt/array.
                     if (data && typeof data === "object") {
                         return {
                             departmentId: id,
@@ -80,7 +92,6 @@ export async function loadAllTicketsFromBackend() {
                         };
                     }
 
-                    // Hvis data er null/undefined, spring det over.
                     console.warn("Tomt svar fra getTicketsForDepartment:", id, data);
                     return null;
                 } catch (e) {
@@ -90,9 +101,27 @@ export async function loadAllTicketsFromBackend() {
             })
         );
 
-        // fjern nulls
-        return results.filter(Boolean);
+        const cleaned = results.filter(Boolean);
 
+        const flattened = [];
+
+        for (const entry of cleaned) {
+            if (!entry) continue;
+
+            if (Array.isArray(entry)) {
+                flattened.push(...entry);
+                continue;
+            }
+
+            if (Array.isArray(entry.tickets)) {
+                flattened.push(...entry.tickets);
+                continue;
+            }
+
+            flattened.push(entry);
+        }
+
+        return flattened;
     } catch (e) {
         console.error("Fejl ved hentning af alle tickets:", e);
         return [];
