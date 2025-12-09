@@ -35,16 +35,46 @@
                 </div>
             </div>
 
-            <nav class="topbar-nav">
-                <a href="./index.html" class="nav-link nav-link-active">
-                    <span class="dot"></span>
-                    <span>Dashboard</span>
-                </a>
-                <a href="./departments.html" class="nav-link">
-                    <span class="dot"></span>
-                    <span>Departments</span>
-                </a>
-            </nav>
+            <!-- Højre side: navigation + settings-tandhjul -->
+            <div class="topbar-right">
+                <nav class="topbar-nav">
+                    <a href="./index.html" class="nav-link nav-link-active">
+                        <span class="dot"></span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="./departments.html" class="nav-link">
+                        <span class="dot"></span>
+                        <span>Departments</span>
+                    </a>
+                </nav>
+
+                <div class="settings-menu">
+                    <button
+                            id="settingsButton"
+                            class="settings-button"
+                            type="button"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            aria-label="Åbn indstillinger"
+                    >
+                        <span class="settings-icon">⚙</span>
+                    </button>
+
+                    <div id="settingsDropdown" class="settings-dropdown" aria-label="Settings menu">
+                        <div class="settings-group-label">Indstillinger</div>
+                        <button class="settings-item" type="button" data-setting="theme">
+                            Skift tema
+                        </button>
+                        <button class="settings-item" type="button" data-setting="refresh">
+                            Opdater data
+                        </button>
+                        <hr class="settings-divider">
+                        <button class="settings-item" type="button" data-setting="logout">
+                            Log ud
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
