@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8" />
+    <title>Ticket Routing – Historisk fejl-routing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Re-brug eksisterende styling -->
+    <link rel="stylesheet" href="../css/index.css" />
+</head>
+<body>
+<div class="app-shell">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <div class="brand-logo">itm8</div>
+                <div>
+                    <div class="brand-text-main">
+                        <div class="brand-title">Ticket Routing Tool</div>
+                        <span class="brand-pill">Internal</span>
+                    </div>
+                    <div class="brand-subtitle">
+                        Historisk statistik over forkert routede tickets
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-layout">
+        <section class="content">
+            <!-- Filter -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Filter</h2>
+                    <p class="card-subtitle">
+                        Vælg evt. datointerval – ellers vises alle dage med data.
+                    </p>
+                </div>
+                <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                    <div>
+                        <label for="fromDate" class="input-label">Fra dato</label>
+                        <input type="date" id="fromDate" class="input" />
+                    </div>
+                    <div>
+                        <label for="toDate" class="input-label">Til dato</label>
+                        <input type="date" id="toDate" class="input" />
+                    </div>
+                    <button id="applyFilterBtn" class="btn btn-primary">
+                        Opdater
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Historik over forkert routede tickets</h2>
+                    <p class="card-subtitle">
+                        Linjegraf: antal forkert routede tickets pr. dag.
+                    </p>
+                </div>
+                <div class="card-body">
+                    <canvas id="misroutingHistoryChart" height="140"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabel -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Detaljer</h2>
+                    <p class="card-subtitle">
+                        Rækker pr. dag med antal tickets og fejl-routing-procent.
+                    </p>
+                </div>
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>Dato</th>
+                                <th>Totalt antal tickets</th>
+                                <th>Forkert routede</th>
+                                <th>% forkert</th>
+                            </tr>
+                            </thead>
+                            <tbody id="misroutingHistoryTableBody">
+                            <!-- udfyldes af JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- JS -->
+<script type="module" src="../js/misroutingHistory.js"></script>
+</body>
+</html>
