@@ -1,416 +1,42 @@
+// index.js
 import {
     getRoutingStats,
     getRoutingStatsForDepartment,
-    getDepartments,
     getTicketsForDepartment,
 } from "./api.js";
 import { loadTicketList } from "./tickets.js";
 
-const USE_MOCK = false;
+import {
+    USE_MOCK,
+    MOCK_STATS,
+    MOCK_TICKETS,
+    SELECTED_DEPARTMENT_ID,
+    SELECTED_DEPARTMENT_NAME,
+} from "./config.js";
 
-const MOCK_STATS = {
-    totalTickets: 30,
-    successCount: 23,
-    failureCount: 5,
-    defaultedCount: 2,
-    accuracy: 23 / 30
-};
+import {
+    initTheme,
+    setupSettingsMenu,
+} from "./theme.js";
 
-const today = new Date();
-function daysAgo(n) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - n);
-    return d.toISOString();
-}
+import {
+    startLiveUpdatedLabel,
+    loadAllTicketsFromBackend,
+} from "./timeUtils.js";
 
-const MOCK_TICKETS = [
-    { metricsDepartmentID: 1, subject: "Login issue", createdAt: daysAgo(7), status: "SUCCESS", departmentName: "Support", predictedTeam: "Support Team" },
-    { metricsDepartmentID: 2, subject: "Order #1234", createdAt: daysAgo(7), status: "SUCCESS", departmentName: "Sales", predictedTeam: "Sales Team" },
-    { metricsDepartmentID: 3, subject: "Billing question", createdAt: daysAgo(6), status: "SUCCESS", departmentName: "Finance", predictedTeam: "Finance Team" },
-    { metricsDepartmentID: 4, subject: "Password reset", createdAt: daysAgo(6), status: "SUCCESS", departmentName: "Support", predictedTeam: "Support Team" },
-    { metricsDepartmentID: 5, subject: "API integration", createdAt: daysAgo(5), status: "SUCCESS", departmentName: "Tech", predictedTeam: "Tech Team" },
-    { metricsDepartmentID: 6, subject: "Invoice missing", createdAt: daysAgo(5), status: "SUCCESS", departmentName: "Finance", predictedTeam: "Finance Team" },
-    { metricsDepartmentID: 7, subject: "Refund request", createdAt: daysAgo(4), status: "SUCCESS", departmentName: "Finance", predictedTeam: "Finance Team" },
-    { metricsDepartmentID: 8, subject: "New user onboarding", createdAt: daysAgo(4), status: "SUCCESS", departmentName: "Support", predictedTeam: "Support Team" },
-    { metricsDepartmentID: 9, subject: "Product demo", createdAt: daysAgo(3), status: "SUCCESS", departmentName: "Sales", predictedTeam: "Sales Team" },
-    { metricsDepartmentID: 10, subject: "SLA question", createdAt: daysAgo(3), status: "SUCCESS", departmentName: "Support", predictedTeam: "Support Team" },
-    { metricsDepartmentID: 11, subject: "Contract change", createdAt: daysAgo(2), status: "SUCCESS", departmentName: "Sales", predictedTeam: "Sales Team" },
-    { metricsDepartmentID: 12, subject: "Feature request", createdAt: daysAgo(2), status: "SUCCESS", departmentName: "Tech", predictedTeam: "Tech Team" },
-    { metricsDepartmentID: 13, subject: "DB timeout", createdAt: daysAgo(1), status: "SUCCESS", departmentName: "Tech", predictedTeam: "Tech Team" },
-    { metricsDepartmentID: 14, subject: "Latency spike", createdAt: daysAgo(1), status: "SUCCESS", departmentName: "Tech", predictedTeam: "Tech Team" },
-    { metricsDepartmentID: 15, subject: "Slow UI", createdAt: daysAgo(0), status: "SUCCESS", departmentName: "Support", predictedTeam: "Support Team" },
-    { metricsDepartmentID: 16, subject: "Export data", createdAt: daysAgo(0), status: "SUCCESS", departmentName: "Tech", predictedTeam: "Tech Team" },
-    { metricsDepartmentID: 17, subject: "Wrong routing 1", createdAt: daysAgo(6), status: "FAILURE", departmentName: "Support", predictedTeam: "Sales Team" },
-    { metricsDepartmentID: 18, subject: "Wrong routing 2", createdAt: daysAgo(5), status: "FAILURE", departmentName: "Sales", predictedTeam: "Support Team" },
-    { metricsDepartmentID: 19, subject: "Wrong routing 3", createdAt: daysAgo(3), status: "FAILURE", departmentName: "Finance", predictedTeam: "Support Team" },
-    { metricsDepartmentID: 20, subject: "Wrong routing 4", createdAt: daysAgo(2), status: "FAILURE", departmentName: "Tech", predictedTeam: "Finance Team" },
-    { metricsDepartmentID: 21, subject: "Wrong routing 5", createdAt: daysAgo(1), status: "FAILURE", departmentName: "Finance", predictedTeam: "Sales Team" },
-    { metricsDepartmentID: 22, subject: "Fallback 1", createdAt: daysAgo(4), status: "DEFAULTED", departmentName: "Support", predictedTeam: "Default Queue" },
-    { metricsDepartmentID: 23, subject: "Fallback 2", createdAt: daysAgo(2), status: "DEFAULTED", departmentName: "Sales", predictedTeam: "Default Queue" },
-    { metricsDepartmentID: 24, subject: "Extra success 1", createdAt: daysAgo(3), status: "SUCCESS", departmentName: "Support", predictedTeam: "Support Team" },
-    { metricsDepartmentID: 25, subject: "Extra success 2", createdAt: daysAgo(2), status: "SUCCESS", departmentName: "Tech", predictedTeam: "Tech Team" },
-    { metricsDepartmentID: 26, subject: "Extra success 3", createdAt: daysAgo(1), status: "SUCCESS", departmentName: "Finance", predictedTeam: "Finance Team" },
-    { metricsDepartmentID: 27, subject: "Extra success 4", createdAt: daysAgo(0), status: "SUCCESS", departmentName: "Sales", predictedTeam: "Sales Team" },
-    { metricsDepartmentID: 28, subject: "Extra success 5", createdAt: daysAgo(0), status: "SUCCESS", departmentName: "Support", predictedTeam: "Support Team" },
-    { metricsDepartmentID: 29, subject: "Extra success 6", createdAt: daysAgo(1), status: "SUCCESS", departmentName: "Tech", predictedTeam: "Tech Team" },
-    { metricsDepartmentID: 30, subject: "Extra success 7", createdAt: daysAgo(2), status: "SUCCESS", departmentName: "Finance", predictedTeam: "Finance Team" }
-];
+import {
+    allTickets,
+    setAllTickets,
+    computeStatsFromTickets,
+    buildDailyAccuracySeries,
+    buildAccuracyPrediction,
+    renderTicketList,
+} from "./statsUtils.js";
 
 let chartInstance = null;
 let predictionChartInstance = null;
-let liveUpdatedInterval = null;
-let allTickets = [];
 
-const urlParams = new URLSearchParams(window.location.search);
-const SELECTED_DEPARTMENT_ID = urlParams.get("departmentId")
-    ? parseInt(urlParams.get("departmentId"), 10)
-    : null;
-const SELECTED_DEPARTMENT_NAME = urlParams.get("departmentName");
-
-/* ================= TEMA / DARK MODE ================= */
-
-function applyTheme(theme) {
-    const body = document.body;
-    if (theme === "dark") {
-        body.setAttribute("data-theme", "dark");
-    } else {
-        body.removeAttribute("data-theme");
-    }
-}
-
-function initTheme() {
-    let saved = null;
-    try {
-        saved = window.localStorage.getItem("appTheme");
-    } catch (_) {}
-
-    if (saved !== "dark" && saved !== "light") {
-        saved = "light";
-    }
-
-    applyTheme(saved);
-}
-
-function toggleTheme() {
-    let current = "light";
-    try {
-        current = window.localStorage.getItem("appTheme") || "light";
-    } catch (_) {}
-
-    const next = current === "light" ? "dark" : "light";
-
-    try {
-        window.localStorage.setItem("appTheme", next);
-    } catch (_) {}
-
-    applyTheme(next);
-}
-
-/* ================= LOGOUT ================= */
-
-function handleLogout() {
-    try {
-        window.localStorage.removeItem("authToken");
-        window.localStorage.removeItem("currentUser");
-    } catch (_) {}
-
-    // antager at login-siden hedder "login.html" i samme mappe
-    window.location.href = "./login.html";
-}
-
-/* ================= RESTEN AF DIT DASHBOARD-KODE ================= */
-
-function computeStatsFromTickets(tickets) {
-    const result = {
-        totalTickets: 0,
-        successCount: 0,
-        failureCount: 0,
-        defaultedCount: 0
-    };
-
-    if (!Array.isArray(tickets) || tickets.length === 0) {
-        return result;
-    }
-
-    result.totalTickets = tickets.length;
-
-    for (const t of tickets) {
-        const status = (t.status ?? t.routingStatus ?? "").toUpperCase();
-
-        if (status === "SUCCESS") {
-            result.successCount++;
-        } else if (status === "FAILURE") {
-            result.failureCount++;
-        } else if (status === "DEFAULTED") {
-            result.defaultedCount++;
-        }
-    }
-
-    return result;
-}
-
-function startLiveUpdatedLabel(element, timestamp) {
-    if (!element || !timestamp) return;
-
-    if (liveUpdatedInterval) {
-        clearInterval(liveUpdatedInterval);
-        liveUpdatedInterval = null;
-    }
-
-    function render() {
-        const now = Date.now();
-        const diffMs = now - timestamp.getTime();
-        const diffSec = Math.floor(diffMs / 1000);
-        const diffMin = Math.floor(diffSec / 60);
-        const diffHours = Math.floor(diffMin / 60);
-        const diffDays = Math.floor(diffHours / 24);
-
-        let text;
-        if (diffSec < 5) {
-            text = "Opdateret lige nu";
-        } else if (diffSec < 60) {
-            text = `Opdateret for ${diffSec} sek. siden`;
-        } else if (diffMin < 60) {
-            text = `Opdateret for ${diffMin} min. siden`;
-        } else if (diffHours < 24) {
-            text = `Opdateret for ${diffHours} timer siden`;
-        } else {
-            text = `Opdateret for ${diffDays} dage siden`;
-        }
-
-        element.textContent = text;
-    }
-
-    render();
-    liveUpdatedInterval = setInterval(render, 1000);
-}
-
-function formatDateTime(isoString) {
-    if (!isoString) return "";
-    const d = new Date(isoString);
-    if (Number.isNaN(d.getTime())) return isoString;
-    return d.toLocaleString("da-DK");
-}
-
-async function loadAllTicketsFromBackend() {
-    try {
-        const departments = await getDepartments();
-        if (!Array.isArray(departments) || departments.length === 0) {
-            console.warn("Ingen departments fundet");
-            return [];
-        }
-
-        const ids = departments
-            .map(d => d.departmentID ?? d.id)
-            .filter(id => id != null);
-
-        const results = await Promise.all(
-            ids.map(async id => {
-                try {
-                    const data = await getTicketsForDepartment(id);
-
-                    if (Array.isArray(data)) {
-                        return data;
-                    } else if (data && Array.isArray(data.tickets)) {
-                        return data.tickets;
-                    }
-
-                    console.warn("Ukendt dataformat fra getTicketsForDepartment:", id, data);
-                    return [];
-                } catch (e) {
-                    console.warn("Kunne ikke hente tickets for department", id, e);
-                    return [];
-                }
-            })
-        );
-
-        return results.flat();
-
-    } catch (e) {
-        console.error("Fejl ved hentning af alle tickets:", e);
-        return [];
-    }
-}
-
-function buildDailyAccuracySeries(tickets) {
-    const map = new Map();
-
-    for (const t of tickets) {
-        const created = t.createdAt ?? t.created_at ?? t.timestamp;
-        if (!created) continue;
-
-        const d = new Date(created);
-        if (Number.isNaN(d.getTime())) continue;
-
-        const key = d.toISOString().slice(0, 10);
-
-        let entry = map.get(key);
-        if (!entry) {
-            entry = { date: key, success: 0, total: 0 };
-            map.set(key, entry);
-        }
-
-        entry.total++;
-
-        const status = (t.status ?? t.routingStatus ?? "").toUpperCase();
-        if (status === "SUCCESS") {
-            entry.success++;
-        }
-    }
-
-    const series = Array.from(map.values())
-        .sort((a, b) => a.date.localeCompare(b.date));
-
-    return series.map(e => {
-        const dateObj = new Date(e.date);
-        return {
-            date: e.date,
-            label: dateObj.toLocaleDateString("da-DK", {
-                day: "2-digit",
-                month: "2-digit"
-            }),
-            accuracy: e.total > 0 ? (e.success / e.total) * 100 : 0
-        };
-    });
-}
-
-function buildAccuracyPrediction(dailySeries, horizonDays = 7) {
-    if (!dailySeries || dailySeries.length === 0) return [];
-
-    if (dailySeries.length === 1) {
-        const last = dailySeries[0];
-        const baseDate = new Date(last.date);
-        const result = [];
-
-        for (let i = 1; i <= horizonDays; i++) {
-            const d = new Date(baseDate);
-            d.setDate(d.getDate() + i);
-
-            result.push({
-                date: d.toISOString().slice(0, 10),
-                label: d.toLocaleDateString("da-DK", {
-                    day: "2-digit",
-                    month: "2-digit"
-                }),
-                accuracy: last.accuracy
-            });
-        }
-        return result;
-    }
-
-    const first = dailySeries[0];
-    const last = dailySeries[dailySeries.length - 1];
-    const n = dailySeries.length;
-
-    const slope = (last.accuracy - first.accuracy) / (n - 1);
-    const baseDate = new Date(last.date);
-    const result = [];
-
-    for (let i = 1; i <= horizonDays; i++) {
-        const d = new Date(baseDate);
-        d.setDate(d.getDate() + i);
-
-        let acc = last.accuracy + slope * i;
-        if (acc > 100) acc = 100;
-        if (acc < 0) acc = 0;
-
-        result.push({
-            date: d.toISOString().slice(0, 10),
-            label: d.toLocaleDateString("da-DK", {
-                day: "2-digit",
-                month: "2-digit"
-            }),
-            accuracy: acc
-        });
-    }
-
-    return result;
-}
-
-function renderTicketList(status, label) {
-    const container = document.getElementById("ticketList");
-    if (!container) return;
-
-    if (!Array.isArray(allTickets) || allTickets.length === 0) {
-        container.innerHTML = `
-            <div style="font-size:0.85rem;color:#6b7280;">
-                Ingen ticket-data tilgængelig fra backend endnu.
-            </div>
-        `;
-        return;
-    }
-
-    const upperStatus = status.toUpperCase();
-
-    const filtered = allTickets.filter(t => {
-        const s = (t.status ?? t.routingStatus ?? "").toUpperCase();
-        return s === upperStatus;
-    });
-
-    if (filtered.length === 0) {
-        container.innerHTML = `
-            <div style="font-size:0.85rem;color:#6b7280;">
-                Ingen tickets fundet for: <strong>${label}</strong>.
-            </div>
-        `;
-        return;
-    }
-
-    const rows = filtered.slice(0, 50).map(t => {
-        const id =
-            t.metricsDepartmentID ??
-            t.id ??
-            t.ticketId ??
-            t.ticketNumber ??
-            "Ukendt ID";
-
-        const subject = t.subject ?? t.title ?? "(ingen subject)";
-        const created = t.createdAt ?? t.created_at ?? t.date;
-        const createdText = created ? formatDateTime(created) : "-";
-
-        const deptName =
-            (t.department && t.department.departmentName) ??
-            t.departmentName ??
-            "";
-
-        const statusVal = t.status ?? t.routingStatus ?? "";
-
-        return `
-            <tr>
-                <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${id}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${subject}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${createdText}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${deptName}</td> 
-                <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${statusVal}</td>
-            </tr>
-        `;
-    }).join("");
-
-    container.innerHTML = `
-        <div style="margin-bottom:6px;">
-            <div class="stat-label" style="margin-bottom:4px;">Tickets – ${label}</div>
-            <div style="font-size:0.8rem;color:#6b7280;">
-                Viser ${filtered.length > 50 ? "de første 50 af " : ""}${filtered.length} tickets.
-            </div>
-        </div>
-        <div style="overflow:auto;max-height:260px;border:1px solid #e5e7eb;border-radius:6px;">
-            <table style="border-collapse:collapse;width:100%;font-size:0.8rem;">
-                <thead style="background:#f9fafb;position:sticky;top:0;z-index:1;">
-                    <tr>
-                        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Ticket ID</th>
-                        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Subject</th>
-                        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Oprettet</th>
-                        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Department</th>
-                        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rows}
-                </tbody>
-            </table>
-        </div>
-    `;
-}
+/* ================= HOVED-FUNKTION: loadStats ================= */
 
 async function loadStats() {
     const output = document.getElementById("output");
@@ -496,7 +122,8 @@ async function loadStats() {
             scopeLabel = "Alle departments";
         }
 
-        allTickets = tickets || [];
+        // <--- her brugte du før allTickets = tickets || [];
+        setAllTickets(tickets || []);
 
         const total = stats.totalTickets ?? 0;
         const success = stats.successCount ?? 0;
@@ -893,70 +520,11 @@ async function loadStats() {
     }
 }
 
-/* ===== SETTINGS/TANDHJUL – bruger nu theme + logout ===== */
-function setupSettingsMenu() {
-    const btn = document.getElementById("settingsButton");
-    const dropdown = document.getElementById("settingsDropdown");
-
-    if (!btn || !dropdown) return;
-
-    function openMenu() {
-        dropdown.classList.add("settings-dropdown-open");
-        btn.setAttribute("aria-expanded", "true");
-    }
-
-    function closeMenu() {
-        dropdown.classList.remove("settings-dropdown-open");
-        btn.setAttribute("aria-expanded", "false");
-    }
-
-    function toggleMenu() {
-        const isOpen = dropdown.classList.contains("settings-dropdown-open");
-        if (isOpen) {
-            closeMenu();
-        } else {
-            openMenu();
-        }
-    }
-
-    btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        toggleMenu();
-    });
-
-    dropdown.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const item = e.target.closest(".settings-item");
-        if (!item) return;
-
-        const action = item.dataset.setting;
-
-        switch (action) {
-            case "refresh":
-                window.location.reload();
-                break;
-            case "theme":
-                toggleTheme();
-                break;
-            case "logout":
-                handleLogout();
-                break;
-            default:
-                break;
-        }
-
-        closeMenu();
-    });
-
-    document.addEventListener("click", () => {
-        closeMenu();
-    });
-}
-
 /* ===== INIT ===== */
+
 window.addEventListener("DOMContentLoaded", () => {
-    // Tema først – så siden tegnes i rigtig mode
     initTheme();
+    setupSettingsMenu();
 
     const backBtn = document.getElementById("backToDepartments");
     const ticketSection = document.getElementById("departmentTicketListSection");
@@ -979,6 +547,5 @@ window.addEventListener("DOMContentLoaded", () => {
         ticketSection.style.display = isDepartmentView ? "block" : "none";
     }
 
-    setupSettingsMenu();
     loadStats();
 });
