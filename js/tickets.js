@@ -1,4 +1,15 @@
 import { getDepartmentTicketList, markTicketAsMisrouted } from "./api.js";
+import { SELECTED_DEPARTMENT_ID } from "./config.js";
+
+const PAGE_SIZE = 10;
+let allTickets = [];
+let filters = {
+    search: "",
+    status: "",
+    routing: "",
+};
+let currentPage = 1;
+let currentView = "table";
 
 function formatDate(iso) {
     if (!iso) return "";
@@ -11,19 +22,20 @@ export async function loadTicketList(departmentId) {
     const container = document.getElementById("ticket-list");
     if (!container) return;
 
-    if (!departmentId) {
-        container.innerHTML = "<p>Ingen department valgt.</p>";
+    const activeDepartment = departmentId ?? SELECTED_DEPARTMENT_ID;
+    if (!activeDepartment) {
+        container.innerHTML = "";
         return;
     }
 
     container.innerHTML = `
         <div style="padding:10px 0;font-size:0.9rem;color:#6b7280;">
-            Indlæser tickets for department #${departmentId}...
+            Indlæser tickets for department #${activeDepartment}...
         </div>
     `;
 
     try {
-        const data = await getDepartmentTicketList(departmentId);
+        const data = await getDepartmentTicketList(activeDepartment);
 
         let tickets;
         if (Array.isArray(data)) {
@@ -34,6 +46,11 @@ export async function loadTicketList(departmentId) {
             tickets = [];
         }
 
+        allTickets = tickets;
+        filters = { search: "", status: "", routing: "" };
+        currentView = currentView || "table";
+        currentPage = 1;
+
         if (!tickets.length) {
             container.innerHTML = `
                 <div style="padding:12px 0;font-size:0.9rem;color:#6b7280;">
@@ -43,7 +60,7 @@ export async function loadTicketList(departmentId) {
             return;
         }
 
-        renderTicketList(container, tickets);
+        renderTicketList(container);
     } catch (e) {
         console.error("Fejl ved hentning af tickets:", e);
         container.innerHTML = `
@@ -55,43 +72,242 @@ export async function loadTicketList(departmentId) {
     }
 }
 
-function renderTicketList(container, tickets) {
-    const html = tickets
+function buildFilterBar(statuses) {
+    return `
+        <div class="ticket-controls">
+            <div class="ticket-filters">
+                <input
+                    type="search"
+                    class="ticket-filter-input"
+                    id="ticketSearchInput"
+                    placeholder="Søg efter ticket eller subject..."
+                    value="${filters.search}"
+                />
+                <select class="ticket-filter-select" id="ticketStatusFilter">
+                    <option value="">Alle statusser</option>
+                    ${statuses
+                        .map(status => {
+                            const active = filters.status === status ? "selected" : "";
+                            return `<option value="${status}" ${active}>${status}</option>`;
+                        })
+                        .join("")}
+                </select>
+                <select class="ticket-filter-select" id="ticketRoutingFilter">
+                    <option value="">Alle routingtyper</option>
+                    <option value="correct" ${filters.routing === "correct" ? "selected" : ""}>Korrekt routing</option>
+                    <option value="incorrect" ${filters.routing === "incorrect" ? "selected" : ""}>Forkert routing</option>
+                </select>
+            </div>
+            <div class="ticket-view-toggle">
+                <button class="view-toggle-btn ${currentView === "table" ? "active" : ""}" data-view="table">Tabel</button>
+                <button class="view-toggle-btn ${currentView === "card" ? "active" : ""}" data-view="card">Kort</button>
+            </div>
+        </div>
+    `;
+}
+
+function renderTableRows(tickets) {
+    return `
+        <table class="ticket-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Status</th>
+                    <th>Subject</th>
+                    <th>Dato</th>
+                    <th class="ticket-table-actions">Handling</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tickets
+                    .map(t => {
+                        const isFailure = t.status === "FAILURE";
+                        return `
+                            <tr class="ticket-table-row" data-ticket-id="${t.id}">
+                                <td class="ticket-id">#${t.id}</td>
+                                <td><span class="ticket-status ${isFailure ? "status-failure" : "status-success"}">${t.status}</span></td>
+                                <td>${t.subject}</td>
+                                <td>${formatDate(t.date)}</td>
+                                <td class="ticket-table-actions">
+                                    <button
+                                        class="ticket-flag-button"
+                                        data-ticket-id="${t.id}"
+                                        ${isFailure ? "disabled" : ""}
+                                    >
+                                        ${isFailure ? "Markeret som forkert" : "Marker som forkert routing"}
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    })
+                    .join("")}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderCardRows(tickets) {
+    return tickets
         .map(t => {
-            const id =
-                t.metricsDepartmentID ??
-                t.id ??
-                t.ticketId ??
-                t.ticketNumber ??
-                "Ukendt";
-
-            const status = (t.status ?? t.routingStatus ?? "").toUpperCase() || "-";
-            const subject = t.subject ?? t.title ?? "(ingen subject)";
-            const date = t.createdAt ?? t.created_at ?? t.date;
-            const isFailure = status === "FAILURE";
-
+            const isFailure = t.status === "FAILURE";
             return `
-                <div class="ticket-card" data-ticket-id="${id}">
+                <div class="ticket-card" data-ticket-id="${t.id}">
                     <div class="ticket-card-header">
-                        <h3>Ticket #${id}</h3>
+                        <h3>Ticket #${t.id}</h3>
                         <button
                             class="ticket-flag-button"
-                            data-ticket-id="${id}"
+                            data-ticket-id="${t.id}"
                             ${isFailure ? "disabled" : ""}
                         >
                             ${isFailure ? "Markeret som forkert" : "Marker som forkert routing"}
                         </button>
                     </div>
-                    <p><strong>Status:</strong> ${status}</p>
-                    <p><strong>Subject:</strong> ${subject}</p>
-                    <p><strong>Date:</strong> ${formatDate(date)}</p>
+                    <p><strong>Status:</strong> ${t.status}</p>
+                    <p><strong>Subject:</strong> ${t.subject}</p>
+                    <p><strong>Date:</strong> ${formatDate(t.date)}</p>
                 </div>
             `;
         })
         .join('<hr class="ticket-divider">');
+}
 
-    container.innerHTML = html;
+function normalizeTicket(ticket) {
+    return {
+        raw: ticket,
+        id:
+            ticket.metricsDepartmentID ??
+            ticket.id ??
+            ticket.ticketId ??
+            ticket.ticketNumber ??
+            "Ukendt",
+        status: (ticket.status ?? ticket.routingStatus ?? "").toUpperCase() || "-",
+        subject: ticket.subject ?? ticket.title ?? "(ingen subject)",
+        date: ticket.createdAt ?? ticket.created_at ?? ticket.date
+    };
+}
 
+function getNormalizedTickets() {
+    return allTickets.map(normalizeTicket);
+}
+
+function filterTickets() {
+    const term = filters.search.trim().toLowerCase();
+
+    return getNormalizedTickets().filter(t => {
+        const matchesSearch = term
+            ? `${t.id}`.toLowerCase().includes(term) || t.subject.toLowerCase().includes(term)
+            : true;
+
+        const matchesStatus = filters.status
+            ? t.status === filters.status
+            : true;
+
+        const isMisrouted = t.status === "FAILURE";
+        const matchesRouting = filters.routing === "correct"
+            ? !isMisrouted
+            : filters.routing === "incorrect"
+                ? isMisrouted
+                : true;
+
+        return matchesSearch && matchesStatus && matchesRouting;
+    });
+}
+
+function paginate(tickets) {
+    const totalPages = Math.max(1, Math.ceil(tickets.length / PAGE_SIZE));
+    currentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+
+    return {
+        totalPages,
+        pageTickets: tickets.slice(start, end)
+    };
+}
+
+function renderTicketList(container) {
+    const normalizedTickets = getNormalizedTickets();
+    const filteredTickets = filterTickets();
+    const uniqueStatuses = Array.from(
+        new Set(normalizedTickets.map(t => t.status))
+    ).filter(Boolean);
+
+    const { totalPages, pageTickets } = paginate(filteredTickets);
+
+    const resultsHtml = currentView === "table"
+        ? renderTableRows(pageTickets)
+        : renderCardRows(pageTickets);
+
+    container.innerHTML = `
+        ${buildFilterBar(uniqueStatuses)}
+        <div id="ticket-results">${resultsHtml}</div>
+        <div class="ticket-pagination">
+            <button class="pagination-btn" data-direction="prev" ${currentPage === 1 ? "disabled" : ""}>Forrige</button>
+            <span class="pagination-info">Side ${currentPage} af ${totalPages}</span>
+            <button class="pagination-btn" data-direction="next" ${currentPage >= totalPages ? "disabled" : ""}>Næste</button>
+        </div>
+    `;
+
+    wireUpInteractions(container, totalPages);
+    attachFlagButtonHandlers(container);
+}
+
+function wireUpInteractions(container, totalPages) {
+    const searchInput = container.querySelector("#ticketSearchInput");
+    const statusSelect = container.querySelector("#ticketStatusFilter");
+    const routingSelect = container.querySelector("#ticketRoutingFilter");
+    const paginationButtons = container.querySelectorAll(".pagination-btn");
+    const viewButtons = container.querySelectorAll(".view-toggle-btn");
+
+    if (searchInput) {
+        searchInput.addEventListener("input", event => {
+            filters.search = event.target.value;
+            currentPage = 1;
+            renderTicketList(container);
+        });
+    }
+
+    if (statusSelect) {
+        statusSelect.addEventListener("change", event => {
+            filters.status = event.target.value;
+            currentPage = 1;
+            renderTicketList(container);
+        });
+    }
+
+    if (routingSelect) {
+        routingSelect.addEventListener("change", event => {
+            filters.routing = event.target.value;
+            currentPage = 1;
+            renderTicketList(container);
+        });
+    }
+
+    paginationButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const dir = btn.dataset.direction;
+            if (dir === "prev" && currentPage > 1) {
+                currentPage -= 1;
+            } else if (dir === "next" && currentPage < totalPages) {
+                currentPage += 1;
+            }
+            renderTicketList(container);
+        });
+    });
+
+    viewButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const view = btn.dataset.view;
+            if (view && view !== currentView) {
+                currentView = view;
+                renderTicketList(container);
+            }
+        });
+    });
+}
+
+function attachFlagButtonHandlers(container) {
     const buttons = container.querySelectorAll(".ticket-flag-button");
     buttons.forEach(btn => {
         btn.addEventListener("click", async () => {
