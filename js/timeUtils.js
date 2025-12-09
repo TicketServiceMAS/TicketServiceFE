@@ -50,10 +50,8 @@ export function formatDateTime(isoString) {
 }
 
 /**
- * Version der matcher jeres oprindelige index.js:
- * - henter metrics/tickets pr. department
- * - returnerer en liste af objekter { departmentId, ...data }
- * - vi forsøger IKKE at flade om til rene tickets her
+ * Henter metrics/tickets pr. department og flader resultatet ud til rene tickets
+ * med department-id/-navn påført, så de kan bruges i grafer og tabeller.
  */
 export async function loadAllTicketsFromBackend() {
     try {
@@ -63,35 +61,63 @@ export async function loadAllTicketsFromBackend() {
             return [];
         }
 
+        const departmentNames = new Map(
+            departments
+                .map(d => [
+                    d.departmentID ?? d.id,
+                    d.departmentName ?? d.name ?? ""
+                ])
+                .filter(([id]) => id != null)
+        );
+
         const ids = departments
             .map(d => d.departmentID ?? d.id)
             .filter(id => id != null);
 
-        const results = await Promise.all(
+        const allTickets = [];
+
+        await Promise.all(
             ids.map(async id => {
                 try {
                     const data = await getTicketsForDepartment(id);
 
-                    // Acceptér hvad end backend sender, så længe det er et objekt/array.
-                    if (data && typeof data === "object") {
-                        return {
-                            departmentId: id,
-                            ...data
-                        };
+                    const parsedTickets = parseTicketPayload(data);
+                    if (!parsedTickets.length) {
+                        console.warn(
+                            "Tomt svar fra getTicketsForDepartment:",
+                            id,
+                            data
+                        );
+                        return;
                     }
 
-                    // Hvis data er null/undefined, spring det over.
-                    console.warn("Tomt svar fra getTicketsForDepartment:", id, data);
-                    return null;
+                    for (const ticket of parsedTickets) {
+                        if (!ticket || typeof ticket !== "object") continue;
+
+                        const enriched = { ...ticket };
+
+                        // Sørg for at vi kan spore department på hver ticket
+                        if (
+                            enriched.metricsDepartmentID == null &&
+                            enriched.departmentID == null &&
+                            enriched.departmentId == null
+                        ) {
+                            enriched.metricsDepartmentID = id;
+                        }
+
+                        if (!enriched.departmentName && departmentNames.has(id)) {
+                            enriched.departmentName = departmentNames.get(id);
+                        }
+
+                        allTickets.push(enriched);
+                    }
                 } catch (e) {
                     console.warn("Kunne ikke hente tickets for department", id, e);
-                    return null;
                 }
             })
         );
 
-        // fjern nulls
-        return results.filter(Boolean);
+        return allTickets;
 
     } catch (e) {
         console.error("Fejl ved hentning af alle tickets:", e);
@@ -99,25 +125,27 @@ export async function loadAllTicketsFromBackend() {
     }
 }
 
-/**
- * (EKSTRA) Alternativ helper der flader alt ud til rene tickets.
- * Bruger vi ikke lige nu, men den ligger her hvis backend senere
- * returnerer arrays med tickets i en `tickets`-property.
- */
-export async function loadAllTicketsFlattened() {
-    const perDepartment = await loadAllTicketsFromBackend();
-    const flattened = [];
+function parseTicketPayload(payload) {
+    if (!payload) return [];
 
-    for (const dep of perDepartment) {
-        if (!dep) continue;
-
-        // hvis backend har en tickets-liste
-        if (Array.isArray(dep.tickets)) {
-            for (const t of dep.tickets) {
-                flattened.push(t);
-            }
-        }
+    if (Array.isArray(payload)) {
+        return payload;
     }
 
-    return flattened;
+    if (Array.isArray(payload.tickets)) {
+        return payload.tickets;
+    }
+
+    if (Array.isArray(payload.ticketList)) {
+        return payload.ticketList;
+    }
+
+    return [];
+}
+
+/**
+ * (EKSTRA) Alternativ helper der returnerer samme resultat som ovenfor.
+ */
+export async function loadAllTicketsFlattened() {
+    return loadAllTicketsFromBackend();
 }
