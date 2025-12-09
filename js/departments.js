@@ -116,6 +116,11 @@ function renderDepartments() {
             const name = dep.departmentName ?? "Ukendt department";
             const mail = dep.mailAddress || "Ingen mail";
 
+            const accuracy = dep.accuracy ?? 0;
+            const totalTickets = dep.totalTickets ?? 0;
+            const accuracyClass =
+                accuracy >= 90 ? "accuracy-good" : accuracy >= 70 ? "accuracy-ok" : "accuracy-bad";
+
             return `
                 <div
                     class="department-item"
@@ -127,6 +132,12 @@ function renderDepartments() {
                     <div class="department-main">
                         <div class="department-title">${name}</div>
                         <div class="department-subtitle">Mail: ${mail}</div>
+                        <div class="department-metrics">
+                            <span class="accuracy-badge ${accuracyClass}">
+                                ${accuracy.toFixed(1)}% accuracy
+                            </span>
+                            <span class="volume-pill">${totalTickets} tickets</span>
+                        </div>
                     </div>
 
                     <div class="department-meta">
@@ -232,6 +243,7 @@ async function loadDepartments(showSkeleton = false) {
             (departments || []).map(async (dep) => {
                 const id = dep.departmentID ?? dep.id;
                 let accuracy = 0;
+                let totalTickets = 0;
 
                 try {
                     const stats = await getRoutingStatsForDepartment(id);
@@ -242,6 +254,7 @@ async function loadDepartments(showSkeleton = false) {
                             ? stats.accuracy * 100
                             : (total > 0 ? (success / total) * 100 : 0);
                     accuracy = accPct;
+                    totalTickets = total;
                 } catch (err) {
                     console.warn("Kunne ikke hente stats for department", id, err);
                 }
@@ -249,6 +262,7 @@ async function loadDepartments(showSkeleton = false) {
                 return {
                     ...dep,
                     accuracy,
+                    totalTickets,
                 };
             })
         );

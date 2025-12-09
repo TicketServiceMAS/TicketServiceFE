@@ -260,6 +260,15 @@ textarea:focus-visible {
     font-size: 0.85rem;
 }
 
+.hero-next-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
 .hero-updated-label {
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -650,6 +659,9 @@ textarea:focus-visible {
     font-size: 0.82rem;
     cursor: pointer;
     transition: background 0.12s ease-out, border-color 0.12s ease-out, transform 0.05s ease-out;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .ticket-chip:hover {
@@ -662,6 +674,18 @@ textarea:focus-visible {
     background: rgba(95,37,158,0.08);
     color: #4b1c82;
     box-shadow: 0 6px 12px rgba(95,37,158,0.15);
+}
+
+.ticket-chip-count {
+    min-width: 22px;
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid var(--border);
 }
 
 .ticket-filter-input,
@@ -1021,7 +1045,7 @@ textarea:focus-visible {
     padding: 6px 12px 4px;
 }
 
-.settings-item {
+.settings-item { 
     width: 100%;
     padding: 7px 12px;
     background: transparent;
@@ -1037,6 +1061,31 @@ textarea:focus-visible {
 
 .settings-item:hover {
     background: #f3f4f6;
+}
+
+.settings-item-inline {
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.settings-item-static {
+    cursor: default;
+}
+
+.settings-select {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-size: 0.85rem;
+    background: #f9fafb;
+    min-width: 150px;
+    color: #0f172a;
+}
+
+.settings-select:focus-visible {
+    outline: 3px solid #ede9fe;
+    border-color: var(--accent);
 }
 
 .settings-item-toggle {

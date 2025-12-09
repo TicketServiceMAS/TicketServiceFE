@@ -444,6 +444,70 @@ textarea:focus-visible,
     flex: 1;
 }
 
+.department-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    align-items: center;
+}
+
+.accuracy-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.accuracy-badge::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.accuracy-good {
+    background: #ecfdf3;
+    color: #15803d;
+    border-color: rgba(21, 128, 61, 0.35);
+}
+
+.accuracy-ok {
+    background: #fff7ed;
+    color: #c2410c;
+    border-color: rgba(194, 65, 12, 0.35);
+}
+
+.accuracy-bad {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: rgba(185, 28, 28, 0.35);
+}
+
+.volume-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid var(--border);
+}
+
+.volume-pill::before {
+    content: "🗂";
+    font-size: 0.82rem;
+}
+
 .department-title {
     font-size: 1rem;
     font-weight: 500;
@@ -644,6 +708,31 @@ textarea:focus-visible,
 
 .settings-item:hover {
     background: #f3f4f6;
+}
+
+.settings-item-inline {
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.settings-item-static {
+    cursor: default;
+}
+
+.settings-select {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-size: 0.85rem;
+    background: #f9fafb;
+    min-width: 150px;
+    color: #0f172a;
+}
+
+.settings-select:focus-visible {
+    outline: 3px solid #ede9fe;
+    border-color: var(--accent);
 }
 
 .settings-item-toggle {

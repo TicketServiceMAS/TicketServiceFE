@@ -35,8 +35,15 @@ import {
 
 let chartInstance = null;
 let predictionChartInstance = null;
-let autoRefreshInterval = null;
+let autoRefreshTimer = null;
+let nextRefreshLabelTimer = null;
+let nextRefreshTimestamp = null;
 let isAutoRefreshing = false;
+let autoRefreshEnabled = true;
+let autoRefreshIntervalMs = 60_000;
+
+const AUTO_REFRESH_ENABLED_KEY = "autoRefreshEnabled";
+const AUTO_REFRESH_INTERVAL_KEY = "autoRefreshIntervalMs";
 
 function setLiveStatus(message, isBusy = false) {
     const liveRegion = document.getElementById("liveStatus");
@@ -61,6 +68,78 @@ function toggleLoadingOverlay(isVisible) {
         const currentMessage = liveRegion?.textContent || "Data er opdateret";
         setLiveStatus(currentMessage, false);
     }
+}
+
+function loadAutoRefreshPreferences() {
+    try {
+        const savedEnabled = window.localStorage.getItem(AUTO_REFRESH_ENABLED_KEY);
+        const savedInterval = parseInt(window.localStorage.getItem(AUTO_REFRESH_INTERVAL_KEY), 10);
+
+        autoRefreshEnabled = savedEnabled === null ? true : savedEnabled === "true";
+        if (!Number.isNaN(savedInterval) && savedInterval > 0) {
+            autoRefreshIntervalMs = savedInterval;
+        }
+    } catch (err) {
+        console.warn("Kunne ikke læse auto-refresh indstillinger", err);
+    }
+}
+
+function persistAutoRefreshPreferences() {
+    try {
+        window.localStorage.setItem(AUTO_REFRESH_ENABLED_KEY, String(autoRefreshEnabled));
+        window.localStorage.setItem(AUTO_REFRESH_INTERVAL_KEY, String(autoRefreshIntervalMs));
+    } catch (err) {
+        console.warn("Kunne ikke gemme auto-refresh indstillinger", err);
+    }
+}
+
+function syncAutoRefreshUI() {
+    const toggle = document.getElementById("autoRefreshToggleInput");
+    if (toggle) {
+        toggle.checked = autoRefreshEnabled;
+    }
+
+    const select = document.getElementById("autoRefreshIntervalSelect");
+    if (select) {
+        select.value = String(autoRefreshIntervalMs);
+    }
+
+    const statusLabel = document.getElementById("autoRefreshStatusLabel");
+    if (statusLabel) {
+        const seconds = Math.round(autoRefreshIntervalMs / 1000);
+        statusLabel.textContent = autoRefreshEnabled
+            ? `Aktiveret (${seconds}s)`
+            : "Slået fra";
+    }
+}
+
+function updateNextRefreshLabel() {
+    const heroLabel = document.getElementById("nextRefreshLabel");
+    const dropdownLabel = document.getElementById("autoRefreshNextLabel");
+
+    if (!autoRefreshEnabled) {
+        if (heroLabel) heroLabel.textContent = "Auto-refresh er slået fra";
+        if (dropdownLabel) dropdownLabel.textContent = "Auto-refresh er slået fra";
+        return;
+    }
+
+    if (!nextRefreshTimestamp) {
+        if (heroLabel) heroLabel.textContent = "Planlægges...";
+        if (dropdownLabel) dropdownLabel.textContent = "Planlægges...";
+        return;
+    }
+
+    const diffMs = Math.max(0, nextRefreshTimestamp - Date.now());
+    const diffSec = Math.ceil(diffMs / 1000);
+    const timeText = new Date(nextRefreshTimestamp).toLocaleTimeString("da-DK", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+    });
+
+    const text = `Om ${diffSec}s (kl. ${timeText})`;
+    if (heroLabel) heroLabel.textContent = text;
+    if (dropdownLabel) dropdownLabel.textContent = text;
 }
 
 function renderStatusStrip({ accuracyPercent, totalTickets, incorrect, defaulted }) {
@@ -610,44 +689,94 @@ async function handleManualRefresh() {
         if (isDepartmentView) {
             await loadTicketList(SELECTED_DEPARTMENT_ID);
         }
+
+        scheduleAutoRefresh();
     } finally {
         toggleLoadingOverlay(false);
     }
 }
 
-function startAutoRefresh() {
+async function performAutoRefresh() {
+    if (isAutoRefreshing || !autoRefreshEnabled) return;
+
     const isDepartmentView =
         SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
 
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
+    isAutoRefreshing = true;
+
+    try {
+        await loadStats({ skipOverlay: true });
+
+        if (isDepartmentView) {
+            await loadTicketList(SELECTED_DEPARTMENT_ID);
+        }
+    } catch (error) {
+        console.error("Automatisk opdatering fejlede", error);
+    } finally {
+        isAutoRefreshing = false;
+    }
+}
+
+function scheduleAutoRefresh() {
+    if (autoRefreshTimer) {
+        clearTimeout(autoRefreshTimer);
+    }
+    if (nextRefreshLabelTimer) {
+        clearInterval(nextRefreshLabelTimer);
     }
 
-    const performAutoRefresh = async () => {
-        if (isAutoRefreshing) return;
+    if (!autoRefreshEnabled) {
+        nextRefreshTimestamp = null;
+        updateNextRefreshLabel();
+        return;
+    }
 
-        isAutoRefreshing = true;
+    const interval = autoRefreshIntervalMs || 60_000;
+    nextRefreshTimestamp = Date.now() + interval;
+    updateNextRefreshLabel();
 
-        try {
-            await loadStats({ skipOverlay: true });
+    nextRefreshLabelTimer = setInterval(updateNextRefreshLabel, 1000);
 
-            if (isDepartmentView) {
-                await loadTicketList(SELECTED_DEPARTMENT_ID);
+    autoRefreshTimer = setTimeout(async () => {
+        await performAutoRefresh();
+        scheduleAutoRefresh();
+    }, interval);
+}
+
+function setupAutoRefreshControls() {
+    loadAutoRefreshPreferences();
+    syncAutoRefreshUI();
+    updateNextRefreshLabel();
+
+    const toggle = document.getElementById("autoRefreshToggleInput");
+    if (toggle) {
+        toggle.addEventListener("change", () => {
+            autoRefreshEnabled = toggle.checked;
+            persistAutoRefreshPreferences();
+            syncAutoRefreshUI();
+            scheduleAutoRefresh();
+        });
+    }
+
+    const select = document.getElementById("autoRefreshIntervalSelect");
+    if (select) {
+        select.addEventListener("change", () => {
+            const parsed = parseInt(select.value, 10);
+            if (!Number.isNaN(parsed) && parsed > 0) {
+                autoRefreshIntervalMs = parsed;
+                persistAutoRefreshPreferences();
+                syncAutoRefreshUI();
+                scheduleAutoRefresh();
             }
-        } catch (error) {
-            console.error("Automatisk opdatering fejlede", error);
-        } finally {
-            isAutoRefreshing = false;
-        }
-    };
-
-    autoRefreshInterval = setInterval(performAutoRefresh, 60_000);
+        });
+    }
 }
 
 /* ===== INIT ===== */
 
 window.addEventListener("DOMContentLoaded", () => {
     initTheme();
+    setupAutoRefreshControls();
     setupSettingsMenu({ onRefresh: handleManualRefresh });
 
     const backBtn = document.getElementById("backToDepartments");
@@ -685,6 +814,6 @@ window.addEventListener("DOMContentLoaded", () => {
         refreshNowButton.addEventListener("click", handleManualRefresh);
     }
 
-    startAutoRefresh();
+    scheduleAutoRefresh();
     loadStats();
 });
