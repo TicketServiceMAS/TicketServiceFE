@@ -53,9 +53,11 @@ export function handleLogout() {
 
 /* ================= SETTINGS-MENU (tandhjul) ================= */
 
-export function setupSettingsMenu() {
+export function setupSettingsMenu(options = {}) {
     const btn = document.getElementById("settingsButton");
     const dropdown = document.getElementById("settingsDropdown");
+
+    const { onRefresh } = options;
 
     if (!btn || !dropdown) return;
 
@@ -92,7 +94,11 @@ export function setupSettingsMenu() {
 
         switch (action) {
             case "refresh":
-                window.location.reload();
+                if (typeof onRefresh === "function") {
+                    onRefresh();
+                } else {
+                    window.location.reload();
+                }
                 break;
             case "theme":
                 toggleTheme();

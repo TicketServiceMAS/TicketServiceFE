@@ -233,6 +233,17 @@ body {
 
 .hero-updated {
     color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.hero-updated-label {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.7rem;
+    color: #475467;
 }
 
 /* Tilbage-knap (department view) */
@@ -450,6 +461,21 @@ body {
     border: 2px solid #e5e7eb;
     border-top-color: var(--accent);
     animation: spin 0.7s linear infinite;
+}
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.72);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    backdrop-filter: blur(2px);
+}
+
+.loading-overlay.active {
+    display: flex;
 }
 
 @keyframes spin {
