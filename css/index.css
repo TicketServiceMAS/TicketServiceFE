@@ -769,3 +769,21 @@ body[data-theme="dark"] .footer {
     background: #020617;
     border-top-color: #1e293b;
 }
+
+/* ---------- Side-fade mellem views (Dashboard / Departments) ---------- */
+
+body {
+    opacity: 0;
+    transform: translateY(3px);
+    transition: opacity 0.22s ease-out, transform 0.22s ease-out;
+}
+
+body.page-loaded {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+body.page-leaving {
+    opacity: 0;
+    transform: translateY(-3px);
+}
