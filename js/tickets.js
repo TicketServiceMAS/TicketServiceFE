@@ -7,6 +7,7 @@ let filters = {
     search: "",
     status: "",
     routing: "",
+    priority: "",
 };
 let currentPage = 1;
 let currentView = "table";
@@ -16,6 +17,13 @@ function formatDate(iso) {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
     return d.toLocaleDateString("da-DK");
+}
+
+function formatPriority(raw) {
+    if (!raw) return "Normal";
+    const str = String(raw).trim();
+    if (!str) return "Normal";
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 export async function loadTicketList(departmentId) {
@@ -47,7 +55,7 @@ export async function loadTicketList(departmentId) {
         }
 
         allTickets = tickets;
-        filters = { search: "", status: "", routing: "" };
+        filters = { search: "", status: "", routing: "", priority: "" };
         currentView = currentView || "table";
         currentPage = 1;
 
@@ -106,6 +114,58 @@ function buildFilterBar(statuses) {
     `;
 }
 
+function renderFilterChips(statuses, priorities) {
+    const statusContainer = document.getElementById("statusChipContainer");
+    const priorityContainer = document.getElementById("priorityChipContainer");
+    const chipRow = document.getElementById("ticketChipRow");
+
+    if (chipRow) {
+        chipRow.style.display = statuses.length ? "flex" : "none";
+    }
+
+    if (statusContainer) {
+        const statusOptions = ["", ...statuses];
+        statusContainer.innerHTML = statusOptions
+            .map(status => {
+                const label = status || "Alle";
+                const isActive = filters.status === status;
+                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="status" data-value="${status}">${label}</button>`;
+            })
+            .join("");
+    }
+
+    if (priorityContainer) {
+        const defaultPriorities = ["Høj", "Normal", "Lav"];
+        const uniquePriorities = Array.from(new Set(["", ...priorities, ...defaultPriorities]));
+        priorityContainer.innerHTML = uniquePriorities
+            .map(priority => {
+                const label = priority || "Alle";
+                const isActive = filters.priority.toLowerCase() === priority.toLowerCase();
+                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="priority" data-value="${priority}">${label}</button>`;
+            })
+            .join("");
+    }
+
+    const chipButtons = document.querySelectorAll("#ticketChipRow .ticket-chip");
+    chipButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const type = btn.getAttribute("data-type");
+            const value = btn.getAttribute("data-value") || "";
+
+            if (type === "status") {
+                filters.status = value;
+            }
+
+            if (type === "priority") {
+                filters.priority = value;
+            }
+
+            currentPage = 1;
+            renderTicketList(document.getElementById("ticket-list"));
+        });
+    });
+}
+
 function renderTableRows(tickets) {
     return `
         <table class="ticket-table">
@@ -113,6 +173,7 @@ function renderTableRows(tickets) {
                 <tr>
                     <th>ID</th>
                     <th>Status</th>
+                    <th>Prioritet</th>
                     <th>Subject</th>
                     <th>Dato</th>
                     <th class="ticket-table-actions">Handling</th>
@@ -126,6 +187,7 @@ function renderTableRows(tickets) {
                             <tr class="ticket-table-row" data-ticket-id="${t.id}">
                                 <td class="ticket-id">#${t.id}</td>
                                 <td><span class="ticket-status ${isFailure ? "status-failure" : "status-success"}">${t.status}</span></td>
+                                <td>${t.priority}</td>
                                 <td>${t.subject}</td>
                                 <td>${formatDate(t.date)}</td>
                                 <td class="ticket-table-actions">
@@ -163,6 +225,7 @@ function renderCardRows(tickets) {
                         </button>
                     </div>
                     <p><strong>Status:</strong> ${t.status}</p>
+                    <p><strong>Prioritet:</strong> ${t.priority}</p>
                     <p><strong>Subject:</strong> ${t.subject}</p>
                     <p><strong>Date:</strong> ${formatDate(t.date)}</p>
                 </div>
@@ -182,7 +245,8 @@ function normalizeTicket(ticket) {
             "Ukendt",
         status: (ticket.status ?? ticket.routingStatus ?? "").toUpperCase() || "-",
         subject: ticket.subject ?? ticket.title ?? "(ingen subject)",
-        date: ticket.createdAt ?? ticket.created_at ?? ticket.date
+        date: ticket.createdAt ?? ticket.created_at ?? ticket.date,
+        priority: formatPriority(ticket.priority || ticket.priorityLevel || ticket.severity || ticket.priority_name)
     };
 }
 
@@ -209,7 +273,11 @@ function filterTickets() {
                 ? isMisrouted
                 : true;
 
-        return matchesSearch && matchesStatus && matchesRouting;
+        const matchesPriority = filters.priority
+            ? (t.priority || "Normal").toLowerCase() === filters.priority.toLowerCase()
+            : true;
+
+        return matchesSearch && matchesStatus && matchesRouting && matchesPriority;
     });
 }
 
@@ -232,12 +300,17 @@ function renderTicketList(container) {
     const uniqueStatuses = Array.from(
         new Set(normalizedTickets.map(t => t.status))
     ).filter(Boolean);
+    const uniquePriorities = Array.from(
+        new Set(normalizedTickets.map(t => t.priority))
+    ).filter(Boolean);
 
     const { totalPages, pageTickets } = paginate(filteredTickets);
 
     const resultsHtml = currentView === "table"
         ? renderTableRows(pageTickets)
         : renderCardRows(pageTickets);
+
+    renderFilterChips(uniqueStatuses, uniquePriorities);
 
     container.innerHTML = `
         ${buildFilterBar(uniqueStatuses)}

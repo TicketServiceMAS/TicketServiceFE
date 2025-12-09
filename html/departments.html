@@ -65,9 +65,17 @@
 
                     <div id="settingsDropdown" class="settings-dropdown" aria-label="Settings menu">
                         <div class="settings-group-label">Indstillinger</div>
-                        <button class="settings-item" type="button" data-setting="theme">
-                            Skift tema
-                        </button>
+                        <div class="settings-item settings-item-toggle" data-setting="theme">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Tema</div>
+                                <div class="settings-item-sub" id="themeStatusLabel">Lyst tema</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="themeToggleInput" aria-label="Skift tema">
+                                <span class="slider"></span>
+                            </label>
+                            <div class="theme-preview" id="themePreview" aria-hidden="true"></div>
+                        </div>
                         <button class="settings-item" type="button" data-setting="refresh">
                             Opdater data
                         </button>
@@ -104,18 +112,23 @@
                     </div>
                 </div>
 
-                <div class="toolbar">
+                    <div class="toolbar">
 
-                    <!-- Search -->
-                    <div class="toolbar-search">
-                        <label class="visually-hidden" for="departmentSearch">Søg efter department</label>
-                        <input id="departmentSearch" type="text" placeholder="Søg efter department...">
-                    </div>
+                        <!-- Search -->
+                        <div class="toolbar-search">
+                            <label class="visually-hidden" for="departmentSearch">Søg efter department</label>
+                            <input id="departmentSearch" type="text" placeholder="Søg efter department...">
+                        </div>
 
-                    <!-- Filter chips -->
-                    <button class="toolbar-chip toolbar-chip-active" type="button">
-                        <span class="dot"></span> Alle
-                    </button>
+                        <div class="toolbar-result" aria-live="polite">
+                            <span class="result-badge" id="departmentResultBadge">0</span>
+                            <span class="result-label">matches</span>
+                        </div>
+
+                        <!-- Filter chips -->
+                        <button class="toolbar-chip toolbar-chip-active" type="button">
+                            <span class="dot"></span> Alle
+                        </button>
 
                     <button class="toolbar-chip" type="button">
                         <span class="dot"></span> Høj accuracy
