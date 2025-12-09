@@ -11,6 +11,9 @@ let filters = {
 };
 let currentPage = 1;
 let currentView = "table";
+let activeDepartmentKey = null;
+
+const FILTER_STORAGE_KEY = "departmentTicketFilters";
 
 function formatDate(iso) {
     if (!iso) return "";
@@ -26,11 +29,50 @@ function formatPriority(raw) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+function getStorageKey(departmentId) {
+    const id = departmentId ?? SELECTED_DEPARTMENT_ID;
+    return String(id ?? "all");
+}
+
+function loadSavedFilters(departmentId) {
+    try {
+        const raw = window.localStorage.getItem(FILTER_STORAGE_KEY);
+        if (!raw) return null;
+
+        const parsed = JSON.parse(raw);
+        const key = getStorageKey(departmentId);
+        return parsed?.[key] ?? null;
+    } catch (err) {
+        console.warn("Kunne ikke læse filter-tilstand", err);
+        return null;
+    }
+}
+
+function persistFilters() {
+    if (!activeDepartmentKey) return;
+
+    try {
+        const raw = window.localStorage.getItem(FILTER_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+
+        parsed[activeDepartmentKey] = {
+            filters,
+            currentView,
+            currentPage
+        };
+
+        window.localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(parsed));
+    } catch (err) {
+        console.warn("Kunne ikke gemme filter-tilstand", err);
+    }
+}
+
 export async function loadTicketList(departmentId) {
     const container = document.getElementById("ticket-list");
     if (!container) return;
 
     const activeDepartment = departmentId ?? SELECTED_DEPARTMENT_ID;
+    activeDepartmentKey = getStorageKey(activeDepartment);
     if (!activeDepartment) {
         container.innerHTML = "";
         return;
@@ -55,9 +97,10 @@ export async function loadTicketList(departmentId) {
         }
 
         allTickets = tickets;
-        filters = { search: "", status: "", routing: "", priority: "" };
-        currentView = currentView || "table";
-        currentPage = 1;
+        const savedFilters = loadSavedFilters(activeDepartment);
+        filters = savedFilters?.filters || { search: "", status: "", routing: "", priority: "" };
+        currentView = savedFilters?.currentView || currentView || "table";
+        currentPage = savedFilters?.currentPage || 1;
 
         if (!tickets.length) {
             container.innerHTML = `
@@ -114,7 +157,7 @@ function buildFilterBar(statuses) {
     `;
 }
 
-function renderFilterChips(statuses, priorities) {
+function renderFilterChips(statuses, priorities, statusCounts, priorityCounts) {
     const statusContainer = document.getElementById("statusChipContainer");
     const priorityContainer = document.getElementById("priorityChipContainer");
     const chipRow = document.getElementById("ticketChipRow");
@@ -129,7 +172,8 @@ function renderFilterChips(statuses, priorities) {
             .map(status => {
                 const label = status || "Alle";
                 const isActive = filters.status === status;
-                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="status" data-value="${status}">${label}</button>`;
+                const count = statusCounts[status || ""] ?? 0;
+                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="status" data-value="${status}">${label}<span class="ticket-chip-count">${count}</span></button>`;
             })
             .join("");
     }
@@ -141,7 +185,9 @@ function renderFilterChips(statuses, priorities) {
             .map(priority => {
                 const label = priority || "Alle";
                 const isActive = filters.priority.toLowerCase() === priority.toLowerCase();
-                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="priority" data-value="${priority}">${label}</button>`;
+                const countKey = priority || "Normal";
+                const count = priority ? (priorityCounts[countKey] ?? 0) : (priorityCounts[""] ?? 0);
+                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="priority" data-value="${priority}">${label}<span class="ticket-chip-count">${count}</span></button>`;
             })
             .join("");
     }
@@ -161,6 +207,7 @@ function renderFilterChips(statuses, priorities) {
             }
 
             currentPage = 1;
+            persistFilters();
             renderTicketList(document.getElementById("ticket-list"));
         });
     });
@@ -254,31 +301,57 @@ function getNormalizedTickets() {
     return allTickets.map(normalizeTicket);
 }
 
+function matchesFilters(ticket, overrides = {}) {
+    const { search, status, routing, priority } = { ...filters, ...overrides };
+    const term = search.trim().toLowerCase();
+
+    const matchesSearch = term
+        ? `${ticket.id}`.toLowerCase().includes(term) || ticket.subject.toLowerCase().includes(term)
+        : true;
+
+    const matchesStatus = status
+        ? ticket.status === status
+        : true;
+
+    const isMisrouted = ticket.status === "FAILURE";
+    const matchesRouting = routing === "correct"
+        ? !isMisrouted
+        : routing === "incorrect"
+            ? isMisrouted
+            : true;
+
+    const matchesPriority = priority
+        ? (ticket.priority || "Normal").toLowerCase() === priority.toLowerCase()
+        : true;
+
+    return matchesSearch && matchesStatus && matchesRouting && matchesPriority;
+}
+
 function filterTickets() {
-    const term = filters.search.trim().toLowerCase();
+    return getNormalizedTickets().filter(ticket => matchesFilters(ticket));
+}
 
-    return getNormalizedTickets().filter(t => {
-        const matchesSearch = term
-            ? `${t.id}`.toLowerCase().includes(term) || t.subject.toLowerCase().includes(term)
-            : true;
+function buildStatusCounts(tickets) {
+    const base = tickets.filter(t => matchesFilters(t, { status: "" }));
+    const counts = { "": base.length };
 
-        const matchesStatus = filters.status
-            ? t.status === filters.status
-            : true;
-
-        const isMisrouted = t.status === "FAILURE";
-        const matchesRouting = filters.routing === "correct"
-            ? !isMisrouted
-            : filters.routing === "incorrect"
-                ? isMisrouted
-                : true;
-
-        const matchesPriority = filters.priority
-            ? (t.priority || "Normal").toLowerCase() === filters.priority.toLowerCase()
-            : true;
-
-        return matchesSearch && matchesStatus && matchesRouting && matchesPriority;
+    base.forEach(t => {
+        counts[t.status] = (counts[t.status] || 0) + 1;
     });
+
+    return counts;
+}
+
+function buildPriorityCounts(tickets) {
+    const base = tickets.filter(t => matchesFilters(t, { priority: "" }));
+    const counts = { "": base.length };
+
+    base.forEach(t => {
+        const key = t.priority || "Normal";
+        counts[key] = (counts[key] || 0) + 1;
+    });
+
+    return counts;
 }
 
 function paginate(tickets) {
@@ -304,13 +377,16 @@ function renderTicketList(container) {
         new Set(normalizedTickets.map(t => t.priority))
     ).filter(Boolean);
 
+    const statusCounts = buildStatusCounts(normalizedTickets);
+    const priorityCounts = buildPriorityCounts(normalizedTickets);
+
     const { totalPages, pageTickets } = paginate(filteredTickets);
 
     const resultsHtml = currentView === "table"
         ? renderTableRows(pageTickets)
         : renderCardRows(pageTickets);
 
-    renderFilterChips(uniqueStatuses, uniquePriorities);
+    renderFilterChips(uniqueStatuses, uniquePriorities, statusCounts, priorityCounts);
 
     container.innerHTML = `
         ${buildFilterBar(uniqueStatuses)}
@@ -337,6 +413,7 @@ function wireUpInteractions(container, totalPages) {
         searchInput.addEventListener("input", event => {
             filters.search = event.target.value;
             currentPage = 1;
+            persistFilters();
             renderTicketList(container);
         });
     }
@@ -345,6 +422,7 @@ function wireUpInteractions(container, totalPages) {
         statusSelect.addEventListener("change", event => {
             filters.status = event.target.value;
             currentPage = 1;
+            persistFilters();
             renderTicketList(container);
         });
     }
@@ -353,6 +431,7 @@ function wireUpInteractions(container, totalPages) {
         routingSelect.addEventListener("change", event => {
             filters.routing = event.target.value;
             currentPage = 1;
+            persistFilters();
             renderTicketList(container);
         });
     }
@@ -365,6 +444,7 @@ function wireUpInteractions(container, totalPages) {
             } else if (dir === "next" && currentPage < totalPages) {
                 currentPage += 1;
             }
+            persistFilters();
             renderTicketList(container);
         });
     });
@@ -374,6 +454,7 @@ function wireUpInteractions(container, totalPages) {
             const view = btn.dataset.view;
             if (view && view !== currentView) {
                 currentView = view;
+                persistFilters();
                 renderTicketList(container);
             }
         });
