@@ -89,11 +89,11 @@ async function loadStats(options = {}) {
         const isDepartmentView =
             SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
 
+        let departmentData = null;
+
         if (isDepartmentView) {
             const depId = SELECTED_DEPARTMENT_ID;
             console.log("Loader department view for id", depId);
-
-            let departmentData = null;
 
             if (USE_MOCK) {
                 tickets = MOCK_TICKETS.filter(t => {
@@ -103,6 +103,7 @@ async function loadStats(options = {}) {
                         t.departmentId;
                     return String(ticketDeptId) === String(depId);
                 });
+
                 stats = computeStatsFromTickets(tickets);
 
                 if (tickets.length > 0) {
@@ -125,20 +126,34 @@ async function loadStats(options = {}) {
                     console.warn("Ukendt format fra getTicketsForDepartment:", deptData);
                     tickets = [];
                 }
+
                 await loadTicketList(depId);
             }
 
-            const inferredName = SELECTED_DEPARTMENT_NAME
-                ? decodeURIComponent(SELECTED_DEPARTMENT_NAME)
-                : (departmentData &&
-                    (departmentData.departmentName ||
-                        (departmentData.department && departmentData.department.departmentName))) ||
-                "";
+            const inferredName =
+                SELECTED_DEPARTMENT_NAME
+                    ? decodeURIComponent(SELECTED_DEPARTMENT_NAME)
+                    : (departmentData &&
+                        (departmentData.departmentName ||
+                            (departmentData.department &&
+                                departmentData.department.departmentName))) ||
+                    "";
+
+            // 🔥 OPDATER FRONTEND-TITLE HER — nu virker det!
+            const titleEl = document.getElementById("main-title");
+            const subtitleEl = document.getElementById("main-subtitle");
+            const overlineEl = document.getElementById("main-overline");
+
+            if (titleEl) titleEl.textContent = inferredName;
+            if (subtitleEl)
+                subtitleEl.textContent = "Alle tickets for dette department.";
+            if (overlineEl) overlineEl.textContent = "Department overview";
 
             scopeLabel = inferredName
                 ? `Department: ${inferredName}`
                 : `Department #${depId}`;
         } else {
+            // normal forside
             if (USE_MOCK) {
                 console.log("Bruger MOCK_DATA – sæt USE_MOCK = false for at bruge backend.");
                 stats = MOCK_STATS;
@@ -154,6 +169,7 @@ async function loadStats(options = {}) {
 
             scopeLabel = "Alle departments";
         }
+
 
         // <--- her brugte du før allTickets = tickets || [];
         setAllTickets(tickets || []);
@@ -221,18 +237,8 @@ async function loadStats(options = {}) {
             SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
 
         if (isDepartmentViewNow) {
-            output.innerHTML = `
-                <section class="card fade-in">
-                    <div class="card-header">
-                        <div>
-                            <h2>Tickets</h2>
-                            <div class="card-header-sub">
-                                ${scopeLabel} – alle tickets for dette department vises nedenfor.
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            `;
+            output.innerHTML =
+                "";
         } else {
             output.innerHTML = `
                 <section class="card fade-in">

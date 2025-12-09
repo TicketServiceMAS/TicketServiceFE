@@ -186,7 +186,6 @@ export function renderTicketList(status, label) {
                 <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${id}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${subject}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${createdText}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${deptName}</td> 
                 <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${statusVal}</td>
             </tr>
         `;
@@ -206,7 +205,6 @@ export function renderTicketList(status, label) {
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Ticket ID</th>
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Subject</th>
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Oprettet</th>
-                        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Department</th>
                         <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;">Status</th>
                     </tr>
                 </thead>
