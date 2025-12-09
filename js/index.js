@@ -536,6 +536,15 @@ window.addEventListener("DOMContentLoaded", () => {
         if (isDepartmentView) {
             backBtn.style.display = "inline-flex";
             backBtn.addEventListener("click", () => {
+                try {
+                    sessionStorage.removeItem("selectedDepartmentId");
+                    sessionStorage.removeItem("selectedDepartmentName");
+                    localStorage.removeItem("selectedDepartmentId");
+                    localStorage.removeItem("selectedDepartmentName");
+                } catch (err) {
+                    console.warn("Kunne ikke rydde department-relateret storage", err);
+                }
+
                 window.location.href = "./departments.html";
             });
         } else {
