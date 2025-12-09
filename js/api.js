@@ -1,10 +1,29 @@
-// Use a relative API base to avoid CORS issues when frontend and backend share a host.
-// You can override via window.TICKET_SERVICE_API_BASE if needed.
+// Use a configurable API base. In most deployments the frontend is hosted by the backend
+// so the relative path works. When running the static files from another port (e.g. 63342
+// in JetBrains preview) fall back to the common backend port 8080 unless an explicit
+// override is provided via `window.TICKET_SERVICE_API_BASE`.
 const API_BASE_PATH = "/api/ticketservice";
-const API_BASE_URL =
-    (typeof window !== "undefined" && window.TICKET_SERVICE_API_BASE)
-        ? window.TICKET_SERVICE_API_BASE
-        : API_BASE_PATH;
+
+function resolveApiBaseUrl() {
+    if (typeof window === "undefined") {
+        return API_BASE_PATH;
+    }
+
+    if (window.TICKET_SERVICE_API_BASE) {
+        return window.TICKET_SERVICE_API_BASE;
+    }
+
+    const { protocol, hostname, port } = window.location;
+
+    // If we're on localhost but *not* the backend port, assume the backend runs on 8080.
+    if (hostname === "localhost" && port && port !== "8080") {
+        return `${protocol}//${hostname}:8080${API_BASE_PATH}`;
+    }
+
+    return API_BASE_PATH;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 export async function getDepartments() {
     const r = await fetch(`${API_BASE_URL}/departments`);
