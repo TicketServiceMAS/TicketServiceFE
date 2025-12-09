@@ -3,32 +3,79 @@ import {
     createDepartment,
     updateDepartment,
     deleteDepartment,
-    getRoutingStatsForDepartment, // NYT
+    getRoutingStatsForDepartment,
 } from "./api.js";
 
-let allDepartments = [];          // gemmer alle departments så vi kan søge/opdatere lokalt
-let editingDepartmentId = null;   // track hvilket department der redigeres lige nu
+let allDepartments = [];
+let editingDepartmentId = null;
 
 // filter / sort state
-let currentFilter = "all";        // "all" | "high" | "low"
-let currentSearchQuery = "";      // søgetekst
+let currentFilter = "all";
+let currentSearchQuery = "";
 
-// Simpel email-validering – matcher backend regex ret tæt
+/* ================= TEMA / DARK MODE ================= */
+
+function applyTheme(theme) {
+    const body = document.body;
+    if (theme === "dark") {
+        body.setAttribute("data-theme", "dark");
+    } else {
+        body.removeAttribute("data-theme");
+    }
+}
+
+function initTheme() {
+    let saved = null;
+    try {
+        saved = window.localStorage.getItem("appTheme");
+    } catch (_) {}
+
+    if (saved !== "dark" && saved !== "light") {
+        saved = "light";
+    }
+
+    applyTheme(saved);
+}
+
+function toggleTheme() {
+    let current = "light";
+    try {
+        current = window.localStorage.getItem("appTheme") || "light";
+    } catch (_) {}
+
+    const next = current === "light" ? "dark" : "light";
+
+    try {
+        window.localStorage.setItem("appTheme", next);
+    } catch (_) {}
+
+    applyTheme(next);
+}
+
+/* ================= LOGOUT ================= */
+
+function handleLogout() {
+    try {
+        window.localStorage.removeItem("authToken");
+        window.localStorage.removeItem("currentUser");
+    } catch (_) {}
+
+    window.location.href = "./login.html";
+}
+
+// Simpel email-validering
 function isValidEmail(email) {
     if (!email) return false;
     const regex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/;
     return regex.test(email);
 }
 
-/** ------------------------------
- *  Render departments i output
- * ------------------------------ */
+/** Render departments */
 function renderDepartments() {
     const output = document.getElementById("department-output");
 
     let list = [...allDepartments];
 
-    // 1) filtrér på søgning
     const q = currentSearchQuery.trim().toLowerCase();
     if (q !== "") {
         list = list.filter(dep => {
@@ -43,13 +90,10 @@ function renderDepartments() {
         });
     }
 
-    // 2) sortér efter valgt chip (accuracy ligger på dep.accuracy)
     if (currentFilter === "high") {
         list.sort((a, b) => (b.accuracy || 0) - (a.accuracy || 0));
     } else if (currentFilter === "low") {
         list.sort((a, b) => (a.accuracy || 0) - (b.accuracy || 0));
-    } else {
-        // "all" → behold rækkefølgen fra backend (ingen ekstra sortering)
     }
 
     if (!list || list.length === 0) {
@@ -100,9 +144,7 @@ function renderDepartments() {
     attachDepartmentItemHandlers();
 }
 
-/** ------------------------------
- *  Klik-håndtering for department items
- * ------------------------------ */
+/** Klik-håndtering for department items */
 function attachDepartmentItemHandlers() {
     const container = document.getElementById("department-output");
     if (!container) return;
@@ -112,11 +154,9 @@ function attachDepartmentItemHandlers() {
         const id = item.getAttribute("data-id");
         if (!id) return;
 
-        // Klik på selve rækken -> gå til dashboard
         item.addEventListener("click", (e) => {
             const actionBtn = e.target.closest(".department-action");
             if (actionBtn) {
-                // hvis det er edit/slet-knap, håndteres separat
                 return;
             }
 
@@ -128,7 +168,6 @@ function attachDepartmentItemHandlers() {
         });
     });
 
-    // Edit-knapper
     const editBtns = container.querySelectorAll(".department-action-edit");
     editBtns.forEach(btn => {
         btn.addEventListener("click", (e) => {
@@ -138,7 +177,6 @@ function attachDepartmentItemHandlers() {
         });
     });
 
-    // Delete-knapper
     const deleteBtns = container.querySelectorAll(".department-action-delete");
     deleteBtns.forEach(btn => {
         btn.addEventListener("click", async (e) => {
@@ -149,9 +187,7 @@ function attachDepartmentItemHandlers() {
     });
 }
 
-/** ------------------------------
- *  Hent departments + metrics fra API
- * ------------------------------ */
+/** Hent departments + metrics */
 async function loadDepartments() {
     const output = document.getElementById("department-output");
     output.textContent = "Henter departments...";
@@ -159,7 +195,6 @@ async function loadDepartments() {
     try {
         const departments = await getDepartments();
 
-        // Hent stats for hvert department, så vi kan sortere på accuracy
         const withStats = await Promise.all(
             (departments || []).map(async (dep) => {
                 const id = dep.departmentID ?? dep.id;
@@ -180,7 +215,7 @@ async function loadDepartments() {
 
                 return {
                     ...dep,
-                    accuracy, // gemmes til sortering
+                    accuracy,
                 };
             })
         );
@@ -195,9 +230,7 @@ async function loadDepartments() {
     }
 }
 
-/** ------------------------------
- *  Søgning i real-tid
- * ------------------------------ */
+/** Søgning */
 function setupSearch() {
     const searchInput = document.getElementById("departmentSearch");
     if (!searchInput) return;
@@ -208,16 +241,13 @@ function setupSearch() {
     });
 }
 
-/** ------------------------------
- *  Filter-chips (Alle / Høj / Lav accuracy)
- * ------------------------------ */
+/** Filter-chips */
 function setupFilterChips() {
     const chips = document.querySelectorAll(".toolbar-chip");
     if (!chips.length) return;
 
     chips.forEach(chip => {
         chip.addEventListener("click", () => {
-            // toggle aktiv klasse
             chips.forEach(c => c.classList.remove("toolbar-chip-active"));
             chip.classList.add("toolbar-chip-active");
 
@@ -236,9 +266,7 @@ function setupFilterChips() {
     });
 }
 
-/** ------------------------------
- *  Add department UI helpers
- * ------------------------------ */
+/** Add department UI */
 function showAddForm(show) {
     const container = document.getElementById("addDepartmentContainer");
     const msgEl = document.getElementById("addDepartmentMessage");
@@ -248,7 +276,6 @@ function showAddForm(show) {
         container.classList.remove("hidden");
     } else {
         container.classList.add("hidden");
-        // ryd form + beskeder
         const form = document.getElementById("addDepartmentForm");
         const nameInput = document.getElementById("newDepartmentName");
         const mailInput = document.getElementById("newDepartmentMail");
@@ -284,9 +311,7 @@ function setAddFormMessage(type, text) {
     }
 }
 
-/** ------------------------------
- *  Edit department UI helpers
- * ------------------------------ */
+/** Edit department UI */
 function showEditForm(show) {
     const container = document.getElementById("editDepartmentContainer");
     const msgEl = document.getElementById("editDepartmentMessage");
@@ -332,9 +357,7 @@ function setEditFormMessage(type, text) {
     }
 }
 
-/** ------------------------------
- *  Åbn edit-form for et bestemt department
- * ------------------------------ */
+/** Åbn edit-form */
 function openEditForm(departmentId) {
     const dep = allDepartments.find(d => String(d.departmentID) === String(departmentId));
     if (!dep) {
@@ -354,9 +377,7 @@ function openEditForm(departmentId) {
     showEditForm(true);
 }
 
-/** ------------------------------
- *  Håndter sletning af department
- * ------------------------------ */
+/** Slet department */
 async function handleDeleteDepartment(departmentId) {
     const dep = allDepartments.find(d => String(d.departmentID) === String(departmentId));
     const name = dep?.departmentName ?? `ID ${departmentId}`;
@@ -367,10 +388,8 @@ async function handleDeleteDepartment(departmentId) {
     try {
         await deleteDepartment(departmentId);
 
-        // fjern lokalt
         allDepartments = allDepartments.filter(d => String(d.departmentID) !== String(departmentId));
 
-        // hvis vi var i gang med at redigere det, luk formen
         if (String(editingDepartmentId) === String(departmentId)) {
             showEditForm(false);
         }
@@ -381,9 +400,7 @@ async function handleDeleteDepartment(departmentId) {
     }
 }
 
-/** ------------------------------
- *  Opsæt add department form
- * ------------------------------ */
+/** Setup add department */
 function setupAddDepartment() {
     const toggleBtn = document.getElementById("toggleAddDepartment");
     const cancelBtn = document.getElementById("cancelAddDepartment");
@@ -446,7 +463,6 @@ function setupAddDepartment() {
                     return;
                 }
 
-                // Tilføj det nye department til lokal liste og re-render
                 allDepartments = [...allDepartments, { ...created, accuracy: 0 }];
                 renderDepartments();
 
@@ -466,9 +482,7 @@ function setupAddDepartment() {
     }
 }
 
-/** ------------------------------
- *  Opsæt edit department form
- * ------------------------------ */
+/** Setup edit department */
 function setupEditDepartment() {
     const cancelBtn = document.getElementById("cancelEditDepartment");
     const form = document.getElementById("editDepartmentForm");
@@ -520,7 +534,6 @@ function setupEditDepartment() {
                 const payload = { departmentName, mailAddress };
                 const updated = await updateDepartment(editingDepartmentId, payload);
 
-                // Opdater lokalt array (behold gammel accuracy)
                 allDepartments = allDepartments.map(dep =>
                     String(dep.departmentID) === String(editingDepartmentId)
                         ? { ...dep, ...updated }
@@ -545,13 +558,73 @@ function setupEditDepartment() {
     }
 }
 
-/** ------------------------------
- *  Init
- * ------------------------------ */
+/** SETTINGS MENU */
+function setupSettingsMenu() {
+    const btn = document.getElementById("settingsButton");
+    const dropdown = document.getElementById("settingsDropdown");
+
+    if (!btn || !dropdown) return;
+
+    function openMenu() {
+        dropdown.classList.add("settings-dropdown-open");
+        btn.setAttribute("aria-expanded", "true");
+    }
+
+    function closeMenu() {
+        dropdown.classList.remove("settings-dropdown-open");
+        btn.setAttribute("aria-expanded", "false");
+    }
+
+    function toggleMenu() {
+        const isOpen = dropdown.classList.contains("settings-dropdown-open");
+        if (isOpen) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    }
+
+    btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleMenu();
+    });
+
+    dropdown.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const item = e.target.closest(".settings-item");
+        if (!item) return;
+
+        const action = item.dataset.setting;
+
+        switch (action) {
+            case "refresh":
+                window.location.reload();
+                break;
+            case "theme":
+                toggleTheme();
+                break;
+            case "logout":
+                handleLogout();
+                break;
+            default:
+                break;
+        }
+
+        closeMenu();
+    });
+
+    document.addEventListener("click", () => {
+        closeMenu();
+    });
+}
+
+/** Init */
 window.addEventListener("DOMContentLoaded", () => {
+    initTheme();
     loadDepartments();
     setupSearch();
-    setupFilterChips();   // NYT
+    setupFilterChips();
     setupAddDepartment();
     setupEditDepartment();
+    setupSettingsMenu();
 });
