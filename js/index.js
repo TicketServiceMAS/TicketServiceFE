@@ -154,7 +154,7 @@ async function loadAllTicketsFromBackend() {
         const results = await Promise.all(
             ids.map(async id => {
                 try {
-                    const [data, list] = await Promise.all([
+                    const [data] = await Promise.all([
                         getTicketsForDepartment(id),
                     ]);
 
@@ -842,9 +842,12 @@ async function loadStats() {
 
 window.addEventListener("DOMContentLoaded", () => {
     const backBtn = document.getElementById("backToDepartments");
+    const ticketSection = document.getElementById("departmentTicketListSection");
+
     const isDepartmentView =
         SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
 
+    // Tilbage-knap
     if (backBtn) {
         if (isDepartmentView) {
             backBtn.style.display = "inline-flex";
@@ -854,6 +857,11 @@ window.addEventListener("DOMContentLoaded", () => {
         } else {
             backBtn.style.display = "none";
         }
+    }
+
+    // Vis / skjul "Department Ticket List"
+    if (ticketSection) {
+        ticketSection.style.display = isDepartmentView ? "block" : "none";
     }
 
     loadStats();
