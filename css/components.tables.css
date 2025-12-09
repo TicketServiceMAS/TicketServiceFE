@@ -1,0 +1,60 @@
+@import url('../foundations.css');
+
+.ticket-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--color-surface);
+}
+
+.ticket-table thead th {
+    background: #f7f7fb;
+    color: #111827;
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.ticket-table-row {
+    background: white;
+    transition: background 0.12s ease-out;
+}
+
+.ticket-table-row td {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    color: #111827;
+}
+
+.ticket-table-row td:first-child {
+    font-weight: 600;
+}
+
+.ticket-table-row td:last-child {
+    text-align: right;
+}
+
+.ticket-table-row:hover {
+    background: #f9fafb;
+}
+
+.ticket-table-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+:root[data-theme="dark"] .ticket-table,
+:root[data-theme="dark"] .ticket-table thead th {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-color: var(--color-border);
+}
+
+:root[data-theme="dark"] .ticket-table-row:hover {
+    background: #0b1222;
+}

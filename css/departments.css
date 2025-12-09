@@ -1,192 +1,4 @@
-:root {
-    --accent: #5f259e;
-    --accent-soft: #f4effb;
-
-    --danger: #b91c1c;
-    --danger-soft: #fee2e2;
-
-    --text: #111827;
-    --text-muted: #6b7280;
-
-    --surface: #ffffff;
-    --surface-alt: #fafafa;
-    --border: #e5e7eb;
-}
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    background: #f3f4f6;
-    font-family: "Inter", system-ui, sans-serif;
-    color: var(--text);
-}
-
-.visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
-}
-
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-.department-item:focus-visible {
-    outline: 3px solid #2c133b;
-    outline-offset: 2px;
-    box-shadow: 0 0 0 2px #ede9fe;
-}
-
-.app-shell {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-/* ================= HEADER ================= */
-
-.topbar {
-    background: #ffffff;
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-    position: sticky;
-    top: 0;
-    z-index: 20;
-}
-
-.topbar-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.brand-logo {
-    width: 34px;
-    height: 34px;
-    background: var(--accent);
-    border-radius: 8px;
-    color: white;
-    font-size: 0.9rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.brand-text-main {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.brand-title {
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.brand-pill {
-    font-size: 0.7rem;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: #f6f1ff;
-    color: var(--accent);
-    border: 1px solid rgba(95,37,158,0.2);
-}
-
-.brand-subtitle {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-top: 2px;
-}
-
-.topbar-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.nav-link {
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: 0.15s;
-}
-
-.nav-link:hover {
-    background: #f3f0ff;
-    color: #3b1669;
-}
-
-.nav-link-active {
-    background: rgba(95,37,158,0.1);
-    border: 1px solid rgba(95,37,158,0.25);
-    color: var(--accent);
-}
-
-/* ================= PAGE ================= */
-
-.page {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 24px 16px 40px;
-    flex: 1;
-}
-
-/* ================= CARD ================= */
-
-.card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.04);
-}
-
-.card-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.card-header-text {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.card-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.card-subtitle {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-/* ================= TOOLBAR ================= */
+body { --bg-body: #f3f4f6; }
 
 .toolbar {
     display: flex;
@@ -209,53 +21,6 @@ textarea:focus-visible,
     background: #ffffff;
 }
 
-.toolbar-chip {
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    border: 1px solid #d1d5db;
-    background: #f9fafb;
-    color: #374151;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-}
-
-.toolbar-chip .dot {
-    width: 7px;
-    height: 7px;
-    background: #e5e7eb;
-    border-radius: 999px;
-}
-
-.toolbar-chip-active {
-    background: var(--accent-soft);
-    color: var(--accent);
-    border-color: rgba(95,37,158,0.3);
-}
-
-.toolbar-chip-active .dot {
-    background: var(--accent);
-}
-
-.toolbar-button-primary {
-    padding: 8px 14px;
-    border-radius: 999px;
-    background: var(--accent);
-    color: white;
-    border: 1px solid rgba(95,37,158,0.25);
-    font-size: 0.82rem;
-    cursor: pointer;
-    transition: 0.15s;
-}
-
-.toolbar-button-primary:hover {
-    background: #4a1d7b;
-}
-
-/* ================= ADD / EDIT FORMS ================= */
-
 .add-department-container {
     margin-top: 16px;
     padding: 14px;
@@ -264,9 +29,7 @@ textarea:focus-visible,
     border: 1px dashed #d1d5db;
 }
 
-.hidden {
-    display: none;
-}
+.hidden { display: none; }
 
 .add-department-title {
     font-size: 0.9rem;
@@ -288,11 +51,7 @@ textarea:focus-visible,
     flex: 1;
 }
 
-.add-department-label {
-    color: var(--text-muted);
-    font-size: 0.80rem;
-}
-
+.add-department-label { color: var(--text-muted); font-size: 0.80rem; }
 .add-department-input {
     padding: 7px 10px;
     border-radius: 8px;
@@ -300,58 +59,14 @@ textarea:focus-visible,
     font-size: 0.85rem;
 }
 
-.add-department-input:focus-visible {
-    border-color: var(--accent);
-}
+.add-department-input:focus-visible { border-color: var(--accent); }
 
-.add-department-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+.add-department-actions { display: flex; align-items: center; gap: 8px; }
 
-.btn-primary {
-    padding: 8px 14px;
-    border-radius: 999px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    cursor: pointer;
-}
+.add-department-error { margin-top: 6px; color: var(--danger); font-size: 0.8rem; }
 
-.btn-primary:hover {
-    background: #4a1d7b;
-}
+#department-output { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
 
-.btn-ghost {
-    padding: 8px 14px;
-    border-radius: 999px;
-    background: #ffffff;
-    border: 1px solid #d1d5db;
-    cursor: pointer;
-    font-size: 0.84rem;
-}
-
-.btn-ghost:hover {
-    background: #f3f4f6;
-}
-
-.add-department-error {
-    margin-top: 6px;
-    color: var(--danger);
-    font-size: 0.8rem;
-}
-
-/* ================= DEPARTMENT LIST ================= */
-
-#department-output {
-    margin-top: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-/* Hver række */
 .department-item {
     display: flex;
     align-items: center;
@@ -361,49 +76,23 @@ textarea:focus-visible,
     background: var(--surface);
     border: 1px solid var(--border);
     transition: all 0.15s ease;
-    min-height: 60px; /* alle rækker samme højde */
+    min-height: 60px;
     cursor: pointer;
 }
 
-.department-item:hover {
+.department-item:hover,
+.department-item:focus-visible {
     background: #fbfaff;
     border-color: var(--accent);
     box-shadow: 0 2px 6px rgba(95,37,158,0.1);
 }
 
-.department-item:focus-visible {
-    background: #fbfaff;
-    border-color: var(--accent);
-}
+.department-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.department-title { font-size: 1rem; font-weight: 500; }
+.department-subtitle { font-size: 0.8rem; color: var(--text-muted); }
 
-/* Venstre side: navn + mail */
-.department-main {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-    flex: 1;
-}
+.department-meta { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 
-.department-title {
-    font-size: 1rem;
-    font-weight: 500;
-}
-
-.department-subtitle {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-/* Højre side: ID + knapper, i én linje */
-.department-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-}
-
-/* ID-pill – FAST bredde, så knapperne står LIGE */
 .department-chip {
     display: inline-flex;
     align-items: center;
@@ -414,226 +103,17 @@ textarea:focus-visible,
     color: var(--accent);
     font-weight: 600;
     font-size: 0.8rem;
-    min-width: 70px;   /* <--- sørger for samme bredde uanset ID 1 vs 10 vs 100 */
+    min-width: 70px;
 }
 
-/* Knap-per-row container */
-.department-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+.department-actions { display: flex; align-items: center; gap: 10px; }
+.department-action { font-size: 0.8rem; border-radius: 999px; padding: 6px 14px; border: 1px solid transparent; cursor: pointer; background: transparent; transition: 0.15s; }
 
-/* Fælles stil til knapper */
-.department-action {
-    font-size: 0.8rem;
-    border-radius: 999px;
-    padding: 6px 14px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    background: transparent;
-    transition: 0.15s;
-}
-
-/* Rediger */
-.department-action-edit {
-    background: #ffffff;
-    border-color: #cbd5e1;
-    color: #111827;
-}
-
-.department-action-edit:hover {
-    background: #f1f5f9;
-}
-
-/* Slet */
-.department-action-delete {
-    background: var(--danger-soft);
-    color: var(--danger);
-    border-color: rgba(185,28,28,0.3);
-}
-
-.department-action-delete:hover {
-    background: #fecaca;
-    border-color: rgba(185,28,28,0.55);
-}
-
-/* ================= FOOTER ================= */
-
-.footer {
-    padding: 14px;
-    border-top: 1px solid var(--border);
-    background: white;
-    text-align: center;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-.footer-divider {
-    opacity: 0.6;
-}
-
-/* ================= RESPONSIVE ================= */
+.footer { padding: 14px; border-top: 1px solid var(--border); background: white; text-align: center; font-size: 0.8rem; color: var(--text-muted); }
 
 @media (max-width: 800px) {
-    .topbar-inner {
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-start;
-    }
-
-    .toolbar {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .department-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-
-    .department-meta {
-        width: 100%;
-        justify-content: flex-start;
-    }
-}
-
-/* ========== SETTINGS / TANDHJUL I TOPBAR ========== */
-
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.settings-menu {
-    position: relative;
-}
-
-.settings-button {
-    width: 32px;
-    height: 32px;
-    border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.7);
-    background: #ffffff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    padding: 0;
-    transition: background 0.12s ease-out,
-    border-color 0.12s ease-out,
-    box-shadow 0.12s ease-out,
-    transform 0.05s ease-out;
-}
-
-.settings-button:hover {
-    background: #f9fafb;
-    border-color: rgba(148, 163, 184, 1);
-    box-shadow: 0 4px 10px rgba(148,163,184,0.35);
-    transform: translateY(-1px);
-}
-
-.settings-icon {
-    font-size: 1rem;
-    line-height: 1;
-}
-
-.settings-dropdown {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 6px);
-    background: #ffffff;
-    border-radius: 12px;
-    border: 1px solid rgba(226,232,240,0.95);
-    box-shadow:
-            0 18px 40px rgba(15,23,42,0.15),
-            0 0 0 1px rgba(255,255,255,0.8);
-    min-width: 190px;
-    padding: 8px 0;
-    font-size: 0.85rem;
-    display: none;
-    z-index: 40;
-}
-
-.settings-dropdown-open {
-    display: block;
-}
-
-.settings-group-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--text-muted);
-    padding: 6px 12px 4px;
-}
-
-.settings-item {
-    width: 100%;
-    padding: 7px 12px;
-    background: transparent;
-    border: none;
-    text-align: left;
-    font-size: 0.84rem;
-    color: #111827;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.settings-item:hover {
-    background: #f3f4f6;
-}
-
-.settings-divider {
-    border: 0;
-    border-top: 1px solid #e5e7eb;
-    margin: 6px 0;
-}
-
-/* DARK THEME OVERRIDES – aktiveres når body[data-theme="dark"] */
-
-body[data-theme="dark"] {
-    /* nye værdier til samme CSS-variabler */
-    --accent: #a855f7;
-    --accent-soft: #111827;
-
-    --danger: #f97373;
-    --danger-soft: #7f1d1d;
-
-    --text: #e5e7eb;
-    --text-muted: #9ca3af;
-
-    --surface: #020617;
-    --surface-alt: #020617;
-    --border: #1e293b;
-
-    background: radial-gradient(circle at top left, #1f2937 0, #020617 55%, #020617 100%);
-    color: var(--text);
-}
-
-/* lidt ekstra for topbar / card / footer */
-
-body[data-theme="dark"] .topbar {
-    background: #020617;
-    border-bottom-color: #1e293b;
-    box-shadow: 0 8px 24px rgba(15,23,42,0.7);
-}
-
-body[data-theme="dark"] .card {
-    background: #020617;
-    border-color: #1e293b;
-    box-shadow: 0 18px 45px rgba(15,23,42,0.8);
-}
-
-body[data-theme="dark"] .chart-wrapper {
-    background: radial-gradient(circle at top left, #020617 0, #020617 52%, #020617 100%);
-    border-color: #1e293b;
-}
-
-body[data-theme="dark"] .footer {
-    background: #020617;
-    border-top-color: #1e293b;
+    .topbar-inner { flex-direction: column; gap: 10px; align-items: flex-start; }
+    .toolbar { flex-direction: column; align-items: flex-start; }
+    .department-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .department-meta { width: 100%; justify-content: flex-start; }
 }
