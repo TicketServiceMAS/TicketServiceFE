@@ -757,6 +757,37 @@ textarea:focus-visible {
     white-space: nowrap;
 }
 
+.priority-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.priority-select {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 0.88rem;
+    background: #fff;
+    min-width: 120px;
+    transition: border-color 0.12s ease-out, box-shadow 0.12s ease-out;
+}
+
+.priority-select:focus {
+    outline: none;
+    border-color: #5f259e;
+    box-shadow: 0 0 0 3px rgba(95, 37, 158, 0.15);
+}
+
+.priority-select-saving {
+    opacity: 0.7;
+}
+
+.priority-select-saved {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+}
+
 .ticket-id {
     font-weight: 600;
 }

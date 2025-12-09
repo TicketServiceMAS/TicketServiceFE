@@ -1,4 +1,4 @@
-import { getDepartmentTicketList, markTicketAsMisrouted } from "./api.js";
+import { getDepartmentTicketList, markTicketAsMisrouted, updateTicketPriority } from "./api.js";
 import { SELECTED_DEPARTMENT_ID } from "./config.js";
 
 const PAGE_SIZE = 10;
@@ -187,7 +187,7 @@ function renderTableRows(tickets) {
                             <tr class="ticket-table-row" data-ticket-id="${t.id}">
                                 <td class="ticket-id">#${t.id}</td>
                                 <td><span class="ticket-status ${isFailure ? "status-failure" : "status-success"}">${t.status}</span></td>
-                                <td>${t.priority}</td>
+                                <td>${renderPriorityControl(t.id, t.priority)}</td>
                                 <td>${t.subject}</td>
                                 <td>${formatDate(t.date)}</td>
                                 <td class="ticket-table-actions">
@@ -225,7 +225,7 @@ function renderCardRows(tickets) {
                         </button>
                     </div>
                     <p><strong>Status:</strong> ${t.status}</p>
-                    <p><strong>Prioritet:</strong> ${t.priority}</p>
+                    <p><strong>Prioritet:</strong> ${renderPriorityControl(t.id, t.priority)}</p>
                     <p><strong>Subject:</strong> ${t.subject}</p>
                     <p><strong>Date:</strong> ${formatDate(t.date)}</p>
                 </div>
@@ -324,6 +324,7 @@ function renderTicketList(container) {
 
     wireUpInteractions(container, totalPages);
     attachFlagButtonHandlers(container);
+    attachPriorityHandlers(container);
 }
 
 function wireUpInteractions(container, totalPages) {
@@ -405,6 +406,58 @@ function attachFlagButtonHandlers(container) {
                 btn.disabled = false;
                 btn.textContent = "Marker som forkert routing";
                 alert("Der opstod en fejl ved opdatering af ticketen.");
+            }
+        });
+    });
+}
+
+function renderPriorityControl(ticketId, priority) {
+    const defaultOptions = ["Høj", "Normal", "Lav"];
+    const normalizedPriority = priority || "Normal";
+    const options = Array.from(new Set([normalizedPriority, ...defaultOptions]));
+
+    const optionHtml = options
+        .map(option => {
+            const isSelected = option.toLowerCase() === normalizedPriority.toLowerCase();
+            return `<option value="${option}" ${isSelected ? "selected" : ""}>${option}</option>`;
+        })
+        .join("");
+
+    return `
+        <label class="priority-control">
+            <span class="visually-hidden">Prioritet for ticket #${ticketId}</span>
+            <select class="priority-select" data-ticket-id="${ticketId}" data-current-priority="${normalizedPriority}">
+                ${optionHtml}
+            </select>
+        </label>
+    `;
+}
+
+function attachPriorityHandlers(container) {
+    const selects = container.querySelectorAll(".priority-select");
+    selects.forEach(select => {
+        select.addEventListener("change", async event => {
+            const newPriority = event.target.value;
+            const ticketId = event.target.getAttribute("data-ticket-id");
+            const previousPriority = event.target.getAttribute("data-current-priority") || newPriority;
+
+            if (!ticketId || !newPriority) return;
+
+            event.target.disabled = true;
+            event.target.classList.add("priority-select-saving");
+
+            try {
+                await updateTicketPriority(ticketId, newPriority);
+                event.target.setAttribute("data-current-priority", newPriority);
+                event.target.classList.add("priority-select-saved");
+                setTimeout(() => event.target.classList.remove("priority-select-saved"), 1000);
+            } catch (e) {
+                console.error("Kunne ikke opdatere prioritet:", e);
+                alert("Kunne ikke opdatere ticketens prioritet.");
+                event.target.value = previousPriority;
+            } finally {
+                event.target.disabled = false;
+                event.target.classList.remove("priority-select-saving");
             }
         });
     });
