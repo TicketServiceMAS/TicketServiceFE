@@ -42,7 +42,11 @@ export function buildDailyAccuracySeries(tickets) {
     const map = new Map();
 
     for (const t of tickets) {
-        const created = t.createdAt ?? t.created_at ?? t.timestamp;
+        const created =
+            t.createdAt ??
+            t.created_at ??
+            t.timestamp ??
+            t.date;
         if (!created) continue;
 
         const d = new Date(created);
