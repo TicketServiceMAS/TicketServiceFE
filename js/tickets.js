@@ -19,11 +19,14 @@ function formatDate(iso) {
     return d.toLocaleDateString("da-DK");
 }
 
+const PRIORITY_ORDER = ["P1", "P0", "P3", "P2"];
+
 function formatPriority(raw) {
-    if (!raw) return "Normal";
+    if (!raw) return "P1";
     const str = String(raw).trim();
-    if (!str) return "Normal";
-    return str.charAt(0).toUpperCase() + str.slice(1);
+    if (!str) return "P1";
+    const normalized = str.toUpperCase();
+    return normalized;
 }
 
 export async function loadTicketList(departmentId) {
@@ -135,9 +138,15 @@ function renderFilterChips(statuses, priorities) {
     }
 
     if (priorityContainer) {
-        const defaultPriorities = ["Høj", "Normal", "Lav"];
-        const uniquePriorities = Array.from(new Set(["", ...priorities, ...defaultPriorities]));
-        priorityContainer.innerHTML = uniquePriorities
+        const seen = new Set();
+        const orderedOptions = ["", ...PRIORITY_ORDER, ...priorities].filter(value => {
+            const key = value.toUpperCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+
+        priorityContainer.innerHTML = orderedOptions
             .map(priority => {
                 const label = priority || "Alle";
                 const isActive = filters.priority.toLowerCase() === priority.toLowerCase();
@@ -412,9 +421,14 @@ function attachFlagButtonHandlers(container) {
 }
 
 function renderPriorityControl(ticketId, priority) {
-    const defaultOptions = ["Høj", "Normal", "Lav"];
-    const normalizedPriority = priority || "Normal";
-    const options = Array.from(new Set([normalizedPriority, ...defaultOptions]));
+    const normalizedPriority = priority || PRIORITY_ORDER[0];
+    const seen = new Set();
+    const options = [normalizedPriority, ...PRIORITY_ORDER].filter(option => {
+        const key = option.toUpperCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 
     const optionHtml = options
         .map(option => {
