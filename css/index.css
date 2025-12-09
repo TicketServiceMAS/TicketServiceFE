@@ -29,6 +29,27 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #2c133b;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #ede9fe;
+}
+
 .app-shell {
     min-height: 100vh;
     display: flex;
@@ -550,9 +571,8 @@ body {
     transition: border-color 0.12s ease-out, box-shadow 0.12s ease-out, background 0.12s ease-out;
 }
 
-.ticket-filter-input:focus,
-.ticket-filter-select:focus {
-    outline: none;
+.ticket-filter-input:focus-visible,
+.ticket-filter-select:focus-visible {
     border-color: rgba(95,37,158,0.5);
     box-shadow: 0 0 0 3px rgba(95,37,158,0.12);
     background: #fff;

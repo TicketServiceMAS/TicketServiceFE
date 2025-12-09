@@ -36,14 +36,28 @@ import {
 let chartInstance = null;
 let predictionChartInstance = null;
 
+function setLiveStatus(message, isBusy = false) {
+    const liveRegion = document.getElementById("liveStatus");
+    if (!liveRegion) return;
+
+    liveRegion.textContent = message;
+    liveRegion.setAttribute("aria-busy", isBusy ? "true" : "false");
+}
+
 function toggleLoadingOverlay(isVisible) {
     const overlay = document.getElementById("loadingOverlay");
     if (!overlay) return;
 
     if (isVisible) {
         overlay.classList.add("active");
+        overlay.setAttribute("aria-busy", "true");
+        setLiveStatus("Opdaterer data...", true);
     } else {
         overlay.classList.remove("active");
+        overlay.setAttribute("aria-busy", "false");
+        const liveRegion = document.getElementById("liveStatus");
+        const currentMessage = liveRegion?.textContent || "Data er opdateret";
+        setLiveStatus(currentMessage, false);
     }
 }
 
@@ -62,6 +76,8 @@ async function loadStats(options = {}) {
     if (!skipOverlay) {
         toggleLoadingOverlay(true);
     }
+
+    setLiveStatus("Indlæser statistik...", true);
 
     try {
         console.log("Henter stats + tickets...");
@@ -290,6 +306,8 @@ async function loadStats(options = {}) {
                 </section>
             `;
         }
+
+        setLiveStatus(`Statistik opdateret for ${scopeLabel}`, false);
 
         try {
             window.localStorage.setItem("routingAccuracyLast", String(accuracyPercent));
@@ -522,6 +540,8 @@ async function loadStats(options = {}) {
 
     } catch (error) {
         console.error("Fejl ved hentning af stats:", error);
+
+        setLiveStatus("Fejl ved indlæsning af statistik", false);
 
         const outputFallback = document.getElementById("output");
         if (!outputFallback) return;

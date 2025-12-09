@@ -24,6 +24,28 @@ body {
     color: var(--text);
 }
 
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.department-item:focus-visible {
+    outline: 3px solid #2c133b;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #ede9fe;
+}
+
 .app-shell {
     min-height: 100vh;
     display: flex;
@@ -182,8 +204,7 @@ body {
     width: 180px;
 }
 
-.toolbar-search input:focus {
-    outline: none;
+.toolbar-search input:focus-visible {
     border-color: var(--accent);
     background: #ffffff;
 }
@@ -279,9 +300,8 @@ body {
     font-size: 0.85rem;
 }
 
-.add-department-input:focus {
+.add-department-input:focus-visible {
     border-color: var(--accent);
-    outline: none;
 }
 
 .add-department-actions {
@@ -342,12 +362,18 @@ body {
     border: 1px solid var(--border);
     transition: all 0.15s ease;
     min-height: 60px; /* alle rækker samme højde */
+    cursor: pointer;
 }
 
 .department-item:hover {
     background: #fbfaff;
     border-color: var(--accent);
     box-shadow: 0 2px 6px rgba(95,37,158,0.1);
+}
+
+.department-item:focus-visible {
+    background: #fbfaff;
+    border-color: var(--accent);
 }
 
 /* Venstre side: navn + mail */

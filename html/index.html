@@ -80,6 +80,7 @@
 
     <!-- SIDEINDHOLD -->
     <main class="page">
+        <div id="liveStatus" class="visually-hidden" aria-live="polite"></div>
         <section class="hero">
             <div class="hero-left">
                 <div class="hero-overline">Routing performance</div>
@@ -120,8 +121,8 @@
 
         <!-- Department Ticket List – kun vist i department-view -->
         <section id="departmentTicketListSection">
-            <h1>Department Ticket List</h1>
-            <div id="ticket-list">Loading...</div>
+            <h2>Department Ticket List</h2>
+            <div id="ticket-list" role="status" aria-live="polite">Loading...</div>
         </section>
 
     </main>

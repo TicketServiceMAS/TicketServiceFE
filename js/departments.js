@@ -13,6 +13,14 @@ let editingDepartmentId = null;
 let currentFilter = "all";
 let currentSearchQuery = "";
 
+function setDepartmentLiveStatus(message, isBusy = false) {
+    const liveRegion = document.getElementById("departmentLiveRegion");
+    if (!liveRegion) return;
+
+    liveRegion.textContent = message;
+    liveRegion.setAttribute("aria-busy", isBusy ? "true" : "false");
+}
+
 /* ================= TEMA / DARK MODE ================= */
 
 function applyTheme(theme) {
@@ -111,7 +119,13 @@ function renderDepartments() {
             const mail = dep.mailAddress || "Ingen mail";
 
             return `
-                <div class="department-item" data-id="${id}">
+                <div
+                    class="department-item"
+                    data-id="${id}"
+                    role="button"
+                    tabindex="0"
+                    aria-label="Åbn dashboard for ${name} (ID ${id})"
+                >
                     <div class="department-main">
                         <div class="department-title">${name}</div>
                         <div class="department-subtitle">Mail: ${mail}</div>
@@ -166,6 +180,20 @@ function attachDepartmentItemHandlers() {
 
             window.location.href = `index.html?departmentId=${id}&departmentName=${encodedName}`;
         });
+
+        item.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter" && e.key !== " ") return;
+
+            const actionBtn = e.target.closest(".department-action");
+            if (actionBtn) return;
+
+            e.preventDefault();
+            const dep = allDepartments.find(d => String(d.departmentID) === String(id));
+            const name = dep?.departmentName ?? "";
+            const encodedName = encodeURIComponent(name);
+
+            window.location.href = `index.html?departmentId=${id}&departmentName=${encodedName}`;
+        });
     });
 
     const editBtns = container.querySelectorAll(".department-action-edit");
@@ -191,6 +219,7 @@ function attachDepartmentItemHandlers() {
 async function loadDepartments() {
     const output = document.getElementById("department-output");
     output.textContent = "Henter departments...";
+    setDepartmentLiveStatus("Henter departments...", true);
 
     try {
         const departments = await getDepartments();
@@ -222,11 +251,13 @@ async function loadDepartments() {
 
         allDepartments = withStats;
         renderDepartments();
+        setDepartmentLiveStatus(`Indlæste ${withStats.length} departments`, false);
     } catch (err) {
         output.innerHTML = `
             <p style="color:#b91c1c; font-weight:500;">
                 Fejl ved indlæsning: ${err.message}
             </p>`;
+        setDepartmentLiveStatus("Fejl ved indlæsning af departments", false);
     }
 }
 
