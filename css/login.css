@@ -27,6 +27,27 @@ body {
     color: var(--text);
 }
 
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #2c133b;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #ede9fe;
+}
+
 .login-shell {
     width: 100%;
     max-width: 420px;
@@ -130,8 +151,7 @@ body {
     background: #f9fafb;
 }
 
-.login-input:focus {
-    outline: none;
+.login-input:focus-visible {
     border-color: var(--accent);
     background: #ffffff;
 }

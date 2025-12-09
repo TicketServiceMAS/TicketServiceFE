@@ -85,6 +85,8 @@
     <!-- ================= PAGE CONTENT ================= -->
     <main class="page">
 
+        <div id="departmentLiveRegion" class="visually-hidden" aria-live="polite"></div>
+
         <h1 style="margin: 0 0 6px;">Departments</h1>
         <p style="margin: 0 0 20px; color: var(--text-muted);">
             Administrér departments og få overblik over routing performance.
@@ -106,6 +108,7 @@
 
                     <!-- Search -->
                     <div class="toolbar-search">
+                        <label class="visually-hidden" for="departmentSearch">Søg efter department</label>
                         <input id="departmentSearch" type="text" placeholder="Søg efter department...">
                     </div>
 
@@ -138,12 +141,12 @@
                     <div class="add-department-grid">
 
                         <div class="add-department-field">
-                            <label class="add-department-label">Navn *</label>
+                            <label class="add-department-label" for="newDepartmentName">Navn *</label>
                             <input id="newDepartmentName" type="text" class="add-department-input" required>
                         </div>
 
                         <div class="add-department-field">
-                            <label class="add-department-label">Mailadresse *</label>
+                            <label class="add-department-label" for="newDepartmentMail">Mailadresse *</label>
                             <input id="newDepartmentMail" type="email" class="add-department-input" required>
                         </div>
 
@@ -166,12 +169,12 @@
                     <div class="add-department-grid">
 
                         <div class="add-department-field">
-                            <label class="add-department-label">Navn *</label>
+                            <label class="add-department-label" for="editDepartmentName">Navn *</label>
                             <input id="editDepartmentName" type="text" class="add-department-input" required>
                         </div>
 
                         <div class="add-department-field">
-                            <label class="add-department-label">Mailadresse *</label>
+                            <label class="add-department-label" for="editDepartmentMail">Mailadresse *</label>
                             <input id="editDepartmentMail" type="email" class="add-department-input" required>
                         </div>
 
@@ -187,7 +190,7 @@
             </div>
 
             <!-- ======== Department List Output ======== -->
-            <div id="department-output">
+            <div id="department-output" role="status" aria-live="polite">
                 Henter departments...
             </div>
 
