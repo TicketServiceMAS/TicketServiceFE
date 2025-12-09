@@ -21,20 +21,21 @@ export function startLiveUpdatedLabel(element, timestamp) {
         const diffHours = Math.floor(diffMin / 60);
         const diffDays = Math.floor(diffHours / 24);
 
-        let text;
+        let relativeText;
         if (diffSec < 5) {
-            text = "Opdateret lige nu";
+            relativeText = "lige nu";
         } else if (diffSec < 60) {
-            text = `Opdateret for ${diffSec} sek. siden`;
+            relativeText = `for ${diffSec} sek. siden`;
         } else if (diffMin < 60) {
-            text = `Opdateret for ${diffMin} min. siden`;
+            relativeText = `for ${diffMin} min. siden`;
         } else if (diffHours < 24) {
-            text = `Opdateret for ${diffHours} timer siden`;
+            relativeText = `for ${diffHours} timer siden`;
         } else {
-            text = `Opdateret for ${diffDays} dage siden`;
+            relativeText = `for ${diffDays} dage siden`;
         }
 
-        element.textContent = text;
+        const timeText = timestamp.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+        element.textContent = `kl. ${timeText} (${relativeText})`;
     }
 
     render();

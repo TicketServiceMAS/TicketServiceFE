@@ -36,14 +36,31 @@ import {
 let chartInstance = null;
 let predictionChartInstance = null;
 
+function toggleLoadingOverlay(isVisible) {
+    const overlay = document.getElementById("loadingOverlay");
+    if (!overlay) return;
+
+    if (isVisible) {
+        overlay.classList.add("active");
+    } else {
+        overlay.classList.remove("active");
+    }
+}
+
 /* ================= HOVED-FUNKTION: loadStats ================= */
 
-async function loadStats() {
+async function loadStats(options = {}) {
+    const { skipOverlay = false } = options;
+
     const output = document.getElementById("output");
 
     if (!output) {
         console.error("Kunne ikke finde elementet med id='output'.");
         return;
+    }
+
+    if (!skipOverlay) {
+        toggleLoadingOverlay(true);
     }
 
     try {
@@ -517,6 +534,27 @@ async function loadStats() {
                 </p>
             </section>
         `;
+    } finally {
+        if (!skipOverlay) {
+            toggleLoadingOverlay(false);
+        }
+    }
+}
+
+async function handleManualRefresh() {
+    toggleLoadingOverlay(true);
+
+    try {
+        await loadStats({ skipOverlay: true });
+
+        const isDepartmentView =
+            SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
+
+        if (isDepartmentView) {
+            await loadTicketList(SELECTED_DEPARTMENT_ID);
+        }
+    } finally {
+        toggleLoadingOverlay(false);
     }
 }
 
@@ -524,7 +562,7 @@ async function loadStats() {
 
 window.addEventListener("DOMContentLoaded", () => {
     initTheme();
-    setupSettingsMenu();
+    setupSettingsMenu({ onRefresh: handleManualRefresh });
 
     const backBtn = document.getElementById("backToDepartments");
     const ticketSection = document.getElementById("departmentTicketListSection");
