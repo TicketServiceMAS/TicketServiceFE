@@ -35,6 +35,8 @@ import {
 
 let chartInstance = null;
 let predictionChartInstance = null;
+let autoRefreshInterval = null;
+let isAutoRefreshing = false;
 
 function setLiveStatus(message, isBusy = false) {
     const liveRegion = document.getElementById("liveStatus");
@@ -613,6 +615,35 @@ async function handleManualRefresh() {
     }
 }
 
+function startAutoRefresh() {
+    const isDepartmentView =
+        SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
+
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+
+    const performAutoRefresh = async () => {
+        if (isAutoRefreshing) return;
+
+        isAutoRefreshing = true;
+
+        try {
+            await loadStats({ skipOverlay: true });
+
+            if (isDepartmentView) {
+                await loadTicketList(SELECTED_DEPARTMENT_ID);
+            }
+        } catch (error) {
+            console.error("Automatisk opdatering fejlede", error);
+        } finally {
+            isAutoRefreshing = false;
+        }
+    };
+
+    autoRefreshInterval = setInterval(performAutoRefresh, 60_000);
+}
+
 /* ===== INIT ===== */
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -654,5 +685,6 @@ window.addEventListener("DOMContentLoaded", () => {
         refreshNowButton.addEventListener("click", handleManualRefresh);
     }
 
+    startAutoRefresh();
     loadStats();
 });
