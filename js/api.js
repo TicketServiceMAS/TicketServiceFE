@@ -1,7 +1,7 @@
 // Use a configurable API base. In most deployments the frontend is hosted by the backend
-// so the relative path works. When running the static files from another port (e.g. 63342
-// in JetBrains preview) fall back to the common backend port 8080 unless an explicit
-// override is provided via `window.TICKET_SERVICE_API_BASE`.
+// so the relative path works. Prefer the relative path to avoid CORS issues when the
+// backend is exposed via a reverse proxy on the same origin, and only use a custom base
+// when it is explicitly provided via `window.TICKET_SERVICE_API_BASE`.
 const API_BASE_PATH = "/api/ticketservice";
 
 function resolveApiBaseUrl() {
@@ -11,13 +11,6 @@ function resolveApiBaseUrl() {
 
     if (window.TICKET_SERVICE_API_BASE) {
         return window.TICKET_SERVICE_API_BASE;
-    }
-
-    const { protocol, hostname, port } = window.location;
-
-    // If we're on localhost but *not* the backend port, assume the backend runs on 8080.
-    if (hostname === "localhost" && port && port !== "8080") {
-        return `${protocol}//${hostname}:8080${API_BASE_PATH}`;
     }
 
     return API_BASE_PATH;
