@@ -35,7 +35,6 @@
                 </div>
             </div>
 
-
             <nav class="topbar-nav">
                 <a href="./index.html" class="nav-link nav-link-active">
                     <span class="dot"></span>
@@ -73,7 +72,6 @@
                     <span>Tilbage til departments</span>
                 </button>
             </div>
-
         </section>
 
         <!-- JS skriver her dashboardet ind -->
@@ -85,12 +83,13 @@
                 </div>
             </div>
             <div id="ticket-output"></div>
-
         </section>
-        <h1>Department Ticket List</h1>
-        <div id="ticket-list">Loading...</div>
 
-        <!-- IMPORTANT: must use type="module" to allow import -->
+        <!-- Department Ticket List – kun vist i department-view -->
+        <section id="departmentTicketListSection">
+            <h1>Department Ticket List</h1>
+            <div id="ticket-list">Loading...</div>
+        </section>
 
     </main>
 
@@ -102,7 +101,7 @@
     </footer>
 </div>
 
-<!-- VIGTIGT: index.js ligger i .idea/js -->
+<!-- JS -->
 <script type="module" src="../js/index.js"></script>
 <script type="module" src="../js/tickets.js"></script>
 
