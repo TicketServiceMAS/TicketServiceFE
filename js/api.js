@@ -1,4 +1,10 @@
-const API_BASE_URL = "http://localhost:8080/api/ticketservice";
+// Use a relative API base to avoid CORS issues when frontend and backend share a host.
+// You can override via window.TICKET_SERVICE_API_BASE if needed.
+const API_BASE_PATH = "/api/ticketservice";
+const API_BASE_URL =
+    (typeof window !== "undefined" && window.TICKET_SERVICE_API_BASE)
+        ? window.TICKET_SERVICE_API_BASE
+        : API_BASE_PATH;
 
 export async function getDepartments() {
     const r = await fetch(`${API_BASE_URL}/departments`);
