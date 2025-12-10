@@ -41,6 +41,7 @@ let nextRefreshTimestamp = null;
 let isAutoRefreshing = false;
 let autoRefreshEnabled = true;
 let autoRefreshIntervalMs = 60_000;
+let latestReportData = null;
 
 const AUTO_REFRESH_ENABLED_KEY = "autoRefreshEnabled";
 const AUTO_REFRESH_INTERVAL_KEY = "autoRefreshIntervalMs";
@@ -68,6 +69,49 @@ function toggleLoadingOverlay(isVisible) {
         const currentMessage = liveRegion?.textContent || "Data er opdateret";
         setLiveStatus(currentMessage, false);
     }
+}
+
+function buildReportSnapshot(scopeLabel, statsSummary, tickets) {
+    return {
+        generatedAt: new Date().toISOString(),
+        scope: scopeLabel,
+        stats: statsSummary,
+        tickets: Array.isArray(tickets) ? tickets : []
+    };
+}
+
+function enableReportButton() {
+    const downloadBtn = document.getElementById("downloadReportButton");
+    if (downloadBtn) {
+        downloadBtn.disabled = false;
+        downloadBtn.setAttribute("aria-disabled", "false");
+    }
+}
+
+function handleDownloadReport() {
+    if (!latestReportData) {
+        setLiveStatus("Ingen data til rapport endnu. Prøv at opdatere.", false);
+        return;
+    }
+
+    const payload = {
+        ...latestReportData,
+        exportedAt: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const timestamp = new Date().toISOString().replace(/[:T]/g, "-").split(".")[0];
+
+    a.href = url;
+    a.download = `ticket-report-${timestamp}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+    setLiveStatus("Rapport downloadet (JSON).", false);
 }
 
 function loadAutoRefreshPreferences() {
@@ -290,6 +334,19 @@ async function loadStats(options = {}) {
                 : (total > 0 ? (success / total) * 100 : 0);
 
         const accuracyRounded = accuracyPercent.toFixed(1);
+
+        const statsSummary = {
+            totalTickets: total,
+            successCount: success,
+            failureCount: failure,
+            defaultedCount: defaulted,
+            incorrectCount: incorrect,
+            accuracyPercent: Number(accuracyPercent.toFixed(2)),
+            accuracyDecimal: Number((accuracyPercent / 100).toFixed(4))
+        };
+
+        latestReportData = buildReportSnapshot(scopeLabel, statsSummary, tickets);
+        enableReportButton();
 
         let badgeClass = "bad";
         if (accuracyPercent >= 90) {
@@ -782,6 +839,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const backBtn = document.getElementById("backToDepartments");
     const ticketSection = document.getElementById("departmentTicketListSection");
     const refreshNowButton = document.getElementById("refreshNowButton");
+    const downloadReportButton = document.getElementById("downloadReportButton");
 
     const isDepartmentView =
         SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
@@ -812,6 +870,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (refreshNowButton) {
         refreshNowButton.addEventListener("click", handleManualRefresh);
+    }
+
+    if (downloadReportButton) {
+        downloadReportButton.setAttribute("aria-disabled", "true");
+        downloadReportButton.addEventListener("click", handleDownloadReport);
     }
 
     scheduleAutoRefresh();
