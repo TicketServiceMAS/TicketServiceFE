@@ -41,6 +41,8 @@ let nextRefreshTimestamp = null;
 let isAutoRefreshing = false;
 let autoRefreshEnabled = true;
 let autoRefreshIntervalMs = 60_000;
+let lastTicketTotal = null;
+let latestStatsSnapshot = null;
 
 const AUTO_REFRESH_ENABLED_KEY = "autoRefreshEnabled";
 const AUTO_REFRESH_INTERVAL_KEY = "autoRefreshIntervalMs";
@@ -164,6 +166,76 @@ function renderStatusStrip({ accuracyPercent, totalTickets, incorrect, defaulted
     }
 }
 
+function renderSkeletonState() {
+    const output = document.getElementById("output");
+    if (!output) return;
+
+    output.innerHTML = `
+        <div class="card skeleton-card">
+            <div class="skeleton-header">
+                <div class="skeleton-line w-30"></div>
+                <div class="skeleton-pill"></div>
+            </div>
+            <div class="content-layout">
+                <div class="skeleton-column">
+                    <div class="skeleton-line w-40"></div>
+                    <div class="skeleton-line w-60"></div>
+                    <div class="skeleton-grid">
+                        <div class="skeleton-tile"></div>
+                        <div class="skeleton-tile"></div>
+                        <div class="skeleton-tile"></div>
+                        <div class="skeleton-tile"></div>
+                    </div>
+                    <div class="skeleton-table">
+                        <div class="skeleton-line w-90"></div>
+                        <div class="skeleton-line w-80"></div>
+                        <div class="skeleton-line w-85"></div>
+                    </div>
+                </div>
+                <div class="skeleton-column">
+                    <div class="skeleton-chart"></div>
+                    <div class="skeleton-line w-70"></div>
+                    <div class="skeleton-chart"></div>
+                </div>
+            </div>
+        </div>
+        <div id="ticket-output"></div>
+    `;
+}
+
+function updateNewTicketsBadge(newTicketsCount) {
+    const badge = document.getElementById("newTicketsBadge");
+    if (!badge) return;
+
+    const count = Math.max(0, newTicketsCount ?? 0);
+    badge.textContent = count > 0 ? `Nye tickets: +${count}` : "Nye tickets: 0";
+    badge.classList.toggle("has-new", count > 0);
+}
+
+function downloadReport() {
+    if (!latestStatsSnapshot) {
+        console.warn("Ingen data til rapport endnu.");
+        return;
+    }
+
+    const payload = {
+        generatedAt: new Date().toISOString(),
+        scope: latestStatsSnapshot.scopeLabel,
+        summary: latestStatsSnapshot,
+        tickets: allTickets
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `routing-report-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
 /* ================= HOVED-FUNKTION: loadStats ================= */
 
 async function loadStats(options = {}) {
@@ -174,6 +246,10 @@ async function loadStats(options = {}) {
     if (!output) {
         console.error("Kunne ikke finde elementet med id='output'.");
         return;
+    }
+
+    if (!skipOverlay) {
+        renderSkeletonState();
     }
 
     if (!skipOverlay) {
@@ -284,6 +360,12 @@ async function loadStats(options = {}) {
 
         const incorrect = failure + defaulted;
 
+        const newTicketsDelta = lastTicketTotal != null
+            ? Math.max(0, total - lastTicketTotal)
+            : total;
+        updateNewTicketsBadge(newTicketsDelta);
+        lastTicketTotal = total;
+
         const accuracyPercent =
             stats.accuracy != null
                 ? stats.accuracy * 100
@@ -304,6 +386,16 @@ async function loadStats(options = {}) {
             incorrect,
             defaulted
         });
+
+        latestStatsSnapshot = {
+            scopeLabel,
+            total,
+            success,
+            failure,
+            defaulted,
+            incorrect,
+            accuracyPercent: Number(accuracyPercent.toFixed(2))
+        };
 
         let trendHtml = "";
         const lastAccuracyRaw = window.localStorage.getItem("routingAccuracyLast");
@@ -782,6 +874,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const backBtn = document.getElementById("backToDepartments");
     const ticketSection = document.getElementById("departmentTicketListSection");
     const refreshNowButton = document.getElementById("refreshNowButton");
+    const downloadReportButton = document.getElementById("downloadReportButton");
 
     const isDepartmentView =
         SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
@@ -812,6 +905,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (refreshNowButton) {
         refreshNowButton.addEventListener("click", handleManualRefresh);
+    }
+
+    if (downloadReportButton) {
+        downloadReportButton.addEventListener("click", downloadReport);
     }
 
     scheduleAutoRefresh();

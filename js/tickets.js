@@ -15,6 +15,14 @@ let activeDepartmentKey = null;
 
 const FILTER_STORAGE_KEY = "departmentTicketFilters";
 
+function getStatusChipTone(status = "") {
+    const normalized = status.toLowerCase();
+    if (normalized.includes("success")) return "tone-success";
+    if (normalized.includes("default")) return "tone-warning";
+    if (normalized.includes("fail")) return "tone-danger";
+    return "tone-neutral";
+}
+
 function formatDate(iso) {
     if (!iso) return "";
     const d = new Date(iso);
@@ -173,7 +181,8 @@ function renderFilterChips(statuses, priorities, statusCounts, priorityCounts) {
                 const label = status || "Alle";
                 const isActive = filters.status === status;
                 const count = statusCounts[status || ""] ?? 0;
-                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="status" data-value="${status}">${label}<span class="ticket-chip-count">${count}</span></button>`;
+                const toneClass = getStatusChipTone(status || "");
+                return `<button class="ticket-chip ${toneClass} ${isActive ? "ticket-chip-active" : ""}" data-type="status" data-value="${status}">${label}<span class="ticket-chip-count">${count}</span></button>`;
             })
             .join("");
     }

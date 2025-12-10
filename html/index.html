@@ -48,6 +48,13 @@
                     </a>
                 </nav>
 
+                <div class="topbar-actions" aria-label="Hurtige handlinger">
+                    <span class="quick-badge" id="newTicketsBadge">Nye tickets: –</span>
+                    <button class="quick-action" id="downloadReportButton" type="button">
+                        ⬇ Download rapport
+                    </button>
+                </div>
+
                 <div class="settings-menu">
                     <button
                             id="settingsButton"
@@ -182,10 +189,32 @@
 
         <!-- JS skriver her dashboardet ind -->
         <section id="output" class="fade-in">
-            <div class="card">
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>Indlæser statistik...</p>
+            <div class="card skeleton-card">
+                <div class="skeleton-header">
+                    <div class="skeleton-line w-30"></div>
+                    <div class="skeleton-pill"></div>
+                </div>
+                <div class="content-layout">
+                    <div class="skeleton-column">
+                        <div class="skeleton-line w-40"></div>
+                        <div class="skeleton-line w-60"></div>
+                        <div class="skeleton-grid">
+                            <div class="skeleton-tile"></div>
+                            <div class="skeleton-tile"></div>
+                            <div class="skeleton-tile"></div>
+                            <div class="skeleton-tile"></div>
+                        </div>
+                        <div class="skeleton-table">
+                            <div class="skeleton-line w-90"></div>
+                            <div class="skeleton-line w-80"></div>
+                            <div class="skeleton-line w-85"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-column">
+                        <div class="skeleton-chart"></div>
+                        <div class="skeleton-line w-70"></div>
+                        <div class="skeleton-chart"></div>
+                    </div>
                 </div>
             </div>
             <div id="ticket-output"></div>
