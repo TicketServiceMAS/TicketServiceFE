@@ -80,6 +80,137 @@ function buildReportSnapshot(scopeLabel, statsSummary, tickets) {
     };
 }
 
+function formatDateTime(isoString) {
+    if (!isoString) return "";
+    const parsed = new Date(isoString);
+    if (Number.isNaN(parsed.getTime())) return isoString;
+    return parsed.toLocaleString("da-DK", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function normalizeTicketForExport(ticket) {
+    const priorityRaw =
+        ticket.priority ||
+        ticket.priorityLevel ||
+        ticket.severity ||
+        ticket.priority_name ||
+        "Normal";
+
+    const normalizedPriority = String(priorityRaw)
+        .trim()
+        .toLowerCase()
+        .replace(/(^|\s)\w/g, c => c.toUpperCase()) || "Normal";
+
+    return {
+        id:
+            ticket.metricsDepartmentID ??
+            ticket.id ??
+            ticket.ticketId ??
+            ticket.ticketNumber ??
+            "Ukendt",
+        status: (ticket.status ?? ticket.routingStatus ?? "").toUpperCase() || "-",
+        subject: ticket.subject ?? ticket.title ?? "(ingen subject)",
+        date: ticket.createdAt ?? ticket.created_at ?? ticket.date ?? "",
+        priority: normalizedPriority
+    };
+}
+
+function buildTable(headers, rows) {
+    const headHtml = headers
+        .map(h => `<th>${escapeHtml(h)}</th>`)
+        .join("");
+
+    const bodyHtml = rows.length
+        ? rows
+            .map(row => {
+                const cells = row
+                    .map(cell => `<td>${escapeHtml(cell)}</td>`)
+                    .join("");
+                return `<tr>${cells}</tr>`;
+            })
+            .join("")
+        : `<tr><td colspan="${headers.length}" class="muted">Ingen data</td></tr>`;
+
+    return `
+        <table>
+            <thead><tr>${headHtml}</tr></thead>
+            <tbody>${bodyHtml}</tbody>
+        </table>
+    `;
+}
+
+function buildExcelReportContent(snapshot, exportedAt) {
+    const stats = snapshot.stats || {};
+
+    const statsRows = [
+        ["Scope", snapshot.scope || "Alle departments"],
+        ["Genereret", formatDateTime(snapshot.generatedAt)],
+        ["Eksporteret", formatDateTime(exportedAt)],
+        ["Accuracy", stats.accuracyPercent != null ? `${stats.accuracyPercent}%` : "-"],
+        ["Tickets i alt", stats.totalTickets ?? 0],
+        ["Korrekt routede", stats.successCount ?? 0],
+        ["Forkerte routinger", stats.failureCount ?? 0],
+        ["Defaulted", stats.defaultedCount ?? 0]
+    ];
+
+    const normalizedTickets = Array.isArray(snapshot.tickets)
+        ? snapshot.tickets.map(normalizeTicketForExport)
+        : [];
+
+    const ticketRows = normalizedTickets.map(ticket => ([
+        `#${ticket.id}`,
+        ticket.status,
+        ticket.priority,
+        ticket.subject,
+        formatDateTime(ticket.date)
+    ]));
+
+    const statsTable = buildTable(["Nøgle", "Værdi"], statsRows);
+    const ticketsTable = buildTable(
+        ["Ticket", "Status", "Prioritet", "Subject", "Dato"],
+        ticketRows
+    );
+
+    return `
+        <!DOCTYPE html>
+        <html lang="da">
+        <head>
+            <meta charset="UTF-8" />
+            <style>
+                body { font-family: 'Inter', 'Segoe UI', sans-serif; color: #111827; padding: 18px; }
+                h1 { font-size: 18px; margin: 0 0 12px 0; }
+                h2 { font-size: 15px; margin: 18px 0 8px 0; }
+                table { border-collapse: collapse; width: 100%; margin-top: 6px; }
+                th, td { border: 1px solid #d1d5db; padding: 8px 10px; text-align: left; font-size: 12px; }
+                th { background: #f3f4f6; font-weight: 700; }
+                .muted { color: #6b7280; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <h1>Ticket Service Rapport</h1>
+            <h2>Overblik</h2>
+            ${statsTable}
+            <h2>Tickets</h2>
+            ${ticketsTable}
+        </body>
+        </html>
+    `;
+}
+
 function enableReportButton() {
     const downloadBtn = document.getElementById("downloadReportButton");
     if (downloadBtn) {
@@ -94,24 +225,26 @@ function handleDownloadReport() {
         return;
     }
 
+    const exportedAt = new Date().toISOString();
     const payload = {
         ...latestReportData,
-        exportedAt: new Date().toISOString()
+        exportedAt
     };
 
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json"
+    const reportHtml = buildExcelReportContent(payload, exportedAt);
+    const blob = new Blob([reportHtml], {
+        type: "application/vnd.ms-excel"
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const timestamp = new Date().toISOString().replace(/[:T]/g, "-").split(".")[0];
+    const timestamp = exportedAt.replace(/[:T]/g, "-").split(".")[0];
 
     a.href = url;
-    a.download = `ticket-report-${timestamp}.json`;
+    a.download = `ticket-report-${timestamp}.xls`;
     a.click();
 
     URL.revokeObjectURL(url);
-    setLiveStatus("Rapport downloadet (JSON).", false);
+    setLiveStatus("Rapport downloadet (Excel).", false);
 }
 
 function loadAutoRefreshPreferences() {
