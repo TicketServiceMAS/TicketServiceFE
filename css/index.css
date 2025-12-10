@@ -296,58 +296,74 @@ textarea:focus-visible {
     box-shadow: 0 6px 16px rgba(95,37,158,0.15);
 }
 
+/* NY STILREN EXCEL-KNAP --------------------------------------------------- */
+
+/* --- Small Excel Download Button --- */
+
 .hero-download {
-    border: 1px solid rgba(15, 118, 110, 0.2);
-    background: #0f766e;
-    color: #ffffff;
-    border-radius: 12px;
-    padding: 10px 14px;
-    cursor: pointer;
-    font-size: 0.88rem;
-    font-weight: 600;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-    box-shadow: 0 10px 24px rgba(15, 118, 110, 0.25);
-    transition: transform 0.05s ease-out, box-shadow 0.15s ease-out, background 0.15s ease-out;
+    gap: 8px;                   /* mindre afstand */
+    margin-top: 8px;
+    padding: 6px 12px;          /* mindre knap */
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.78rem;         /* mindre tekst */
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    transition:
+            transform 0.06s ease-out,
+            box-shadow 0.15s ease-out,
+            border-color 0.15s ease-out,
+            background 0.15s ease-out;
 }
 
 .hero-download:hover {
     transform: translateY(-1px);
-    box-shadow: 0 14px 30px rgba(15, 118, 110, 0.3);
-    background: #0c625d;
+    background: #f9fafb;
+    border-color: rgba(148, 163, 184, 0.9);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
 }
 
 .hero-download:disabled {
     cursor: not-allowed;
     opacity: 0.65;
-    box-shadow: none;
-    background: #e5e7eb;
-    color: #6b7280;
+    background: #f3f4f6;
     border-color: #e5e7eb;
+    box-shadow: none;
 }
 
+.hero-download:disabled .hero-download-icon {
+    background: #e5e7eb;
+    color: #9ca3af;
+    box-shadow: none;
+}
+
+/* Ikonet gjort mindre */
 .hero-download-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.15);
+    width: 22px;                /* mindre */
+    height: 22px;               /* mindre */
+    border-radius: 6px;
+    background: linear-gradient(135deg, #166534, #22c55e);
     display: grid;
     place-items: center;
-    font-size: 1rem;
+    font-size: 0.75rem;         /* mindre ikon-tekst */
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(22, 101, 52, 0.4);
 }
 
 .hero-download-label {
-    display: inline-block;
     letter-spacing: 0.01em;
 }
 
-.status-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
-    margin: 12px 0 18px;
+
+#statusStrip {
+    display: none;
 }
 
 .status-card {
@@ -1092,7 +1108,7 @@ textarea:focus-visible {
     padding: 6px 12px 4px;
 }
 
-.settings-item { 
+.settings-item {
     width: 100%;
     padding: 7px 12px;
     background: transparent;
