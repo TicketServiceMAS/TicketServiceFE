@@ -46,6 +46,48 @@ let latestReportData = null;
 const AUTO_REFRESH_ENABLED_KEY = "autoRefreshEnabled";
 const AUTO_REFRESH_INTERVAL_KEY = "autoRefreshIntervalMs";
 
+// ===== AUTH (via login page) =====
+const AUTH_TOKEN_KEY = "authToken";
+const AUTH_USER_KEY = "currentUser";
+
+let currentRole = "user"; // "admin" eller "user"
+
+function getCurrentUser() {
+    try {
+        const raw = sessionStorage.getItem(AUTH_USER_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch (e) {
+        console.warn("Kunne ikke parse currentUser fra sessionStorage", e);
+        return null;
+    }
+}
+
+function getCurrentUserRole() {
+    const user = getCurrentUser();
+    if (!user || !user.username) return "user";
+    if (user.username === "admin") return "admin";
+    return "user";
+}
+
+/**
+ * Sørger for at man er logget ind.
+ * Hvis ikke → redirect til login.html
+ * Returnerer "admin" eller "user".
+ */
+function requireAuth() {
+    const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+    const user = getCurrentUser();
+
+    if (!token || !user) {
+        window.location.href = "login.html";
+        return null;
+    }
+    return getCurrentUserRole();
+}
+
+// ===== RESTEN AF APPEN =====
+
 function setLiveStatus(message, isBusy = false) {
     const liveRegion = document.getElementById("liveStatus");
     if (!liveRegion) return;
@@ -944,6 +986,11 @@ function setupAutoRefreshControls() {
 /* ===== INIT ===== */
 
 window.addEventListener("DOMContentLoaded", () => {
+    // Først: kræv login
+    const role = requireAuth();
+    if (!role) return; // bliver redirected til login, så stop her
+    currentRole = role;
+
     initTheme();
     setupAutoRefreshControls();
     setupSettingsMenu({ onRefresh: handleManualRefresh });
@@ -980,13 +1027,24 @@ window.addEventListener("DOMContentLoaded", () => {
         ticketSection.style.display = isDepartmentView ? "block" : "none";
     }
 
+    // ADMIN-KNAPPER: kun admin ser "Opdater nu" + "Download rapport"
     if (refreshNowButton) {
-        refreshNowButton.addEventListener("click", handleManualRefresh);
+        if (currentRole === "admin") {
+            refreshNowButton.style.display = "inline-flex";
+            refreshNowButton.addEventListener("click", handleManualRefresh);
+        } else {
+            refreshNowButton.style.display = "none";
+        }
     }
 
     if (downloadReportButton) {
-        downloadReportButton.setAttribute("aria-disabled", "true");
-        downloadReportButton.addEventListener("click", handleDownloadReport);
+        if (currentRole === "admin") {
+            downloadReportButton.style.display = "inline-flex";
+            downloadReportButton.setAttribute("aria-disabled", "true");
+            downloadReportButton.addEventListener("click", handleDownloadReport);
+        } else {
+            downloadReportButton.style.display = "none";
+        }
     }
 
     scheduleAutoRefresh();
