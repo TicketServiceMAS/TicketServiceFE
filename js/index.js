@@ -29,7 +29,7 @@ import {
     setAllTickets,
     computeStatsFromTickets,
     buildDailyAccuracySeries,
-    buildAccuracyPrediction,
+    buildSmoothedAccuracySeries,
     renderTicketList,
 } from "./statsUtils.js";
 
@@ -419,12 +419,11 @@ async function loadStats(options = {}) {
                                 departmentData.department.departmentName))) ||
                     "";
 
-            // 🔥 OPDATER FRONTEND-TITLE HER — nu virker det!
             const titleEl = document.getElementById("main-title");
             const subtitleEl = document.getElementById("main-subtitle");
             const overlineEl = document.getElementById("main-overline");
 
-            if (titleEl) titleEl.textContent = inferredName;
+            if (titleEl) titleEl.textContent = inferredName || "Department";
             if (subtitleEl)
                 subtitleEl.textContent = "Alle tickets for dette department.";
             if (overlineEl) overlineEl.textContent = "Department overview";
@@ -450,8 +449,6 @@ async function loadStats(options = {}) {
             scopeLabel = "Alle departments";
         }
 
-
-        // <--- her brugte du før allTickets = tickets || [];
         setAllTickets(tickets || []);
 
         const total = stats.totalTickets ?? 0;
@@ -537,8 +534,7 @@ async function loadStats(options = {}) {
             SELECTED_DEPARTMENT_ID != null && !Number.isNaN(SELECTED_DEPARTMENT_ID);
 
         if (isDepartmentViewNow) {
-            output.innerHTML =
-                "";
+            output.innerHTML = "";
         } else {
             output.innerHTML = `
                 <section class="card fade-in">
@@ -596,7 +592,7 @@ async function loadStats(options = {}) {
                             <div style="margin-top:18px; padding-top:8px; border-top:1px solid #e5e7eb; height:260px;">
                                 <canvas id="statusBarChart"></canvas>
                                 <div class="chart-caption" id="statusBarChartCaption" style="margin-top:10px;">
-                                    Udvikling i routing accuracy (historisk + simpel forecast)
+                                    Udvikling i routing accuracy (daglig + 7-dages glidende gennemsnit)
                                 </div>
                             </div>
                         </div>
@@ -623,6 +619,7 @@ async function loadStats(options = {}) {
             return;
         }
 
+        // ===== Donut-chart =====
         const canvas = document.getElementById("accuracyChart");
         if (!canvas) {
             console.error("Kunne ikke finde canvas-elementet til donut-grafen.");
@@ -703,6 +700,7 @@ async function loadStats(options = {}) {
             }
         });
 
+        // ===== Line-chart: daglig + glidende gennemsnit =====
         const lineCanvas = document.getElementById("statusBarChart");
         const captionEl = document.getElementById("statusBarChartCaption");
 
@@ -714,7 +712,7 @@ async function loadStats(options = {}) {
         const lineCtx = lineCanvas.getContext("2d");
 
         const dailySeries = buildDailyAccuracySeries(allTickets);
-        const predictionSeries = buildAccuracyPrediction(dailySeries, 7);
+        const smoothedSeries = buildSmoothedAccuracySeries(dailySeries, 7);
 
         if (predictionChartInstance) {
             predictionChartInstance.destroy();
@@ -722,25 +720,14 @@ async function loadStats(options = {}) {
 
         if (!dailySeries.length) {
             if (captionEl) {
-                captionEl.textContent = "Ingen historiske data endnu til at vise udvikling/prediktion.";
+                captionEl.textContent = "Ingen historiske data endnu til at vise udvikling.";
             }
             return;
         }
 
-        const labels = [
-            ...dailySeries.map(d => d.label),
-            ...predictionSeries.map(d => d.label)
-        ];
-
-        const historicalData = [
-            ...dailySeries.map(d => d.accuracy),
-            ...predictionSeries.map(() => null)
-        ];
-
-        const predictedData = [
-            ...dailySeries.map(() => null),
-            ...predictionSeries.map(d => d.accuracy)
-        ];
+        const labels = dailySeries.map(d => d.label);
+        const historicalData = dailySeries.map(d => d.accuracy);
+        const smoothedData = smoothedSeries.map(d => d.smoothedAccuracy);
 
         predictionChartInstance = new Chart(lineCtx, {
             type: "line",
@@ -748,7 +735,7 @@ async function loadStats(options = {}) {
                 labels,
                 datasets: [
                     {
-                        label: "Historisk accuracy",
+                        label: "Daglig accuracy",
                         data: historicalData,
                         borderColor: "#16a34a",
                         backgroundColor: "rgba(22, 163, 74, 0.08)",
@@ -760,8 +747,8 @@ async function loadStats(options = {}) {
                         pointHitRadius: 8
                     },
                     {
-                        label: "Forventet accuracy (simpel trend)",
-                        data: predictedData,
+                        label: "7-dages glidende gennemsnit",
+                        data: smoothedData,
                         borderColor: "#0ea5e9",
                         borderWidth: 2,
                         tension: 0.35,
@@ -833,7 +820,7 @@ async function loadStats(options = {}) {
 
         if (captionEl) {
             captionEl.textContent =
-                "Udvikling i routing accuracy (grøn = historisk, blå stiplet = simpel forecast)";
+                "Udvikling i routing accuracy (grøn = daglig, blå stiplet = 7-dages glidende gennemsnit).";
         }
 
     } catch (error) {
