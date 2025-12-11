@@ -5,6 +5,7 @@ const departmentName = params.get("departmentName");
 const departmentId = params.get("departmentId");
 
 let donutChartInstance = null;
+let departmentTickets = [];
 
 async function loadTickets() {
     const title = document.getElementById("deptName");
@@ -74,6 +75,27 @@ async function loadTickets() {
                             }
                         }
                     }
+                },
+                onClick: (evt, elements, chartObj) => {
+                    const points = chartObj.getElementsAtEventForMode(
+                        evt,
+                        "nearest",
+                        { intersect: true },
+                        true
+                    );
+
+                    if (!points.length) return;
+
+                    const firstPoint = points[0];
+                    const index = firstPoint.index;
+
+                    if (index === 0) {
+                        renderTicketList("SUCCESS", "Korrekt routede tickets (SUCCESS)");
+                    } else if (index === 1) {
+                        renderTicketList("FAILURE", "Forkerte tickets (FAILURE)");
+                    } else if (index === 2) {
+                        renderTicketList("DEFAULTED", "Fallback-routede tickets (DEFAULTED)");
+                    }
                 }
             }
         });
@@ -94,28 +116,88 @@ async function loadAllTickets() {
 
     try {
         const tickets = await getAllTicketsForDepartment(departmentId);
+        departmentTickets = Array.isArray(tickets) ? tickets : [];
 
-        if (!tickets || tickets.length === 0) {
+        if (!departmentTickets.length) {
             listContainer.innerHTML = "<p>Ingen tickets fundet.</p>";
             return;
         }
 
-        // Build list HTML
-        const html = tickets.map(t => `
-            <div class="ticket-item">
-                <p><strong>ID:</strong> ${t.id}</p>
-                <p><strong>Status:</strong> ${t.status}</p>
-                <p><strong>Created:</strong> ${t.createdAt}</p>
-                <p><strong>Description:</strong> ${t.description}</p>
-                <hr>
+        listContainer.innerHTML = `
+            <div style="font-size:0.9rem;color:#6b7280;">
+                Klik på en farve på donut-grafen for at se de tilhørende tickets fra backend.
             </div>
-        `).join("");
+        `;
 
-        listContainer.innerHTML = html;
+        renderTicketList("SUCCESS", "Korrekt routede tickets (SUCCESS)");
 
     } catch (err) {
         listContainer.innerHTML = `<p style="color:red;">Fejl ved hentning af tickets: ${err.message}</p>`;
     }
+}
+
+function renderTicketList(status, label) {
+    const listContainer = document.getElementById("ticket-list");
+    if (!listContainer) return;
+
+    if (!departmentTickets.length) {
+        listContainer.innerHTML = "<p>Ingen tickets fundet.</p>";
+        return;
+    }
+
+    const normalizedStatus = String(status || "").toUpperCase();
+
+    const filtered = departmentTickets.filter(ticket => {
+        const ticketStatus = (ticket.status ?? ticket.routingStatus ?? "").toUpperCase();
+        return ticketStatus === normalizedStatus;
+    });
+
+    if (!filtered.length) {
+        listContainer.innerHTML = `
+            <div style="font-size:0.9rem;color:#6b7280;">
+                Ingen tickets fundet for <strong>${label}</strong>.
+            </div>
+        `;
+        return;
+    }
+
+    const rows = filtered.slice(0, 50).map(ticket => {
+        const id = ticket.id ?? ticket.ticketId ?? ticket.metricsDepartmentID ?? "Ukendt ID";
+        const description = ticket.description ?? ticket.subject ?? "(Ingen beskrivelse)";
+        const created = ticket.createdAt ?? ticket.created_at ?? ticket.date ?? "";
+        const statusValue = ticket.status ?? ticket.routingStatus ?? "";
+
+        return `
+            <tr>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${id}</td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${description}</td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${created}</td>
+                <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${statusValue}</td>
+            </tr>
+        `;
+    }).join("");
+
+    listContainer.innerHTML = `
+        <div style="margin-bottom:8px;">
+            <div style="font-weight:600;">${label}</div>
+            <div style="font-size:0.85rem;color:#6b7280;">Viser ${filtered.length > 50 ? "de første 50 af " : ""}${filtered.length} tickets fra backend.</div>
+        </div>
+        <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:auto;max-height:320px;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+                <thead style="background:#f9fafb;position:sticky;top:0;">
+                    <tr>
+                        <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Ticket ID</th>
+                        <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Beskrivelse</th>
+                        <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Oprettet</th>
+                        <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 window.addEventListener("DOMContentLoaded", loadTickets);
