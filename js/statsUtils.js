@@ -38,6 +38,7 @@ export function computeStatsFromTickets(tickets) {
     return result;
 }
 
+// Daglig accuracy pr. dato
 export function buildDailyAccuracySeries(tickets) {
     const map = new Map();
 
@@ -84,53 +85,31 @@ export function buildDailyAccuracySeries(tickets) {
     });
 }
 
-export function buildAccuracyPrediction(dailySeries, horizonDays = 7) {
-    if (!dailySeries || dailySeries.length === 0) return [];
-
-    if (dailySeries.length === 1) {
-        const last = dailySeries[0];
-        const baseDate = new Date(last.date);
-        const result = [];
-
-        for (let i = 1; i <= horizonDays; i++) {
-            const d = new Date(baseDate);
-            d.setDate(d.getDate() + i);
-
-            result.push({
-                date: d.toISOString().slice(0, 10),
-                label: d.toLocaleDateString("da-DK", {
-                    day: "2-digit",
-                    month: "2-digit"
-                }),
-                accuracy: last.accuracy
-            });
-        }
-        return result;
+// 7-dages glidende gennemsnit (eller anden windowSize)
+export function buildSmoothedAccuracySeries(dailySeries, windowSize = 7) {
+    if (!Array.isArray(dailySeries) || dailySeries.length === 0) {
+        return [];
     }
 
-    const first = dailySeries[0];
-    const last = dailySeries[dailySeries.length - 1];
-    const n = dailySeries.length;
-
-    const slope = (last.accuracy - first.accuracy) / (n - 1);
-    const baseDate = new Date(last.date);
     const result = [];
 
-    for (let i = 1; i <= horizonDays; i++) {
-        const d = new Date(baseDate);
-        d.setDate(d.getDate() + i);
+    for (let i = 0; i < dailySeries.length; i++) {
+        let sum = 0;
+        let count = 0;
 
-        let acc = last.accuracy + slope * i;
-        if (acc > 100) acc = 100;
-        if (acc < 0) acc = 0;
+        for (let j = Math.max(0, i - windowSize + 1); j <= i; j++) {
+            const val = Number.isFinite(dailySeries[j].accuracy)
+                ? dailySeries[j].accuracy
+                : 0;
+            sum += val;
+            count++;
+        }
+
+        const smoothed = count > 0 ? (sum / count) : 0;
 
         result.push({
-            date: d.toISOString().slice(0, 10),
-            label: d.toLocaleDateString("da-DK", {
-                day: "2-digit",
-                month: "2-digit"
-            }),
-            accuracy: acc
+            ...dailySeries[i],
+            smoothedAccuracy: smoothed
         });
     }
 
