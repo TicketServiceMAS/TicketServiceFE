@@ -1,5 +1,11 @@
-import { getDepartmentTicketList, markTicketAsMisrouted } from "./api.js";
+import {
+    getDepartmentTicketList,
+    markTicketAsMisrouted,
+    markTicketAsCorrect
+} from "./api.js";
+
 import { SELECTED_DEPARTMENT_ID } from "./config.js";
+
 
 const PAGE_SIZE = 10;
 let allTickets = [];
@@ -226,51 +232,63 @@ function renderTableRows(tickets) {
                     <th class="ticket-table-actions">Handling</th>
                 </tr>
             </thead>
+
             <tbody>
                 ${tickets
-                    .map(t => {
-                        const isFailure = t.status === "FAILURE";
-                        return `
+        .map(t => {
+            const isFailure = (t.status || t.routingStatus || "").toUpperCase() === "FAILURE";
+
+            return `
                             <tr class="ticket-table-row" data-ticket-id="${t.id}">
                                 <td class="ticket-id">#${t.id}</td>
-                                <td><span class="ticket-status ${isFailure ? "status-failure" : "status-success"}">${t.status}</span></td>
+
+                                <td>
+                                    <span class="ticket-status ${isFailure ? "status-failure" : "status-success"}">
+                                        ${t.status}
+                                    </span>
+                                </td>
+
                                 <td>${t.priority}</td>
                                 <td>${t.subject}</td>
                                 <td>${formatDate(t.date)}</td>
+
                                 <td class="ticket-table-actions">
                                     <button
-                                        class="ticket-flag-button"
+                                        class="ticket-flag-button ${isFailure ? "flag-correct" : "flag-wrong"}"
                                         data-ticket-id="${t.id}"
-                                        ${isFailure ? "disabled" : ""}
+                                        data-is-failure="${isFailure}"
                                     >
-                                        ${isFailure ? "Markeret som forkert" : "Marker som forkert routing"}
+                                        ${isFailure ? "Marker som korrekt routing" : "Marker som forkert routing"}
                                     </button>
                                 </td>
                             </tr>
                         `;
-                    })
-                    .join("")}
+        })
+        .join("")}
             </tbody>
         </table>
     `;
 }
 
+
 function renderCardRows(tickets) {
     return tickets
         .map(t => {
             const isFailure = t.status === "FAILURE";
+
             return `
                 <div class="ticket-card" data-ticket-id="${t.id}">
                     <div class="ticket-card-header">
                         <h3>Ticket #${t.id}</h3>
                         <button
-                            class="ticket-flag-button"
+                            class="ticket-flag-button ${isFailure ? "flag-correct" : "flag-wrong"}"
                             data-ticket-id="${t.id}"
-                            ${isFailure ? "disabled" : ""}
+                            data-is-failure="${isFailure}"
                         >
-                            ${isFailure ? "Markeret som forkert" : "Marker som forkert routing"}
+                            ${isFailure ? "Marker som korrekt routing" : "Marker som forkert routing"}
                         </button>
                     </div>
+
                     <p><strong>Status:</strong> ${t.status}</p>
                     <p><strong>Prioritet:</strong> ${t.priority}</p>
                     <p><strong>Subject:</strong> ${t.subject}</p>
@@ -280,6 +298,8 @@ function renderCardRows(tickets) {
         })
         .join('<hr class="ticket-divider">');
 }
+
+
 
 function normalizeTicket(ticket) {
     return {
@@ -460,33 +480,55 @@ function wireUpInteractions(container, totalPages) {
         });
     });
 }
-
 function attachFlagButtonHandlers(container) {
     const buttons = container.querySelectorAll(".ticket-flag-button");
+
     buttons.forEach(btn => {
         btn.addEventListener("click", async () => {
             const ticketId = btn.dataset.ticketId;
+            const isFailure = btn.dataset.isFailure === "true";
+
             if (!ticketId) return;
 
-            const confirmed = window.confirm(
-                `Er du sikker på, at ticket #${ticketId} er routet forkert?\n` +
-                `Den bliver markeret som FAILURE, og statistikken opdateres.`
-            );
+            let confirmed = false;
+
+            if (isFailure) {
+                confirmed = window.confirm(
+                    `Vil du markere ticket #${ticketId} som korrekt routed?\n` +
+                    `Den vil blive fjernet fra FAILURE-statistikken.`
+                );
+            } else {
+                confirmed = window.confirm(
+                    `Er du sikker på, at ticket #${ticketId} er routet forkert?\n` +
+                    `Den bliver markeret som FAILURE, og statistikken opdateres.`
+                );
+            }
+
             if (!confirmed) return;
 
             try {
                 btn.disabled = true;
                 btn.textContent = "Opdaterer...";
 
-                await markTicketAsMisrouted(ticketId);
+                if (isFailure) {
+                    await markTicketAsCorrect(ticketId);
+                } else {
+                    await markTicketAsMisrouted(ticketId);
+                }
 
                 window.location.reload();
+
             } catch (e) {
-                console.error("Kunne ikke markere ticket som forkert:", e);
+                console.error("Fejl ved opdatering:", e);
                 btn.disabled = false;
-                btn.textContent = "Marker som forkert routing";
-                alert("Der opstod en fejl ved opdatering af ticketen.");
+
+                btn.textContent = isFailure
+                    ? "Marker som korrekt routing"
+                    : "Marker som forkert routing";
+
+                alert("Der opstod en fejl ved opdateringen.");
             }
         });
     });
 }
+

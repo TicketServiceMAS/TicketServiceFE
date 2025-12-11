@@ -1360,3 +1360,34 @@ body.page-leaving {
     opacity: 0;
     transform: translateY(-3px);
 }
+/* Default styling (du har måske allerede noget her) */
+.ticket-flag-button {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* Når en ticket er forkert routing (den røde knap) */
+.flag-wrong {
+    background: #f8d7da;
+    color: #a94442;
+    border: 1px solid #f5c2c7;
+}
+
+.flag-wrong:hover {
+    background: #f5c6cb;
+}
+
+/* Når brugeren kan markere korrekt routing (den grønne knap) */
+.flag-correct {
+    background: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #badbcc;
+}
+
+.flag-correct:hover {
+    background: #bcded2;
+}
