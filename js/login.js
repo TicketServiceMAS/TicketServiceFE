@@ -90,8 +90,8 @@ window.addEventListener("DOMContentLoaded", () => {
             const result = await fakeAuthenticate(username, password);
 
             // Gem "token" og brugerinfo i localStorage
-            localStorage.setItem("authToken", result.token);
-            localStorage.setItem("currentUser", JSON.stringify(result.user));
+            sessionStorage.setItem("authToken", result.token);
+            sessionStorage.setItem("currentUser", JSON.stringify(result.user));
 
             setLoginMessage("success", "Login lykkedes – omdirigerer...");
 

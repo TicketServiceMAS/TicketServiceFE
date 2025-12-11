@@ -1,7 +1,7 @@
 const API_BASE_URL = "http://localhost:8080/api/ticketservice";
 
 function getAuthHeaders(isJson = true) {
-    const token = sessionStorage.getItem("token");
+    const token = sessionStorage.getItem("authToken");
     const headers = {};
     if (isJson) headers["Content-Type"] = "application/json";
     if (token) headers["Authorization"] = `Bearer ${token}`;
