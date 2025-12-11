@@ -135,14 +135,24 @@ export async function markTicketAsMisrouted(ticketId) {
 }
 
 export async function markTicketAsCorrect(ticketId) {
-    const res = await fetch(`/api/tickets/${ticketId}/correct`, {
-        method: "POST"
+    const res = await fetch(`${API_BASE_URL}/tickets/${ticketId}/correct`, {
+        method: "POST",
+        headers: getAuthHeaders(false)
     });
 
     if (!res.ok) {
-        throw new Error("Fejl ved markering som korrekt routing");
+        let msg = `Fejl ved markering som korrekt routing (status ${res.status})`;
+        try {
+            const errBody = await res.text();
+            msg += `: ${errBody}`;
+        } catch (_) {}
+        throw new Error(msg);
     }
 
-    return await res.json();
+    try {
+        return await res.json();
+    } catch (_) {
+        return null;
+    }
 }
 
