@@ -1,7 +1,8 @@
+const AUTH_BASE_URL = "http://localhost:8080";
 // .idea/js/login.js
 
 // Simpel "fake" auth-funktion – kan senere skiftes til rigtig backend
-async function fakeAuthenticate(username, password) {
+/*async function fakeAuthenticate(username, password) {
     // Simuler lidt netværksdelay
     await new Promise(resolve => setTimeout(resolve, 600));
 
@@ -14,10 +15,28 @@ async function fakeAuthenticate(username, password) {
                 displayName: "Administrator"
             }
         };
+    }*/
+async function fakeAuthenticate(username, password) {
+    const res = await fetch(`${AUTH_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+    });
+
+    if (!res.ok) {
+        throw new Error("Forkert brugernavn eller adgangskode.");
     }
 
-    throw new Error("Forkert brugernavn eller adgangskode.");
+    // Backend returns a plain string, not JSON
+    const token = await res.text();
+
+    return {
+        token,
+        user: { username } // optionally request user info later
+    };
 }
+
+
 
 function setLoginMessage(type, text) {
     const msgEl = document.getElementById("loginMessage");
