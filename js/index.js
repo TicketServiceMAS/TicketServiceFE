@@ -572,14 +572,6 @@ async function loadStats(options = {}) {
                                 </div>
 
                                 <div class="stat-card">
-                                    <div class="stat-label">Forkerte (FAILURE + DEFAULTED)</div>
-                                    <div class="stat-value">${incorrect}</div>
-                                    <div class="stat-extra">
-                                        Failure: ${failure} · Defaulted: ${defaulted}
-                                    </div>
-                                </div>
-
-                                <div class="stat-card">
                                     <div class="stat-label">Defaulted</div>
                                     <div class="stat-value">${defaulted}</div>
                                     <div class="stat-extra">
