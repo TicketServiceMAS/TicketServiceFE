@@ -16,6 +16,45 @@ let currentSearchQuery = "";
 let isSkeletonActive = false;
 let renderTimer = null;
 
+// ===== NYT: auth helpers =====
+const AUTH_TOKEN_KEY = "authToken";
+const AUTH_USER_KEY = "currentUser";
+
+let currentRole = "user"; // "admin" eller "user"
+
+function getCurrentUser() {
+    try {
+        const raw = sessionStorage.getItem(AUTH_USER_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch (e) {
+        console.warn("Kunne ikke parse currentUser fra sessionStorage", e);
+        return null;
+    }
+}
+
+function getCurrentUserRole() {
+    const user = getCurrentUser();
+    if (!user || !user.username) return "user"; // evt. "guest" hvis du vil
+    if (user.username === "admin") return "admin";
+    // abc og alle andre → normal bruger
+    return "user";
+}
+
+function requireAuth() {
+    const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+    const user = getCurrentUser();
+
+    if (!token || !user) {
+        // Ikke logget ind → tilbage til login
+        window.location.href = "login.html";
+        return null;
+    }
+    return getCurrentUserRole();
+}
+
+// ===========================
+
 function updateResultBadge(value) {
     const badge = document.getElementById("departmentResultBadge");
     if (badge) {
@@ -27,13 +66,13 @@ function buildSkeletonPlaceholder() {
     return `
         <div class="department-skeleton">
             ${Array.from({ length: 4 })
-                .map(() => `
+        .map(() => `
                     <div class="skeleton-row">
                         <span class="skeleton-line long"></span>
                         <span class="skeleton-line short"></span>
                     </div>
                 `)
-                .join("")}
+        .join("")}
         </div>
     `;
 }
@@ -121,6 +160,28 @@ function renderDepartments() {
             const accuracyClass =
                 accuracy >= 90 ? "accuracy-good" : accuracy >= 70 ? "accuracy-ok" : "accuracy-bad";
 
+            // KUN admin ser Rediger / Slet
+            const actionsHtml = currentRole === "admin"
+                ? `
+                    <div class="department-actions">
+                        <button
+                            type="button"
+                            class="department-action department-action-edit"
+                            data-id="${id}"
+                        >
+                            Rediger
+                        </button>
+                        <button
+                            type="button"
+                            class="department-action department-action-delete"
+                            data-id="${id}"
+                        >
+                            Slet
+                        </button>
+                    </div>
+                `
+                : "";
+
             return `
                 <div
                     class="department-item"
@@ -142,22 +203,7 @@ function renderDepartments() {
 
                     <div class="department-meta">
                         <span class="department-chip">ID: ${id}</span>
-                        <div class="department-actions">
-                            <button
-                                type="button"
-                                class="department-action department-action-edit"
-                                data-id="${id}"
-                            >
-                                Rediger
-                            </button>
-                            <button
-                                type="button"
-                                class="department-action department-action-delete"
-                                data-id="${id}"
-                            >
-                                Slet
-                            </button>
-                        </div>
+                        ${actionsHtml}
                     </div>
                 </div>
             `;
@@ -205,23 +251,26 @@ function attachDepartmentItemHandlers() {
         });
     });
 
-    const editBtns = container.querySelectorAll(".department-action-edit");
-    editBtns.forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const id = btn.getAttribute("data-id");
-            openEditForm(id);
+    // Edit/Slet kun for admin (knapper findes kun hvis currentRole === "admin")
+    if (currentRole === "admin") {
+        const editBtns = container.querySelectorAll(".department-action-edit");
+        editBtns.forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute("data-id");
+                openEditForm(id);
+            });
         });
-    });
 
-    const deleteBtns = container.querySelectorAll(".department-action-delete");
-    deleteBtns.forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            const id = btn.getAttribute("data-id");
-            await handleDeleteDepartment(id);
+        const deleteBtns = container.querySelectorAll(".department-action-delete");
+        deleteBtns.forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute("data-id");
+                await handleDeleteDepartment(id);
+            });
         });
-    });
+    }
 }
 
 /** Hent departments + metrics */
@@ -454,6 +503,9 @@ async function handleDeleteDepartment(departmentId) {
 
 /** Setup add department */
 function setupAddDepartment() {
+    // Ikke admin? så sæt ingen event handlers (og vi skjuler knappen i init)
+    if (currentRole !== "admin") return;
+
     const toggleBtn = document.getElementById("toggleAddDepartment");
     const cancelBtn = document.getElementById("cancelAddDepartment");
     const form = document.getElementById("addDepartmentForm");
@@ -536,6 +588,9 @@ function setupAddDepartment() {
 
 /** Setup edit department */
 function setupEditDepartment() {
+    // Ikke admin? Så ingen edit-liste
+    if (currentRole !== "admin") return;
+
     const cancelBtn = document.getElementById("cancelEditDepartment");
     const form = document.getElementById("editDepartmentForm");
     const updateBtn = document.getElementById("updateDepartmentBtn");
@@ -612,6 +667,11 @@ function setupEditDepartment() {
 
 /** Init */
 window.addEventListener("DOMContentLoaded", () => {
+    // 1) Kræv login (ellers redirect til login.html)
+    const role = requireAuth();
+    if (!role) return; // vi er på vej væk
+    currentRole = role;
+
     initTheme();
     loadDepartments();
     setupSearch();
@@ -619,4 +679,21 @@ window.addEventListener("DOMContentLoaded", () => {
     setupAddDepartment();
     setupEditDepartment();
     setupSettingsMenu({ onRefresh: () => loadDepartments(true) });
+
+    // Skjul "Nyt department" knappen og forms for ikke-admin
+    const toggleBtn = document.getElementById("toggleAddDepartment");
+    const addContainer = document.getElementById("addDepartmentContainer");
+    const editContainer = document.getElementById("editDepartmentContainer");
+
+    if (currentRole !== "admin") {
+        if (toggleBtn) {
+            toggleBtn.style.display = "none";
+        }
+        if (addContainer) {
+            addContainer.classList.add("hidden");
+        }
+        if (editContainer) {
+            editContainer.classList.add("hidden");
+        }
+    }
 });
