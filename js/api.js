@@ -135,3 +135,16 @@ export async function markTicketAsMisrouted(ticketId) {
         return null;
     }
 }
+
+export async function markTicketAsCorrect(ticketId) {
+    const res = await fetch(`/api/tickets/${ticketId}/correct`, {
+        method: "POST"
+    });
+
+    if (!res.ok) {
+        throw new Error("Fejl ved markering som korrekt routing");
+    }
+
+    return await res.json();
+}
+
