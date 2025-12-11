@@ -237,7 +237,7 @@ textarea:focus-visible {
     border-radius: 999px;
     font-size: 0.75rem;
     font-weight: 500;
-    border: 1px solid rgba(16,185,129,0.25);
+    border: 1px solid transparent;
 }
 
 .pill-soft {
@@ -733,16 +733,16 @@ textarea:focus-visible {
 
 .ticket-chip {
     border: 1px solid var(--border);
-    background: #ffffff;
-    color: #374151;
-    padding: 6px 12px;
     border-radius: 999px;
+    padding: 6px 12px;
     font-size: 0.82rem;
+    background: #fff;
+    color: #374151;
     cursor: pointer;
-    transition: background 0.12s ease-out, border-color 0.12s ease-out, transform 0.05s ease-out;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    transition: background 0.12s ease-out, border-color 0.12s ease-out, transform 0.05s ease-out;
 }
 
 .ticket-chip:hover {
