@@ -192,7 +192,7 @@
         <!-- Department Ticket List – kun vist i department-view -->
         <section id="departmentTicketListSection">
             <h2>Department Ticket List</h2>
-            <div class="ticket-chip-row" id="ticke qtChipRow" aria-label="Ticket filtre">
+            <div class="ticket-chip-row" id="ticketChipRow">
                 <div class="ticket-chip-group">
                     <span class="chip-label">Status</span>
                     <div class="ticket-chips" id="statusChipContainer"></div>
@@ -202,7 +202,9 @@
                     <div class="ticket-chips" id="priorityChipContainer"></div>
                 </div>
             </div>
-            <div id="ticket-list" role="status" aria-live="polite">Loading...</div>
+
+            <div id="ticket-list"></div>
+
         </section>
 
     </main>

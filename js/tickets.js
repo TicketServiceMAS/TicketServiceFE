@@ -6,148 +6,193 @@ import {
 
 import { SELECTED_DEPARTMENT_ID } from "./config.js";
 
-
 const PAGE_SIZE = 10;
+
 let allTickets = [];
 let filters = {
     search: "",
     status: "",
     routing: "",
-    priority: "",
+    priority: ""
 };
+
 let currentPage = 1;
 let currentView = "table";
 let activeDepartmentKey = null;
 
 const FILTER_STORAGE_KEY = "departmentTicketFilters";
 
+const AUTH_USER_KEY = "currentUser";
+
+function getCurrentUser() {
+    try {
+        const raw = sessionStorage.getItem(AUTH_USER_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+function canEditRouting() {
+    const user = getCurrentUser();
+    return user?.username === "admin";
+}
+
 function formatDate(iso) {
     if (!iso) return "";
     const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleDateString("da-DK");
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("da-DK");
 }
 
 function formatPriority(raw) {
     if (!raw) return "Normal";
-    const str = String(raw).trim();
-    if (!str) return "Normal";
-    return str.charAt(0).toUpperCase() + str.slice(1);
+    const s = String(raw).trim();
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : "Normal";
+}
+
+function normalizePriority(p) {
+    return (p || "Normal").toLowerCase();
 }
 
 function getStorageKey(departmentId) {
-    const id = departmentId ?? SELECTED_DEPARTMENT_ID;
-    return String(id ?? "all");
+    return String(departmentId ?? SELECTED_DEPARTMENT_ID ?? "all");
 }
 
 function loadSavedFilters(departmentId) {
     try {
-        const raw = window.localStorage.getItem(FILTER_STORAGE_KEY);
+        const raw = localStorage.getItem(FILTER_STORAGE_KEY);
         if (!raw) return null;
-
-        const parsed = JSON.parse(raw);
-        const key = getStorageKey(departmentId);
-        return parsed?.[key] ?? null;
-    } catch (err) {
-        console.warn("Kunne ikke læse filter-tilstand", err);
+        return JSON.parse(raw)?.[getStorageKey(departmentId)] ?? null;
+    } catch {
         return null;
     }
 }
 
 function persistFilters() {
     if (!activeDepartmentKey) return;
-
     try {
-        const raw = window.localStorage.getItem(FILTER_STORAGE_KEY);
+        const raw = localStorage.getItem(FILTER_STORAGE_KEY);
         const parsed = raw ? JSON.parse(raw) : {};
-
         parsed[activeDepartmentKey] = {
             filters,
             currentView,
             currentPage
         };
-
-        window.localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(parsed));
-    } catch (err) {
-        console.warn("Kunne ikke gemme filter-tilstand", err);
-    }
+        localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(parsed));
+    } catch { }
 }
 
 export async function loadTicketList(departmentId) {
     const container = document.getElementById("ticket-list");
     if (!container) return;
 
-    const activeDepartment = departmentId ?? SELECTED_DEPARTMENT_ID;
-    activeDepartmentKey = getStorageKey(activeDepartment);
-    if (!activeDepartment) {
-        container.innerHTML = "";
-        return;
-    }
+    const depId = departmentId ?? SELECTED_DEPARTMENT_ID;
+    activeDepartmentKey = getStorageKey(depId);
 
-    container.innerHTML = `
-        <div style="padding:10px 0;font-size:0.9rem;color:#6b7280;">
-            Indlæser tickets for department #${activeDepartment}...
-        </div>
-    `;
+    container.innerHTML = "Indlæser tickets…";
 
     try {
-        const data = await getDepartmentTicketList(activeDepartment);
+        const data = await getDepartmentTicketList(depId);
+        allTickets = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.tickets)
+                ? data.tickets
+                : [];
 
-        let tickets;
-        if (Array.isArray(data)) {
-            tickets = data;
-        } else if (data && Array.isArray(data.tickets)) {
-            tickets = data.tickets;
-        } else {
-            tickets = [];
-        }
-
-        allTickets = tickets;
-        const savedFilters = loadSavedFilters(activeDepartment);
-        filters = savedFilters?.filters || { search: "", status: "", routing: "", priority: "" };
-        currentView = savedFilters?.currentView || currentView || "table";
-        currentPage = savedFilters?.currentPage || 1;
-
-        if (!tickets.length) {
-            container.innerHTML = `
-                <div style="padding:12px 0;font-size:0.9rem;color:#6b7280;">
-                    Der blev ikke fundet nogle tickets for dette department.
-                </div>
-            `;
-            return;
+        const saved = loadSavedFilters(depId);
+        if (saved) {
+            filters = saved.filters || filters;
+            currentView = saved.currentView || currentView;
+            currentPage = saved.currentPage || 1;
         }
 
         renderTicketList(container);
     } catch (e) {
-        console.error("Fejl ved hentning af tickets:", e);
-        container.innerHTML = `
-            <p style="color:#b91c1c;font-size:0.9rem;">
-                Kunne ikke hente tickets for dette department.<br>
-                <small>${e && e.message ? e.message : e}</small>
-            </p>
-        `;
+        console.error(e);
+        container.innerHTML = "Kunne ikke hente tickets.";
     }
+}
+
+function normalizeTicket(t) {
+    return {
+        id: t.metricsDepartmentID ?? t.id ?? t.ticketId ?? "Ukendt",
+        status: (t.status ?? t.routingStatus ?? "").toUpperCase(),
+        subject: t.subject ?? t.title ?? "",
+        date: t.createdAt ?? t.date,
+        priority: formatPriority(
+            t.priority ?? t.priorityLevel ?? t.severity ?? t.priority_name
+        )
+    };
+}
+
+function getNormalizedTickets() {
+    return allTickets.map(normalizeTicket);
+}
+
+function matchesFilters(t) {
+    if (filters.search) {
+        const term = filters.search.toLowerCase();
+        if (
+            !`${t.id}`.toLowerCase().includes(term) &&
+            !t.subject.toLowerCase().includes(term)
+        ) return false;
+    }
+
+    if (filters.status && t.status !== filters.status) return false;
+
+    if (filters.routing) {
+        const isFailure = t.status === "FAILURE";
+        if (filters.routing === "correct" && isFailure) return false;
+        if (filters.routing === "incorrect" && !isFailure) return false;
+    }
+
+    if (filters.priority &&
+        normalizePriority(t.priority) !== filters.priority) return false;
+
+    return true;
+}
+
+function buildStatusCounts(tickets) {
+    const counts = { "": tickets.length };
+    tickets.forEach(t => {
+        counts[t.status] = (counts[t.status] || 0) + 1;
+    });
+    return counts;
+}
+
+function buildPriorityCounts(tickets) {
+    const counts = { "": tickets.length };
+    tickets.forEach(t => {
+        const key = normalizePriority(t.priority);
+        counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+}
+
+function paginate(tickets) {
+    const totalPages = Math.max(1, Math.ceil(tickets.length / PAGE_SIZE));
+    currentPage = Math.min(currentPage, totalPages);
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return {
+        totalPages,
+        pageTickets: tickets.slice(start, start + PAGE_SIZE)
+    };
 }
 
 function buildFilterBar(statuses) {
     return `
         <div class="ticket-controls">
             <div class="ticket-filters">
-                <input
-                    type="search"
-                    class="ticket-filter-input"
-                    id="ticketSearchInput"
-                    placeholder="Søg efter ticket eller subject..."
-                    value="${filters.search}"
-                />
+                <input class="ticket-filter-input"
+                       id="ticketSearchInput"
+                       placeholder="Søg efter ticket eller subject…"
+                       value="${filters.search}">
                 <select class="ticket-filter-select" id="ticketStatusFilter">
                     <option value="">Alle statusser</option>
-                    ${statuses
-                        .map(status => {
-                            const active = filters.status === status ? "selected" : "";
-                            return `<option value="${status}" ${active}>${status}</option>`;
-                        })
-                        .join("")}
+                    ${statuses.map(s =>
+        `<option value="${s}" ${filters.status === s ? "selected" : ""}>${s}</option>`
+    ).join("")}
                 </select>
                 <select class="ticket-filter-select" id="ticketRoutingFilter">
                     <option value="">Alle routingtyper</option>
@@ -163,372 +208,189 @@ function buildFilterBar(statuses) {
     `;
 }
 
-function renderFilterChips(statuses, priorities, statusCounts, priorityCounts) {
-    const statusContainer = document.getElementById("statusChipContainer");
-    const priorityContainer = document.getElementById("priorityChipContainer");
-    const chipRow = document.getElementById("ticketChipRow");
-
-    if (chipRow) {
-        chipRow.style.display = statuses.length ? "flex" : "none";
-    }
-
-    if (statusContainer) {
-        const statusOptions = ["", ...statuses];
-        statusContainer.innerHTML = statusOptions
-            .map(status => {
-                const label = status || "Alle";
-                const isActive = filters.status === status;
-                const count = statusCounts[status || ""] ?? 0;
-                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="status" data-value="${status}">${label}<span class="ticket-chip-count">${count}</span></button>`;
-            })
-            .join("");
-    }
-
-    if (priorityContainer) {
-        const defaultPriorities = ["Høj", "Normal", "Lav"];
-        const uniquePriorities = Array.from(new Set(["", ...priorities, ...defaultPriorities]));
-        priorityContainer.innerHTML = uniquePriorities
-            .map(priority => {
-                const label = priority || "Alle";
-                const isActive = filters.priority.toLowerCase() === priority.toLowerCase();
-                const countKey = priority || "Normal";
-                const count = priority ? (priorityCounts[countKey] ?? 0) : (priorityCounts[""] ?? 0);
-                return `<button class="ticket-chip ${isActive ? "ticket-chip-active" : ""}" data-type="priority" data-value="${priority}">${label}<span class="ticket-chip-count">${count}</span></button>`;
-            })
-            .join("");
-    }
-
-    const chipButtons = document.querySelectorAll("#ticketChipRow .ticket-chip");
-    chipButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-            const type = btn.getAttribute("data-type");
-            const value = btn.getAttribute("data-value") || "";
-
-            if (type === "status") {
-                filters.status = value;
-            }
-
-            if (type === "priority") {
-                filters.priority = value;
-            }
-
-            currentPage = 1;
-            persistFilters();
-            renderTicketList(document.getElementById("ticket-list"));
-        });
-    });
-}
-
 function renderTableRows(tickets) {
+    const canEdit = canEditRouting();
+
     return `
         <table class="ticket-table">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Status</th>
-                    <th>Prioritet</th>
-                    <th>Subject</th>
-                    <th>Dato</th>
-                    <th class="ticket-table-actions">Handling</th>
+                    <th>ID</th><th>Status</th><th>Prioritet</th>
+                    <th>Subject</th><th>Dato</th><th>Handling</th>
                 </tr>
             </thead>
-
             <tbody>
-                ${tickets
-        .map(t => {
-            const isFailure = (t.status || t.routingStatus || "").toUpperCase() === "FAILURE";
-
-            return `
-                            <tr class="ticket-table-row" data-ticket-id="${t.id}">
-                                <td class="ticket-id">#${t.id}</td>
-
-                                <td>
-                                    <span class="ticket-status ${isFailure ? "status-failure" : "status-success"}">
-                                        ${t.status}
-                                    </span>
-                                </td>
-
-                                <td>${t.priority}</td>
-                                <td>${t.subject}</td>
-                                <td>${formatDate(t.date)}</td>
-
-                                <td class="ticket-table-actions">
-                                    <button
-                                        class="ticket-flag-button ${isFailure ? "flag-correct" : "flag-wrong"}"
+                ${tickets.map(t => {
+        const isFailure = t.status === "FAILURE";
+        return `
+                        <tr>
+                            <td>#${t.id}</td>
+                            <td><span class="ticket-status ${isFailure ? "status-failure" : "status-success"}">${t.status}</span></td>
+                            <td>${t.priority}</td>
+                            <td>${t.subject}</td>
+                            <td>${formatDate(t.date)}</td>
+                            <td>
+                                ${canEdit
+            ? `<button class="ticket-flag-button ${isFailure ? "flag-correct" : "flag-wrong"}"
                                         data-ticket-id="${t.id}"
-                                        data-is-failure="${isFailure}"
-                                    >
+                                        data-is-failure="${isFailure}">
                                         ${isFailure ? "Marker som korrekt routing" : "Marker som forkert routing"}
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-        })
-        .join("")}
+                                       </button>`
+            : `<span class="ticket-no-permission">Ingen rettighed</span>`}
+                            </td>
+                        </tr>`;
+    }).join("")}
             </tbody>
         </table>
     `;
 }
 
-
 function renderCardRows(tickets) {
-    return tickets
-        .map(t => {
-            const isFailure = t.status === "FAILURE";
+    const canEdit = canEditRouting();
 
-            return `
-                <div class="ticket-card" data-ticket-id="${t.id}">
-                    <div class="ticket-card-header">
-                        <h3>Ticket #${t.id}</h3>
-                        <button
-                            class="ticket-flag-button ${isFailure ? "flag-correct" : "flag-wrong"}"
-                            data-ticket-id="${t.id}"
-                            data-is-failure="${isFailure}"
-                        >
-                            ${isFailure ? "Marker som korrekt routing" : "Marker som forkert routing"}
-                        </button>
-                    </div>
-
-                    <p><strong>Status:</strong> ${t.status}</p>
-                    <p><strong>Prioritet:</strong> ${t.priority}</p>
-                    <p><strong>Subject:</strong> ${t.subject}</p>
-                    <p><strong>Date:</strong> ${formatDate(t.date)}</p>
-                </div>
-            `;
-        })
-        .join('<hr class="ticket-divider">');
-}
-
-
-
-function normalizeTicket(ticket) {
-    return {
-        raw: ticket,
-        id:
-            ticket.metricsDepartmentID ??
-            ticket.id ??
-            ticket.ticketId ??
-            ticket.ticketNumber ??
-            "Ukendt",
-        status: (ticket.status ?? ticket.routingStatus ?? "").toUpperCase() || "-",
-        subject: ticket.subject ?? ticket.title ?? "(ingen subject)",
-        date: ticket.createdAt ?? ticket.created_at ?? ticket.date,
-        priority: formatPriority(ticket.priority || ticket.priorityLevel || ticket.severity || ticket.priority_name)
-    };
-}
-
-function getNormalizedTickets() {
-    return allTickets.map(normalizeTicket);
-}
-
-function matchesFilters(ticket, overrides = {}) {
-    const { search, status, routing, priority } = { ...filters, ...overrides };
-    const term = search.trim().toLowerCase();
-
-    const matchesSearch = term
-        ? `${ticket.id}`.toLowerCase().includes(term) || ticket.subject.toLowerCase().includes(term)
-        : true;
-
-    const matchesStatus = status
-        ? ticket.status === status
-        : true;
-
-    const isMisrouted = ticket.status === "FAILURE";
-    const matchesRouting = routing === "correct"
-        ? !isMisrouted
-        : routing === "incorrect"
-            ? isMisrouted
-            : true;
-
-    const matchesPriority = priority
-        ? (ticket.priority || "Normal").toLowerCase() === priority.toLowerCase()
-        : true;
-
-    return matchesSearch && matchesStatus && matchesRouting && matchesPriority;
-}
-
-function filterTickets() {
-    return getNormalizedTickets().filter(ticket => matchesFilters(ticket));
-}
-
-function buildStatusCounts(tickets) {
-    const base = tickets.filter(t => matchesFilters(t, { status: "" }));
-    const counts = { "": base.length };
-
-    base.forEach(t => {
-        counts[t.status] = (counts[t.status] || 0) + 1;
-    });
-
-    return counts;
-}
-
-function buildPriorityCounts(tickets) {
-    const base = tickets.filter(t => matchesFilters(t, { priority: "" }));
-    const counts = { "": base.length };
-
-    base.forEach(t => {
-        const key = t.priority || "Normal";
-        counts[key] = (counts[key] || 0) + 1;
-    });
-
-    return counts;
-}
-
-function paginate(tickets) {
-    const totalPages = Math.max(1, Math.ceil(tickets.length / PAGE_SIZE));
-    currentPage = Math.min(Math.max(1, currentPage), totalPages);
-
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-
-    return {
-        totalPages,
-        pageTickets: tickets.slice(start, end)
-    };
+    return tickets.map(t => {
+        const isFailure = t.status === "FAILURE";
+        return `
+            <div class="ticket-card">
+                <h3>Ticket #${t.id}</h3>
+                <p><strong>Status:</strong> ${t.status}</p>
+                <p><strong>Prioritet:</strong> ${t.priority}</p>
+                <p><strong>Subject:</strong> ${t.subject}</p>
+                <p><strong>Dato:</strong> ${formatDate(t.date)}</p>
+                ${canEdit
+            ? `<button class="ticket-flag-button ${isFailure ? "flag-correct" : "flag-wrong"}"
+                        data-ticket-id="${t.id}"
+                        data-is-failure="${isFailure}">
+                        ${isFailure ? "Marker som korrekt routing" : "Marker som forkert routing"}
+                       </button>`
+            : ""}
+            </div>
+        `;
+    }).join("");
 }
 
 function renderTicketList(container) {
-    const normalizedTickets = getNormalizedTickets();
-    const filteredTickets = filterTickets();
-    const uniqueStatuses = Array.from(
-        new Set(normalizedTickets.map(t => t.status))
-    ).filter(Boolean);
-    const uniquePriorities = Array.from(
-        new Set(normalizedTickets.map(t => t.priority))
-    ).filter(Boolean);
+    const normalized = getNormalizedTickets();
+    const filtered = normalized.filter(matchesFilters);
 
-    const statusCounts = buildStatusCounts(normalizedTickets);
-    const priorityCounts = buildPriorityCounts(normalizedTickets);
+    const statuses = [...new Set(normalized.map(t => t.status))];
+    const statusCounts = buildStatusCounts(normalized);
+    const priorityCounts = buildPriorityCounts(normalized);
 
-    const { totalPages, pageTickets } = paginate(filteredTickets);
-
-    const resultsHtml = currentView === "table"
-        ? renderTableRows(pageTickets)
-        : renderCardRows(pageTickets);
-
-    renderFilterChips(uniqueStatuses, uniquePriorities, statusCounts, priorityCounts);
+    const { totalPages, pageTickets } = paginate(filtered);
 
     container.innerHTML = `
-        ${buildFilterBar(uniqueStatuses)}
-        <div id="ticket-results">${resultsHtml}</div>
+        ${buildFilterBar(statuses)}
+        <div id="ticket-results">
+            ${currentView === "table"
+        ? renderTableRows(pageTickets)
+        : renderCardRows(pageTickets)}
+        </div>
         <div class="ticket-pagination">
-            <button class="pagination-btn" data-direction="prev" ${currentPage === 1 ? "disabled" : ""}>Forrige</button>
-            <span class="pagination-info">Side ${currentPage} af ${totalPages}</span>
-            <button class="pagination-btn" data-direction="next" ${currentPage >= totalPages ? "disabled" : ""}>Næste</button>
+            <button class="pagination-btn" data-dir="prev" ${currentPage === 1 ? "disabled" : ""}>Forrige</button>
+            <span>Side ${currentPage} af ${totalPages}</span>
+            <button class="pagination-btn" data-dir="next" ${currentPage === totalPages ? "disabled" : ""}>Næste</button>
         </div>
     `;
 
+    renderFilterChips(statuses, statusCounts, priorityCounts);
     wireUpInteractions(container, totalPages);
     attachFlagButtonHandlers(container);
 }
 
+function renderFilterChips(statuses, statusCounts, priorityCounts) {
+    const statusEl = document.getElementById("statusChipContainer");
+    const prioEl = document.getElementById("priorityChipContainer");
+
+    if (statusEl) {
+        statusEl.innerHTML = ["", ...statuses].map(s => `
+            <button class="ticket-chip ${filters.status === s ? "ticket-chip-active" : ""}"
+                    data-type="status"
+                    data-value="${s}">
+                ${s || "Alle"}
+                <span class="ticket-chip-count">${statusCounts[s || ""] ?? 0}</span>
+            </button>
+        `).join("");
+    }
+
+    if (prioEl) {
+        // ✅ VIGTIGT: RYD FØRST
+        prioEl.innerHTML = "";
+
+        const priorities = [
+            { value: "", label: "Alle" },
+            { value: "høj", label: "Høj" },
+            { value: "normal", label: "Normal" },
+            { value: "lav", label: "Lav" }
+        ];
+
+        prioEl.innerHTML = priorities.map(p => `
+            <button class="ticket-chip ${filters.priority === p.value ? "ticket-chip-active" : ""}"
+                    data-type="priority"
+                    data-value="${p.value}">
+                ${p.label}
+                <span class="ticket-chip-count">${priorityCounts[p.value] ?? 0}</span>
+            </button>
+        `).join("");
+    }
+}
+
 function wireUpInteractions(container, totalPages) {
-    const searchInput = container.querySelector("#ticketSearchInput");
-    const statusSelect = container.querySelector("#ticketStatusFilter");
-    const routingSelect = container.querySelector("#ticketRoutingFilter");
-    const paginationButtons = container.querySelectorAll(".pagination-btn");
-    const viewButtons = container.querySelectorAll(".view-toggle-btn");
+    container.querySelector("#ticketSearchInput")?.addEventListener("input", e => {
+        filters.search = e.target.value;
+        currentPage = 1;
+        persistFilters();
+        renderTicketList(container);
+    });
 
-    if (searchInput) {
-        searchInput.addEventListener("input", event => {
-            filters.search = event.target.value;
-            currentPage = 1;
-            persistFilters();
-            renderTicketList(container);
-        });
-    }
+    container.querySelector("#ticketStatusFilter")?.addEventListener("change", e => {
+        filters.status = e.target.value;
+        currentPage = 1;
+        persistFilters();
+        renderTicketList(container);
+    });
 
-    if (statusSelect) {
-        statusSelect.addEventListener("change", event => {
-            filters.status = event.target.value;
-            currentPage = 1;
-            persistFilters();
-            renderTicketList(container);
-        });
-    }
+    container.querySelector("#ticketRoutingFilter")?.addEventListener("change", e => {
+        filters.routing = e.target.value;
+        currentPage = 1;
+        persistFilters();
+        renderTicketList(container);
+    });
 
-    if (routingSelect) {
-        routingSelect.addEventListener("change", event => {
-            filters.routing = event.target.value;
-            currentPage = 1;
-            persistFilters();
-            renderTicketList(container);
-        });
-    }
-
-    paginationButtons.forEach(btn => {
+    container.querySelectorAll(".pagination-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-            const dir = btn.dataset.direction;
-            if (dir === "prev" && currentPage > 1) {
-                currentPage -= 1;
-            } else if (dir === "next" && currentPage < totalPages) {
-                currentPage += 1;
-            }
+            currentPage += btn.dataset.dir === "next" ? 1 : -1;
             persistFilters();
             renderTicketList(container);
         });
     });
 
-    viewButtons.forEach(btn => {
+    container.querySelectorAll(".view-toggle-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-            const view = btn.dataset.view;
-            if (view && view !== currentView) {
-                currentView = view;
-                persistFilters();
-                renderTicketList(container);
-            }
+            currentView = btn.dataset.view;
+            persistFilters();
+            renderTicketList(container);
         });
+    });
+
+    document.getElementById("ticketChipRow")?.addEventListener("click", e => {
+        const btn = e.target.closest(".ticket-chip");
+        if (!btn) return;
+        filters[btn.dataset.type] = btn.dataset.value || "";
+        currentPage = 1;
+        persistFilters();
+        renderTicketList(container);
     });
 }
+
 function attachFlagButtonHandlers(container) {
-    const buttons = container.querySelectorAll(".ticket-flag-button");
-
-    buttons.forEach(btn => {
+    container.querySelectorAll(".ticket-flag-button").forEach(btn => {
         btn.addEventListener("click", async () => {
-            const ticketId = btn.dataset.ticketId;
+            const id = btn.dataset.ticketId;
             const isFailure = btn.dataset.isFailure === "true";
-
-            if (!ticketId) return;
-
-            let confirmed = false;
-
-            if (isFailure) {
-                confirmed = window.confirm(
-                    `Vil du markere ticket #${ticketId} som korrekt routed?\n` +
-                    `Den vil blive fjernet fra FAILURE-statistikken.`
-                );
-            } else {
-                confirmed = window.confirm(
-                    `Er du sikker på, at ticket #${ticketId} er routet forkert?\n` +
-                    `Den bliver markeret som FAILURE, og statistikken opdateres.`
-                );
-            }
-
-            if (!confirmed) return;
-
-            try {
-                btn.disabled = true;
-                btn.textContent = "Opdaterer...";
-
-                if (isFailure) {
-                    await markTicketAsCorrect(ticketId);
-                } else {
-                    await markTicketAsMisrouted(ticketId);
-                }
-
-                window.location.reload();
-
-            } catch (e) {
-                console.error("Fejl ved opdatering:", e);
-                btn.disabled = false;
-
-                btn.textContent = isFailure
-                    ? "Marker som korrekt routing"
-                    : "Marker som forkert routing";
-
-                alert("Der opstod en fejl ved opdateringen.");
-            }
+            if (!confirm("Er du sikker?")) return;
+            isFailure ? await markTicketAsCorrect(id) : await markTicketAsMisrouted(id);
+            location.reload();
         });
     });
 }
-
