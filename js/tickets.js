@@ -6,7 +6,6 @@ import {
 
 import { SELECTED_DEPARTMENT_ID } from "./config.js";
 
-
 const PAGE_SIZE = 10;
 let allTickets = [];
 let filters = {
@@ -20,6 +19,33 @@ let currentView = "table";
 let activeDepartmentKey = null;
 
 const FILTER_STORAGE_KEY = "departmentTicketFilters";
+
+// ====== AUTH-HELPER (samme logik som i index.js) ======
+const AUTH_USER_KEY = "currentUser";
+
+function getCurrentUser() {
+    try {
+        const raw = sessionStorage.getItem(AUTH_USER_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch (e) {
+        console.warn("Kunne ikke parse currentUser fra sessionStorage", e);
+        return null;
+    }
+}
+
+function getCurrentUserRole() {
+    const user = getCurrentUser();
+    if (!user || !user.username) return "user";
+    if (user.username === "admin") return "admin";
+    return "user";
+}
+
+function canEditRouting() {
+    return getCurrentUserRole() === "admin";
+}
+
+// ======================================================
 
 function formatDate(iso) {
     if (!iso) return "";
@@ -143,11 +169,11 @@ function buildFilterBar(statuses) {
                 <select class="ticket-filter-select" id="ticketStatusFilter">
                     <option value="">Alle statusser</option>
                     ${statuses
-                        .map(status => {
-                            const active = filters.status === status ? "selected" : "";
-                            return `<option value="${status}" ${active}>${status}</option>`;
-                        })
-                        .join("")}
+        .map(status => {
+            const active = filters.status === status ? "selected" : "";
+            return `<option value="${status}" ${active}>${status}</option>`;
+        })
+        .join("")}
                 </select>
                 <select class="ticket-filter-select" id="ticketRoutingFilter">
                     <option value="">Alle routingtyper</option>
@@ -220,6 +246,8 @@ function renderFilterChips(statuses, priorities, statusCounts, priorityCounts) {
 }
 
 function renderTableRows(tickets) {
+    const canEdit = canEditRouting();
+
     return `
         <table class="ticket-table">
             <thead>
@@ -238,6 +266,18 @@ function renderTableRows(tickets) {
         .map(t => {
             const isFailure = (t.status || t.routingStatus || "").toUpperCase() === "FAILURE";
 
+            const actionCell = canEdit
+                ? `
+                                    <button
+                                        class="ticket-flag-button ${isFailure ? "flag-correct" : "flag-wrong"}"
+                                        data-ticket-id="${t.id}"
+                                        data-is-failure="${isFailure}"
+                                    >
+                                        ${isFailure ? "Marker som korrekt routing" : "Marker som forkert routing"}
+                                    </button>
+                              `
+                : `<span class="ticket-no-permission">Ingen rettighed</span>`;
+
             return `
                             <tr class="ticket-table-row" data-ticket-id="${t.id}">
                                 <td class="ticket-id">#${t.id}</td>
@@ -253,13 +293,7 @@ function renderTableRows(tickets) {
                                 <td>${formatDate(t.date)}</td>
 
                                 <td class="ticket-table-actions">
-                                    <button
-                                        class="ticket-flag-button ${isFailure ? "flag-correct" : "flag-wrong"}"
-                                        data-ticket-id="${t.id}"
-                                        data-is-failure="${isFailure}"
-                                    >
-                                        ${isFailure ? "Marker som korrekt routing" : "Marker som forkert routing"}
-                                    </button>
+                                    ${actionCell}
                                 </td>
                             </tr>
                         `;
@@ -270,16 +304,15 @@ function renderTableRows(tickets) {
     `;
 }
 
-
 function renderCardRows(tickets) {
+    const canEdit = canEditRouting();
+
     return tickets
         .map(t => {
             const isFailure = t.status === "FAILURE";
 
-            return `
-                <div class="ticket-card" data-ticket-id="${t.id}">
-                    <div class="ticket-card-header">
-                        <h3>Ticket #${t.id}</h3>
+            const actionButton = canEdit
+                ? `
                         <button
                             class="ticket-flag-button ${isFailure ? "flag-correct" : "flag-wrong"}"
                             data-ticket-id="${t.id}"
@@ -287,6 +320,14 @@ function renderCardRows(tickets) {
                         >
                             ${isFailure ? "Marker som korrekt routing" : "Marker som forkert routing"}
                         </button>
+                  `
+                : `<span class="ticket-no-permission">Ingen rettighed</span>`;
+
+            return `
+                <div class="ticket-card" data-ticket-id="${t.id}">
+                    <div class="ticket-card-header">
+                        <h3>Ticket #${t.id}</h3>
+                        ${actionButton}
                     </div>
 
                     <p><strong>Status:</strong> ${t.status}</p>
@@ -298,8 +339,6 @@ function renderCardRows(tickets) {
         })
         .join('<hr class="ticket-divider">');
 }
-
-
 
 function normalizeTicket(ticket) {
     return {
@@ -480,8 +519,13 @@ function wireUpInteractions(container, totalPages) {
         });
     });
 }
+
 function attachFlagButtonHandlers(container) {
     const buttons = container.querySelectorAll(".ticket-flag-button");
+
+    // Hvis brugeren ikke er admin, er der ingen knapper (eller de er bare spans),
+    // så der er ikke noget at gøre her.
+    if (!buttons.length) return;
 
     buttons.forEach(btn => {
         btn.addEventListener("click", async () => {
@@ -531,4 +575,3 @@ function attachFlagButtonHandlers(container) {
         });
     });
 }
-

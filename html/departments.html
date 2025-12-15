@@ -35,7 +35,7 @@
                     </div>
 
                     <div class="brand-subtitle">
-                        Routing performance &amp; kvalitetsoverblik
+                        Routing performance & kvalitetsoverblik
                     </div>
                 </div>
             </div>
@@ -44,14 +44,10 @@
             <div class="topbar-right">
                 <nav class="topbar-nav">
                     <a href="./index.html" class="nav-link">
-                        <span class="dot"></span>
-                        <span>Dashboard</span>
+                        Dashboard
                     </a>
-                    <a href="./departments.html"
-                       class="nav-link nav-link-active"
-                       aria-current="page">
-                        <span class="dot"></span>
-                        <span>Departments</span>
+                    <a href="./departments.html" class="nav-link nav-link-active">
+                        Departments
                     </a>
                 </nav>
 
@@ -69,7 +65,6 @@
 
                     <div id="settingsDropdown" class="settings-dropdown" aria-label="Settings menu">
                         <div class="settings-group-label">Indstillinger</div>
-
                         <div class="settings-item settings-item-toggle" data-setting="theme">
                             <div class="settings-item-text">
                                 <div class="settings-item-title">Tema</div>
@@ -81,9 +76,7 @@
                             </label>
                             <div class="theme-preview" id="themePreview" aria-hidden="true"></div>
                         </div>
-
                         <div class="settings-group-label">Auto-refresh</div>
-
                         <div class="settings-item settings-item-toggle" id="autoRefreshToggleRow">
                             <div class="settings-item-text">
                                 <div class="settings-item-title">Auto-refresh</div>
@@ -94,7 +87,6 @@
                                 <span class="slider"></span>
                             </label>
                         </div>
-
                         <div class="settings-item settings-item-inline" id="autoRefreshIntervalRow">
                             <div class="settings-item-text">
                                 <div class="settings-item-title">Interval</div>
@@ -107,20 +99,16 @@
                                 <option value="300000">Hvert 5. minut</option>
                             </select>
                         </div>
-
                         <div class="settings-item settings-item-static" id="autoRefreshScheduleRow">
                             <div class="settings-item-text">
                                 <div class="settings-item-title">Næste auto-refresh</div>
                                 <div class="settings-item-sub" id="autoRefreshNextLabel">Planlægges...</div>
                             </div>
                         </div>
-
                         <button class="settings-item" type="button" data-setting="refresh">
                             Opdater data
                         </button>
-
                         <hr class="settings-divider">
-
                         <button class="settings-item" type="button" data-setting="logout">
                             Log ud
                         </button>
@@ -136,16 +124,12 @@
 
         <div id="departmentLiveRegion" class="visually-hidden" aria-live="polite"></div>
 
-        <header class="page-header">
-            <div>
-                <h1 class="page-title">Departments</h1>
-                <p class="page-subtitle">
-                    Administrér departments og få overblik over routing performance på tværs af organisationen.
-                </p>
-            </div>
-        </header>
+        <h1 style="margin: 0 0 6px;">Departments</h1>
+        <p style="margin: 0 0 20px; color: var(--text-muted);">
+            Administrér departments og få overblik over routing performance.
+        </p>
 
-        <section class="card" aria-label="Department-oversigt">
+        <div class="card">
 
             <!-- ======== Card Header ======== -->
             <div class="card-header-row">
@@ -157,26 +141,23 @@
                     </div>
                 </div>
 
-                <div class="toolbar">
+                    <div class="toolbar">
 
-                    <!-- Search -->
-                    <div class="toolbar-search">
-                        <label class="visually-hidden" for="departmentSearch">Søg efter department</label>
-                        <div class="input-with-icon">
-                            <span class="input-icon">🔍</span>
+                        <!-- Search -->
+                        <div class="toolbar-search">
+                            <label class="visually-hidden" for="departmentSearch">Søg efter department</label>
                             <input id="departmentSearch" type="text" placeholder="Søg efter department...">
                         </div>
-                    </div>
 
-                    <div class="toolbar-result" aria-live="polite">
-                        <span class="result-badge" id="departmentResultBadge">0</span>
-                        <span class="result-label">matches</span>
-                    </div>
+                        <div class="toolbar-result" aria-live="polite">
+                            <span class="result-badge" id="departmentResultBadge">0</span>
+                            <span class="result-label">matches</span>
+                        </div>
 
-                    <!-- Filter chips -->
-                    <button class="toolbar-chip toolbar-chip-active" type="button">
-                        <span class="dot"></span> Alle
-                    </button>
+                        <!-- Filter chips -->
+                        <button class="toolbar-chip toolbar-chip-active" type="button">
+                            <span class="dot"></span> Alle
+                        </button>
 
                     <button class="toolbar-chip" type="button">
                         <span class="dot"></span> Høj accuracy
@@ -196,12 +177,7 @@
 
             <!-- ======== Add Department ======== -->
             <div id="addDepartmentContainer" class="add-department-container hidden">
-                <div class="add-department-header">
-                    <div class="add-department-title">Tilføj nyt department</div>
-                    <div class="add-department-subtitle">
-                        Udfyld minimum navn og mailadresse for at kunne gemme.
-                    </div>
-                </div>
+                <div class="add-department-title">Tilføj nyt department</div>
 
                 <form id="addDepartmentForm">
                     <div class="add-department-grid">
@@ -229,12 +205,7 @@
 
             <!-- ======== Edit Department ======== -->
             <div id="editDepartmentContainer" class="add-department-container hidden">
-                <div class="add-department-header">
-                    <div class="add-department-title">Rediger department</div>
-                    <div class="add-department-subtitle">
-                        Opdater informationer for det valgte department.
-                    </div>
-                </div>
+                <div class="add-department-title">Rediger department</div>
 
                 <form id="editDepartmentForm">
                     <div class="add-department-grid">
@@ -265,7 +236,7 @@
                 Henter departments...
             </div>
 
-        </section>
+        </div>
 
     </main>
 
