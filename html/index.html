@@ -19,7 +19,8 @@
 <body>
 
 <div class="app-shell">
-    <!-- TOPBAR -->
+
+    <!-- ================= HEADER ================= -->
     <header class="topbar">
         <div class="topbar-inner">
             <div class="brand">
@@ -30,105 +31,106 @@
                         <span class="brand-pill">Internal</span>
                     </div>
                     <div class="brand-subtitle">
-                        Routing performance &amp; kvalitetsoverblik
+                        Routing performance & kvalitetsoverblik
                     </div>
                 </div>
             </div>
 
-
+            <!-- Right side -->
             <div class="topbar-right">
                 <nav class="topbar-nav">
                     <a href="./index.html" class="nav-link nav-link-active">
                         <span class="dot"></span>
-                        <span>Dashboard</span>
+                        Dashboard
                     </a>
+
                     <a href="./departments.html" class="nav-link">
                         <span class="dot"></span>
-                        <span>Departments</span>
+                        Departments
                     </a>
                 </nav>
 
+                <!-- SETTINGS -->
                 <div class="settings-menu">
-                    <button
-                            id="settingsButton"
-                            class="settings-button"
-                            type="button"
-                            aria-haspopup="true"
-                            aria-expanded="false"
-                            aria-label="Åbn indstillinger"
-                    >
+                    <button id="settingsButton" class="settings-button" type="button">
                         <span class="settings-icon">⚙</span>
                     </button>
 
-                    <div id="settingsDropdown" class="settings-dropdown" aria-label="Settings menu">
+                    <div id="settingsDropdown" class="settings-dropdown">
                         <div class="settings-group-label">Indstillinger</div>
-                        <div class="settings-item settings-item-toggle" data-setting="theme">
+
+                        <!-- Theme toggle -->
+                        <div class="settings-item settings-item-toggle">
                             <div class="settings-item-text">
                                 <div class="settings-item-title">Tema</div>
                                 <div class="settings-item-sub" id="themeStatusLabel">Lyst tema</div>
                             </div>
                             <label class="switch">
-                                <input type="checkbox" id="themeToggleInput" aria-label="Skift tema">
+                                <input type="checkbox" id="themeToggleInput">
                                 <span class="slider"></span>
                             </label>
-                            <div class="theme-preview" id="themePreview" aria-hidden="true"></div>
+                            <div id="themePreview" class="theme-preview"></div>
                         </div>
+
+                        <!-- Auto refresh -->
                         <div class="settings-group-label">Auto-refresh</div>
-                        <div class="settings-item settings-item-toggle" id="autoRefreshToggleRow">
+
+                        <div class="settings-item settings-item-toggle">
                             <div class="settings-item-text">
                                 <div class="settings-item-title">Auto-refresh</div>
                                 <div class="settings-item-sub" id="autoRefreshStatusLabel">Aktiveret</div>
                             </div>
                             <label class="switch">
-                                <input type="checkbox" id="autoRefreshToggleInput" aria-label="Slå auto-refresh til eller fra">
+                                <input type="checkbox" id="autoRefreshToggleInput">
                                 <span class="slider"></span>
                             </label>
                         </div>
-                        <div class="settings-item settings-item-inline" id="autoRefreshIntervalRow">
+
+                        <div class="settings-item settings-item-inline">
                             <div class="settings-item-text">
                                 <div class="settings-item-title">Interval</div>
-                                <div class="settings-item-sub">Hvor ofte skal dashboardet opdateres?</div>
+                                <div class="settings-item-sub">Hvor ofte opdateres dashboardet?</div>
                             </div>
-                            <select id="autoRefreshIntervalSelect" class="settings-select" aria-label="Vælg auto-refresh interval">
-                                <option value="30000">Hvert 30. sekund</option>
-                                <option value="60000" selected>Hvert 1. minut</option>
-                                <option value="120000">Hvert 2. minut</option>
-                                <option value="300000">Hvert 5. minut</option>
+
+                            <select id="autoRefreshIntervalSelect" class="settings-select">
+                                <option value="30000">30 sek</option>
+                                <option value="60000" selected>1 minut</option>
+                                <option value="120000">2 minutter</option>
+                                <option value="300000">5 minutter</option>
                             </select>
                         </div>
-                        <div class="settings-item settings-item-static" id="autoRefreshScheduleRow">
+
+                        <div class="settings-item settings-item-static">
                             <div class="settings-item-text">
                                 <div class="settings-item-title">Næste auto-refresh</div>
                                 <div class="settings-item-sub" id="autoRefreshNextLabel">Planlægges...</div>
                             </div>
                         </div>
-                        <button class="settings-item" type="button" data-setting="refresh">
-                            Opdater data
-                        </button>
+
+                        <button class="settings-item" data-setting="refresh">Opdater data</button>
+
                         <hr class="settings-divider">
-                        <button class="settings-item" type="button" data-setting="logout">
-                            Log ud
-                        </button>
+
+                        <button class="settings-item" data-setting="logout">Log ud</button>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- SIDEINDHOLD -->
+
+    <!-- ================= MAIN PAGE ================= -->
     <main class="page">
-        <div id="liveStatus" class="visually-hidden" aria-live="polite"></div>
         <section class="hero">
             <div class="hero-left">
-                <div class="hero-overline" id="main-overline">Routing performance</div>
+                <div class="hero-overline">Routing Performance</div>
 
-                <h1 id="main-title">
+                <h1>
                     Quality of ticket <span>routing</span>
                 </h1>
 
-                <p id="main-subtitle">
-                    Overblik over hvor præcist systemet fordeler tickets på tværs af teams – og hvordan
-                    routingkvaliteten udvikler sig over tid.
+                <p>
+                    Overblik over hvor præcist systemet fordeler tickets – og hvordan routingkvaliteten udvikler sig over tid.
                 </p>
             </div>
 
@@ -137,32 +139,24 @@
                     <span class="pill-dot"></span>
                     Live data
                 </span>
+
                 <div class="hero-updated">
                     <span class="hero-updated-label">Sidst opdateret</span>
-                    <span class="hero-updated-value" id="lastUpdated"></span>
-                    <button id="refreshNowButton" class="hero-refresh" type="button" aria-label="Opdater data nu">
-                        ↻ Opdater nu
-                    </button>
-                </div>
-                <div class="hero-next-refresh" aria-live="polite">
-                    <span class="hero-updated-label">Næste auto-refresh</span>
-                    <span class="hero-updated-value" id="nextRefreshLabel">Planlægges...</span>
+                    <span id="lastUpdated" class="hero-updated-value"></span>
+
+                    <button id="refreshNowButton" class="hero-refresh">↻ Opdater nu</button>
                 </div>
 
-                <!-- Minimalistisk Excel-knap med officielt logo -->
-                <button
-                        id="downloadReportButton"
-                        class="hero-download"
-                        type="button"
-                        aria-label="Download rapport som Excel-fil med seneste statistik og tickets"
-                        disabled
-                >
-                    <span class="hero-download-icon" aria-hidden="true">
-                        <img
-                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Microsoft_Office_Excel_%282019%E2%80%932025%29.svg/1200px-Microsoft_Office_Excel_%282019%E2%80%932025%29.svg.png"
-                                alt=""
-                                loading="lazy"
-                        >
+                <div class="hero-next-refresh">
+                    <span class="hero-updated-label">Næste auto-refresh</span>
+                    <span id="nextRefreshLabel" class="hero-updated-value">Planlægges...</span>
+                </div>
+
+                <!-- Download Excel -->
+                <button id="downloadReportButton" class="hero-download" disabled>
+                    <span class="hero-download-icon">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Microsoft_Office_Excel_%282019%E2%80%932025%29.svg/1200px-Microsoft_Office_Excel_%282019%E2%80%932025%29.svg.png"
+                             alt="" loading="lazy">
                     </span>
                     <span class="hero-download-text">
                         <span class="hero-download-title">Excel</span>
@@ -170,15 +164,13 @@
                     </span>
                 </button>
 
-                <!-- Tilbage-knap – styres af index.js -->
                 <button id="backToDepartments" class="back-button">
-                    <span class="arrow">←</span>
-                    <span>Tilbage til departments</span>
+                    ← Tilbage til departments
                 </button>
             </div>
         </section>
 
-        <!-- JS skriver her dashboardet ind -->
+        <!-- Dashboard output -->
         <section id="output" class="fade-in">
             <div class="card">
                 <div class="loading">
@@ -186,20 +178,24 @@
                     <p>Indlæser statistik...</p>
                 </div>
             </div>
+
             <div id="ticket-output"></div>
         </section>
 
-        <!-- Department Ticket List – kun vist i department-view -->
+        <!-- Ticket List for Department View -->
         <section id="departmentTicketListSection">
             <h2>Department Ticket List</h2>
             <div class="ticket-chip-row" id="ticketChipRow">
+
+            <div class="ticket-chip-row">
                 <div class="ticket-chip-group">
                     <span class="chip-label">Status</span>
-                    <div class="ticket-chips" id="statusChipContainer"></div>
+                    <div id="statusChipContainer" class="ticket-chips"></div>
                 </div>
+
                 <div class="ticket-chip-group">
                     <span class="chip-label">Prioritet</span>
-                    <div class="ticket-chips" id="priorityChipContainer"></div>
+                    <div id="priorityChipContainer" class="ticket-chips"></div>
                 </div>
             </div>
 
@@ -207,17 +203,22 @@
 
         </section>
 
+            <div id="ticket-list" aria-live="polite">Loading...</div>
+        </section>
     </main>
 
-    <!-- FOOTER -->
+
+    <!-- ================= FOOTER ================= -->
     <footer class="footer">
         <span>itm8 • Ticket Routing Tool</span>
         <span class="footer-divider">•</span>
         <span>Internal dashboard</span>
     </footer>
+
 </div>
 
-<div id="loadingOverlay" class="loading-overlay" aria-live="polite" aria-busy="true">
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay">
     <div class="loading">
         <div class="spinner"></div>
         <p>Opdaterer data...</p>

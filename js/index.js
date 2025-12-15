@@ -3,6 +3,7 @@ import {
     getRoutingStats,
     getRoutingStatsForDepartment,
     getTicketsForDepartment,
+    getDepartmentTicketList,
 } from "./api.js";
 import { loadTicketList } from "./tickets.js";
 
@@ -432,20 +433,24 @@ async function loadStats(options = {}) {
                     departmentData = { departmentName: tickets[0].departmentName };
                 }
             } else {
-                const [statsFromApi, deptData] = await Promise.all([
+                // Hent:
+                //  - stats for department
+                //  - metrics-objekt (til navn m.m.)
+                //  - ticket-listen for department
+                const [statsFromApi, deptMetrics, ticketList] = await Promise.all([
                     getRoutingStatsForDepartment(depId),
-                    getTicketsForDepartment(depId)
+                    getTicketsForDepartment(depId),
+                    getDepartmentTicketList(depId),
                 ]);
 
                 stats = statsFromApi;
-                departmentData = deptData;
+                departmentData = deptMetrics;
 
-                if (Array.isArray(deptData)) {
-                    tickets = deptData;
-                } else if (deptData && Array.isArray(deptData.tickets)) {
-                    tickets = deptData.tickets;
+                if (Array.isArray(ticketList)) {
+                    tickets = ticketList;
+                } else if (ticketList && Array.isArray(ticketList.tickets)) {
+                    tickets = ticketList.tickets;
                 } else {
-                    console.warn("Ukendt format fra getTicketsForDepartment:", deptData);
                     tickets = [];
                 }
 
@@ -648,7 +653,7 @@ async function loadStats(options = {}) {
         try {
             window.localStorage.setItem("routingAccuracyLast", String(accuracyPercent));
         } catch (e) {
-            console.warn("Kunne ikke gemme routingAccuracyLast i localStorage:", e);
+            console.warn("Kunne ikke gemme routingAccuracyLast i localStorage", e);
         }
 
         const updatedEl = document.getElementById("lastUpdated");
