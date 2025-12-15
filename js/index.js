@@ -145,6 +145,30 @@ function escapeHtml(value) {
         .replace(/'/g, "&#39;");
 }
 
+function mapPriorityToCode(priorityRaw) {
+    if (!priorityRaw) return "P3"; // fallback
+
+    const value = String(priorityRaw).toLowerCase().trim();
+
+    // Direkte match
+    if (["p1", "prio1", "priority1", "1"].includes(value)) return "P1";
+    if (["p2", "prio2", "priority2", "2"].includes(value)) return "P2";
+    if (["p3", "prio3", "priority3", "3"].includes(value)) return "P3";
+    if (["sima", "sima-ticket", "sima support"].includes(value)) return "SIMA";
+
+    // Teksttyper
+    if (["kritisk", "critical", "urgent", "høj", "hoej", "high"].includes(value)) return "P1";
+    if (["medium", "mellem", "normal"].includes(value)) return "P2";
+    if (["lav", "low"].includes(value)) return "P3";
+
+    // Hvis brugeren allerede har skrevet P1/P2/P3/SIMA
+    const upper = String(priorityRaw).toUpperCase().trim();
+    if (["P1", "P2", "P3", "SIMA"].includes(upper)) return upper;
+
+    return "P3"; // standard fallback
+}
+
+
 function normalizeTicketForExport(ticket) {
     const priorityRaw =
         ticket.priority ||
@@ -153,10 +177,7 @@ function normalizeTicketForExport(ticket) {
         ticket.priority_name ||
         "Normal";
 
-    const normalizedPriority = String(priorityRaw)
-        .trim()
-        .toLowerCase()
-        .replace(/(^|\s)\w/g, c => c.toUpperCase()) || "Normal";
+    const normalizedPriority = mapPriorityToCode(priorityRaw);
 
     return {
         id:
@@ -165,12 +186,17 @@ function normalizeTicketForExport(ticket) {
             ticket.ticketId ??
             ticket.ticketNumber ??
             "Ukendt",
+
         status: (ticket.status ?? ticket.routingStatus ?? "").toUpperCase() || "-",
+
         subject: ticket.subject ?? ticket.title ?? "(ingen subject)",
+
         date: ticket.createdAt ?? ticket.created_at ?? ticket.date ?? "",
-        priority: normalizedPriority
+
+        priority: normalizedPriority  // P1 / P2 / P3 / SIMA
     };
 }
+
 
 function buildTable(headers, rows) {
     const headHtml = headers

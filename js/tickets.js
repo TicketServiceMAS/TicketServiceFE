@@ -1,7 +1,8 @@
 import {
     getDepartmentTicketList,
     markTicketAsMisrouted,
-    markTicketAsCorrect
+    markTicketAsCorrect,
+    updateTicketPriority
 } from "./api.js";
 
 import { SELECTED_DEPARTMENT_ID } from "./config.js";
@@ -56,18 +57,77 @@ function formatDate(iso) {
     return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("da-DK");
 }
 
+/**
+ * Mapper alle mulige priority-felter til en af:
+ *  - "P1", "P2", "P3" eller "SIMA"
+ */
+function mapPriorityToCode(priorityRaw) {
+    if (!priorityRaw) return "P3"; // default
+
+    let value = priorityRaw;
+
+    // Hvis backend sender et objekt, prøv at trække en tekstværdi ud
+    if (typeof value === "object" && value !== null) {
+        const candidate =
+            value.code ??
+            value.name ??
+            value.label ??
+            value.priority ??
+            value.priorityLevel ??
+            value.severity ??
+            value.priority_name;
+
+        if (candidate) {
+            value = candidate;
+        } else {
+            value = String(value);
+        }
+    }
+
+    const v = String(value).toLowerCase().trim();
+
+    // Direkte match
+    if (["p1", "prio1", "priority1", "1"].includes(v)) return "P1";
+    if (["p2", "prio2", "priority2", "2"].includes(v)) return "P2";
+    if (["p3", "prio3", "priority3", "3"].includes(v)) return "P3";
+    if (["sima", "sima-ticket", "sima support"].includes(v)) return "SIMA";
+
+    // Teksttyper → mappes til P1–P3
+    if (["kritisk", "critical", "urgent", "høj", "hoej", "high"].includes(v)) return "P1";
+    if (["medium", "mellem", "normal"].includes(v)) return "P2";
+    if (["lav", "low"].includes(v)) return "P3";
+
+    // Hvis der allerede står P1/P2/P3/SIMA i en eller anden casing
+    const upper = String(value).toUpperCase().trim();
+    if (["P1", "P2", "P3", "SIMA"].includes(upper)) return upper;
+
+    // Fallback
+    return "P3";
+}
+
 function formatPriority(raw) {
-    if (!raw) return "Normal";
-    const s = String(raw).trim();
-    return s ? s.charAt(0).toUpperCase() + s.slice(1) : "Normal";
+    return mapPriorityToCode(raw);
 }
 
 function normalizePriority(p) {
-    return (p || "Normal").toLowerCase();
+    // Bruges til nøgler i filter-state/counts (lowercase)
+    return mapPriorityToCode(p).toLowerCase(); // "p1", "p2", "p3", "sima"
 }
 
 function getStorageKey(departmentId) {
     return String(departmentId ?? SELECTED_DEPARTMENT_ID ?? "all");
+}
+
+// Mapper P1/P2/P3/SIMA → backend priorityId
+// JUSTÉR denne hvis jeres API bruger andre ID'er.
+function mapPriorityCodeToId(code) {
+    switch (code) {
+        case "P1": return 1;
+        case "P2": return 2;
+        case "P3": return 3;
+        case "SIMA": return 4;
+        default: return 3;
+    }
 }
 
 /* ===================================================== */
@@ -143,6 +203,7 @@ function normalizeTicket(t) {
         status: (t.status ?? t.routingStatus ?? "").toUpperCase(),
         subject: t.subject ?? t.title ?? "",
         date: t.createdAt ?? t.date,
+        // altid P1 / P2 / P3 / SIMA
         priority: formatPriority(
             t.priority ?? t.priorityLevel ?? t.severity ?? t.priority_name
         )
@@ -195,7 +256,7 @@ function buildStatusCounts(tickets) {
 function buildPriorityCounts(tickets) {
     const counts = { "": tickets.length };
     tickets.forEach(t => {
-        const key = normalizePriority(t.priority);
+        const key = normalizePriority(t.priority); // "p1"/"p2"/"p3"/"sima"
         counts[key] = (counts[key] || 0) + 1;
     });
     return counts;
@@ -250,6 +311,7 @@ function buildFilterBar(statuses) {
 
 function renderTableRows(tickets) {
     const canEdit = canEditRouting();
+    const priorityOptions = ["P1", "P2", "P3", "SIMA"];
 
     return `
         <table class="ticket-table">
@@ -262,11 +324,20 @@ function renderTableRows(tickets) {
             <tbody>
                 ${tickets.map(t => {
         const isFailure = t.status === "FAILURE";
+
+        const priorityCell = canEdit
+            ? `<select class="ticket-priority-select" data-ticket-id="${t.id}">
+                                ${priorityOptions.map(p =>
+                `<option value="${p}" ${t.priority === p ? "selected" : ""}>${p}</option>`
+            ).join("")}
+                           </select>`
+            : t.priority;
+
         return `
                         <tr>
                             <td>#${t.id}</td>
                             <td><span class="ticket-status ${isFailure ? "status-failure" : "status-success"}">${t.status}</span></td>
-                            <td>${t.priority}</td>
+                            <td>${priorityCell}</td>
                             <td>${t.subject}</td>
                             <td>${formatDate(t.date)}</td>
                             <td>
@@ -287,14 +358,24 @@ function renderTableRows(tickets) {
 
 function renderCardRows(tickets) {
     const canEdit = canEditRouting();
+    const priorityOptions = ["P1", "P2", "P3", "SIMA"];
 
     return tickets.map(t => {
         const isFailure = t.status === "FAILURE";
+
+        const priorityRow = canEdit
+            ? `<select class="ticket-priority-select" data-ticket-id="${t.id}">
+                    ${priorityOptions.map(p =>
+                `<option value="${p}" ${t.priority === p ? "selected" : ""}>${p}</option>`
+            ).join("")}
+               </select>`
+            : t.priority;
+
         return `
             <div class="ticket-card">
                 <h3>Ticket #${t.id}</h3>
                 <p><strong>Status:</strong> ${t.status}</p>
-                <p><strong>Prioritet:</strong> ${t.priority}</p>
+                <p><strong>Prioritet:</strong> ${priorityRow}</p>
                 <p><strong>Subject:</strong> ${t.subject}</p>
                 <p><strong>Dato:</strong> ${formatDate(t.date)}</p>
                 ${canEdit
@@ -340,6 +421,7 @@ function renderTicketList(container) {
     renderFilterChips(statuses, statusCounts, priorityCounts);
     wireUpInteractions(container, totalPages);
     attachFlagButtonHandlers(container);
+    attachPriorityChangeHandlers(container);
 }
 
 /* ===================================================== */
@@ -362,14 +444,14 @@ function renderFilterChips(statuses, statusCounts, priorityCounts) {
     }
 
     if (prioEl) {
-        // ✅ VIGTIGT: RYD FØRST
         prioEl.innerHTML = "";
 
         const priorities = [
             { value: "", label: "Alle" },
-            { value: "høj", label: "Høj" },
-            { value: "normal", label: "Normal" },
-            { value: "lav", label: "Lav" }
+            { value: "p1", label: "P1" },
+            { value: "p2", label: "P2" },
+            { value: "p3", label: "P3" },
+            { value: "sima", label: "SIMA" }
         ];
 
         prioEl.innerHTML = priorities.map(p => `
@@ -382,7 +464,6 @@ function renderFilterChips(statuses, statusCounts, priorityCounts) {
         `).join("");
     }
 }
-
 
 /* ===================================================== */
 /* EVENTS */
@@ -448,6 +529,41 @@ function attachFlagButtonHandlers(container) {
             if (!confirm("Er du sikker?")) return;
             isFailure ? await markTicketAsCorrect(id) : await markTicketAsMisrouted(id);
             location.reload();
+        });
+    });
+}
+
+/**
+ * Kun admin: ændre prioritet via dropdown.
+ */
+function attachPriorityChangeHandlers(container) {
+    if (!canEditRouting()) return;
+
+    container.querySelectorAll(".ticket-priority-select").forEach(select => {
+        select.addEventListener("change", async () => {
+            const ticketId = select.dataset.ticketId;
+            const newCode = select.value; // P1 / P2 / P3 / SIMA
+            const priorityId = mapPriorityCodeToId(newCode);
+
+            const prevDisabled = select.disabled;
+            select.disabled = true;
+
+            try {
+                await updateTicketPriority(ticketId, priorityId);
+
+                // Opdatér lokal state så filtre m.m. stadig passer
+                const rawTicket = allTickets.find(t =>
+                    String(t.metricsDepartmentID ?? t.id ?? t.ticketId ?? "Ukendt") === String(ticketId)
+                );
+                if (rawTicket) {
+                    rawTicket.priority = newCode;
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Kunne ikke opdatere prioritet: " + (err?.message || err));
+            } finally {
+                select.disabled = prevDisabled;
+            }
         });
     });
 }
