@@ -244,8 +244,8 @@ function buildExcelReportContent(snapshot, exportedAt) {
         `#${ticket.id}`,
         ticket.status,
         ticket.priority,
-        ticket.subject,
-        formatDateTime(ticket.date)
+        ticket.metrics.subject,
+        formatDateTime(ticket.metrics.date)
     ]));
 
     const statsTable = buildTable(["Nøgle", "Værdi"], statsRows);
