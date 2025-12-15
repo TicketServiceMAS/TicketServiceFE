@@ -1391,3 +1391,80 @@ body.page-leaving {
 .flag-correct:hover {
     background: #bcded2;
 }
+
+/* ======== TICKET TABLE PRIORITY SELECTOR ======== */
+
+.priority-select {
+    padding: 6px 10px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    font-size: 0.85rem;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.priority-select:hover,
+.priority-select:focus {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    box-shadow: 0 0 0 2px rgba(95,37,158,0.25);
+}
+
+/* ======== UPDATE BUTTON ======== */
+
+.update-priority-btn {
+    margin-left: 6px;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    background: var(--accent);
+    color: white;
+    border: 1px solid rgba(95, 37, 158, 0.35);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.update-priority-btn:hover {
+    background: #4a1d7b;
+    box-shadow: 0 4px 12px rgba(95,37,158,0.35);
+    transform: translateY(-1px);
+}
+
+.update-priority-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ======== TICKET FLAG BUTTON (already exists but we match styling) ======== */
+
+.ticket-flag-button {
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.flag-wrong {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.flag-wrong:hover {
+    background: #fecaca;
+    transform: translateY(-1px);
+}
+
+.flag-correct {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.flag-correct:hover {
+    background: #bbf7d0;
+    transform: translateY(-1px);
+}
