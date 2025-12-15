@@ -1,5 +1,8 @@
 const API_BASE_URL = "http://localhost:8080/api/ticketservice";
 
+/* ============================================================
+   AUTH HEADERS
+============================================================ */
 function getAuthHeaders(isJson = true) {
     const token = sessionStorage.getItem("authToken");
     const headers = {};
@@ -7,6 +10,10 @@ function getAuthHeaders(isJson = true) {
     if (token) headers["Authorization"] = `Bearer ${token}`;
     return headers;
 }
+
+/* ============================================================
+   DEPARTMENTS
+============================================================ */
 
 export async function getDepartments() {
     const res = await fetch(`${API_BASE_URL}/departments`, {
@@ -72,6 +79,10 @@ export async function deleteDepartment(id) {
     return true;
 }
 
+/* ============================================================
+   TICKETS
+============================================================ */
+
 export async function getTicketsForDepartment(id) {
     const res = await fetch(`${API_BASE_URL}/metrics/departments/${id}`, {
         headers: getAuthHeaders(false)
@@ -87,6 +98,52 @@ export async function getDepartmentTicketList(id) {
     if (!res.ok) throw new Error(`Kunne ikke hente metrics/tickets for department ${id} (status ${res.status})`);
     return await res.json();
 }
+
+/* ----------------------------
+   MISROUTING (ADMIN ONLY)
+---------------------------- */
+
+export async function markTicketAsMisrouted(ticketId) {
+    const res = await fetch(`${API_BASE_URL}/tickets/${ticketId}/misrouted`, {
+        method: "POST",
+        headers: getAuthHeaders(false)
+    });
+
+    if (!res.ok) {
+        throw new Error(`Kunne ikke markere ticket ${ticketId} som forkert routet (status ${res.status})`);
+    }
+}
+
+/* ----------------------------
+   MARK AS CORRECT (ADMIN ONLY)
+---------------------------- */
+export async function markTicketAsCorrect(ticketId) {
+    const res = await fetch(`${API_BASE_URL}/tickets/${ticketId}/correct`, {
+        method: "POST",
+        headers: getAuthHeaders(false)
+    });
+
+    if (!res.ok) {
+        throw new Error(`Kunne ikke markere ticket ${ticketId} som korrekt (status ${res.status})`);
+    }
+}
+
+/* ----------------------------
+   UPDATE PRIORITY (ADMIN ONLY)
+---------------------------- */
+
+export async function updateTicketPriority(ticketId, priorityId) {
+    const res = await fetch(`${API_BASE_URL}/tickets/${ticketId}/priority/${priorityId}`, {
+        method: "POST",
+        headers: getAuthHeaders(false)
+    });
+
+    if (!res.ok) throw new Error(`Kunne ikke opdatere prioritet (status ${res.status})`);
+}
+
+/* ============================================================
+   STATS
+============================================================ */
 
 export async function getRoutingStats() {
     const res = await fetch(`${API_BASE_URL}/stats`, {
@@ -104,6 +161,10 @@ export async function getRoutingStatsForDepartment(id) {
     return await res.json();
 }
 
+/* ----------------------------
+   HISTORIC METRICS
+---------------------------- */
+
 export async function getMetricsHistoryForAllDepartments() {
     const res = await fetch(`${API_BASE_URL}/metrics/departments`, {
         headers: getAuthHeaders(false)
@@ -111,48 +172,3 @@ export async function getMetricsHistoryForAllDepartments() {
     if (!res.ok) throw new Error(`Kunne ikke hente historiske metrics (status ${res.status})`);
     return await res.json();
 }
-
-export async function markTicketAsMisrouted(ticketId) {
-    const res = await fetch(`${API_BASE_URL}/tickets/${ticketId}/misrouted`, {
-        method: "POST",
-        headers: getAuthHeaders(false)
-    });
-
-    if (!res.ok) {
-        let msg = `Kunne ikke markere ticket ${ticketId} som forkert routet (status ${res.status})`;
-        try {
-            const errBody = await res.json();
-            if (errBody?.message) msg += `: ${errBody.message}`;
-        } catch (_) {}
-        throw new Error(msg);
-    }
-
-    try {
-        return await res.json();
-    } catch (_) {
-        return null;
-    }
-}
-
-export async function markTicketAsCorrect(ticketId) {
-    const res = await fetch(`${API_BASE_URL}/tickets/${ticketId}/correct`, {
-        method: "POST",
-        headers: getAuthHeaders(false)
-    });
-
-    if (!res.ok) {
-        let msg = `Fejl ved markering som korrekt routing (status ${res.status})`;
-        try {
-            const errBody = await res.text();
-            msg += `: ${errBody}`;
-        } catch (_) {}
-        throw new Error(msg);
-    }
-
-    try {
-        return await res.json();
-    } catch (_) {
-        return null;
-    }
-}
-
