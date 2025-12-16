@@ -1468,3 +1468,111 @@ body.page-leaving {
     background: #bbf7d0;
     transform: translateY(-1px);
 }
+
+/* ===== MODAL ===== */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+/* Overlay */
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+/* Modal box */
+.modal-content {
+    position: relative;
+
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 28px;
+
+    width: 100%;
+    max-width: 480px;
+
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+
+    /* 🔑 DETTE ER DET VIGTIGE */
+    margin: 0 !important;
+}
+/* ===== CREATE USER FORM ===== */
+#createUserForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Hver label er en kolonne */
+#createUserForm label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #111827;
+}
+
+/* Inputs & selects */
+#createUserForm input,
+#createUserForm select {
+    padding: 8px 10px;
+    font-size: 0.95rem;
+
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+
+    outline: none;
+}
+
+#createUserForm input:focus,
+#createUserForm select:focus {
+    border-color: #7c3aed; /* lilla fokus */
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+/* Knapper */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.modal-actions button {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.modal-actions button[type="submit"] {
+    background: #7c3aed;
+    color: white;
+    border: none;
+}
+
+.modal-actions button[type="button"] {
+    background: transparent;
+    border: 1px solid #d1d5db;
+}
+

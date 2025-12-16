@@ -111,13 +111,23 @@
 
                         <hr class="settings-divider">
 
+                        <!-- ADMIN ONLY -->
+                        <hr class="settings-divider admin-only" style="display:none">
+
+                        <button
+                                id="createUserButton"
+                                class="settings-item admin-only"
+                                style="display:none"
+                        >
+                            👤 Opret ny bruger
+                        </button>
+
                         <button class="settings-item" data-setting="logout">Log ud</button>
                     </div>
                 </div>
             </div>
         </div>
     </header>
-
 
     <!-- ================= MAIN PAGE ================= -->
     <main class="page">
@@ -152,7 +162,6 @@
                     <span id="nextRefreshLabel" class="hero-updated-value">Planlægges...</span>
                 </div>
 
-                <!-- Download Excel -->
                 <button id="downloadReportButton" class="hero-download" disabled>
                     <span class="hero-download-icon">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Microsoft_Office_Excel_%282019%E2%80%932025%29.svg/1200px-Microsoft_Office_Excel_%282019%E2%80%932025%29.svg.png"
@@ -170,7 +179,6 @@
             </div>
         </section>
 
-        <!-- Dashboard output -->
         <section id="output" class="fade-in">
             <div class="card">
                 <div class="loading">
@@ -182,11 +190,9 @@
             <div id="ticket-output"></div>
         </section>
 
-        <!-- Ticket List for Department View -->
         <section id="departmentTicketListSection">
             <h2>Department Ticket List</h2>
 
-            <!-- Chips -->
             <div class="ticket-chip-row" id="ticketChipRow">
                 <div class="ticket-chip-group">
                     <span class="chip-label">Status</span>
@@ -199,12 +205,9 @@
                 </div>
             </div>
 
-            <!-- Ticket table / cards -->
             <div id="ticket-list"></div>
         </section>
-
     </main>
-
 
     <!-- ================= FOOTER ================= -->
     <footer class="footer">
@@ -213,6 +216,45 @@
         <span>Internal dashboard</span>
     </footer>
 
+</div>
+
+<!-- ================= CREATE USER MODAL (OUTSIDE DROPDOWN) ================= -->
+<div id="createUserModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+
+    <div class="modal-content">
+        <h2>Opret ny bruger</h2>
+
+        <form id="createUserForm">
+            <label>
+                Brugernavn
+                <input type="text" id="newUsername" required>
+            </label>
+
+            <label>
+                Password
+                <input type="password" id="newPassword" required>
+            </label>
+
+            <label>
+                Rolle
+                <select id="newRole">
+                    <option value="USER">USER</option>
+                    <option value="ADMIN">ADMIN</option>
+                </select>
+            </label>
+
+            <label>
+                Department
+                <select id="newDepartment" required></select>
+            </label>
+
+            <div class="modal-actions">
+                <button type="submit">Opret</button>
+                <button type="button" id="cancelCreateUser">Annuller</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- Loading overlay -->
