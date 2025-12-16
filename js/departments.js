@@ -16,7 +16,7 @@ let currentSearchQuery = "";
 let isSkeletonActive = false;
 let renderTimer = null;
 
-// ===== NYT: auth helpers =====
+// ===== AUTH helpers =====
 const AUTH_TOKEN_KEY = "authToken";
 const AUTH_USER_KEY = "currentUser";
 
@@ -35,9 +35,8 @@ function getCurrentUser() {
 
 function getCurrentUserRole() {
     const user = getCurrentUser();
-    if (!user || !user.username) return "user"; // evt. "guest" hvis du vil
-    if (user.username === "admin") return "admin";
-    // abc og alle andre → normal bruger
+    if (!user || !user.username) return "user";
+    if (user.username === "admin" || user.admin === true) return "admin";
     return "user";
 }
 
@@ -46,7 +45,6 @@ function requireAuth() {
     const user = getCurrentUser();
 
     if (!token || !user) {
-        // Ikke logget ind → tilbage til login
         window.location.href = "login.html";
         return null;
     }
@@ -57,9 +55,7 @@ function requireAuth() {
 
 function updateResultBadge(value) {
     const badge = document.getElementById("departmentResultBadge");
-    if (badge) {
-        badge.textContent = value;
-    }
+    if (badge) badge.textContent = value;
 }
 
 function buildSkeletonPlaceholder() {
@@ -81,9 +77,7 @@ function triggerSkeletonRender() {
     isSkeletonActive = true;
     renderDepartments();
 
-    if (renderTimer) {
-        clearTimeout(renderTimer);
-    }
+    if (renderTimer) clearTimeout(renderTimer);
 
     renderTimer = setTimeout(() => {
         isSkeletonActive = false;
@@ -124,7 +118,7 @@ function renderDepartments() {
         list = list.filter(dep => {
             const name = (dep.departmentName || "").toLowerCase();
             const mail = (dep.mailAddress || "").toLowerCase();
-            const idStr = String(dep.departmentID ?? "");
+            const idStr = String(dep.departmentID ?? dep.id ?? "");
             return (
                 name.includes(q) ||
                 mail.includes(q) ||
@@ -151,7 +145,7 @@ function renderDepartments() {
 
     output.innerHTML = list
         .map(dep => {
-            const id = dep.departmentID;
+            const id = dep.departmentID ?? dep.id;
             const name = dep.departmentName ?? "Ukendt department";
             const mail = dep.mailAddress || "Ingen mail";
 
@@ -225,11 +219,9 @@ function attachDepartmentItemHandlers() {
 
         item.addEventListener("click", (e) => {
             const actionBtn = e.target.closest(".department-action");
-            if (actionBtn) {
-                return;
-            }
+            if (actionBtn) return;
 
-            const dep = allDepartments.find(d => String(d.departmentID) === String(id));
+            const dep = allDepartments.find(d => String(d.departmentID ?? d.id) === String(id));
             const name = dep?.departmentName ?? "";
             const encodedName = encodeURIComponent(name);
 
@@ -243,7 +235,8 @@ function attachDepartmentItemHandlers() {
             if (actionBtn) return;
 
             e.preventDefault();
-            const dep = allDepartments.find(d => String(d.departmentID) === String(id));
+
+            const dep = allDepartments.find(d => String(d.departmentID ?? d.id) === String(id));
             const name = dep?.departmentName ?? "";
             const encodedName = encodeURIComponent(name);
 
@@ -251,7 +244,7 @@ function attachDepartmentItemHandlers() {
         });
     });
 
-    // Edit/Slet kun for admin (knapper findes kun hvis currentRole === "admin")
+    // Edit/Slet kun for admin
     if (currentRole === "admin") {
         const editBtns = container.querySelectorAll(".department-action-edit");
         editBtns.forEach(btn => {
@@ -316,10 +309,49 @@ async function loadDepartments(showSkeleton = false) {
             })
         );
 
-        allDepartments = withStats;
+        // ==========================================================
+        // HARD FILTER: Normal user ser KUN sit eget department
+        // currentUser indeholder kun { username }, så vi mapper username -> departmentName
+        // ==========================================================
+        const user = getCurrentUser();
+        let finalList = withStats;
+
+        if (currentRole !== "admin") {
+            const username = String(user?.username ?? "").trim();
+
+            // Match 1: username matcher departmentName direkte (case-insensitive)
+            finalList = withStats.filter(dep => {
+                const depName = String(dep.departmentName ?? "").trim();
+                return depName.toUpperCase() === username.toUpperCase();
+            });
+
+            // Match 2: servicedesk.l1 / servicedesk.l2 mapping (hvis I bruger dem)
+            if (finalList.length === 0) {
+                const mappedName =
+                    username === "servicedesk.l1" ? "SERVICE_DESK_L1" :
+                        username === "servicedesk.l2" ? "SERVICE_DESK_L2" :
+                            null;
+
+                if (mappedName) {
+                    finalList = withStats.filter(dep =>
+                        String(dep.departmentName ?? "").toUpperCase() === mappedName
+                    );
+                }
+            }
+
+            // Debug logs
+            console.log("currentUser:", user);
+            console.log("username:", username);
+            console.log("departments from api:", withStats.map(d => ({ id: d.departmentID ?? d.id, name: d.departmentName })));
+            console.log("finalList:", finalList);
+        }
+
+        allDepartments = finalList;
+        // ==========================================================
+
         isSkeletonActive = false;
         renderDepartments();
-        setDepartmentLiveStatus(`Indlæste ${withStats.length} departments`, false);
+        setDepartmentLiveStatus(`Indlæste ${finalList.length} departments`, false);
     } catch (err) {
         output.innerHTML = `
             <p style="color:#b91c1c; font-weight:500;">
@@ -460,13 +492,13 @@ function setEditFormMessage(type, text) {
 
 /** Åbn edit-form */
 function openEditForm(departmentId) {
-    const dep = allDepartments.find(d => String(d.departmentID) === String(departmentId));
+    const dep = allDepartments.find(d => String(d.departmentID ?? d.id) === String(departmentId));
     if (!dep) {
         alert("Kunne ikke finde det valgte department.");
         return;
     }
 
-    editingDepartmentId = dep.departmentID;
+    editingDepartmentId = dep.departmentID ?? dep.id;
 
     const nameInput = document.getElementById("editDepartmentName");
     const mailInput = document.getElementById("editDepartmentMail");
@@ -480,7 +512,7 @@ function openEditForm(departmentId) {
 
 /** Slet department */
 async function handleDeleteDepartment(departmentId) {
-    const dep = allDepartments.find(d => String(d.departmentID) === String(departmentId));
+    const dep = allDepartments.find(d => String(d.departmentID ?? d.id) === String(departmentId));
     const name = dep?.departmentName ?? `ID ${departmentId}`;
 
     const ok = window.confirm(`Er du sikker på, at du vil slette department "${name}"?`);
@@ -489,7 +521,7 @@ async function handleDeleteDepartment(departmentId) {
     try {
         await deleteDepartment(departmentId);
 
-        allDepartments = allDepartments.filter(d => String(d.departmentID) !== String(departmentId));
+        allDepartments = allDepartments.filter(d => String(d.departmentID ?? d.id) !== String(departmentId));
 
         if (String(editingDepartmentId) === String(departmentId)) {
             showEditForm(false);
@@ -503,7 +535,6 @@ async function handleDeleteDepartment(departmentId) {
 
 /** Setup add department */
 function setupAddDepartment() {
-    // Ikke admin? så sæt ingen event handlers (og vi skjuler knappen i init)
     if (currentRole !== "admin") return;
 
     const toggleBtn = document.getElementById("toggleAddDepartment");
@@ -521,9 +552,7 @@ function setupAddDepartment() {
     }
 
     if (cancelBtn) {
-        cancelBtn.addEventListener("click", () => {
-            showAddForm(false);
-        });
+        cancelBtn.addEventListener("click", () => showAddForm(false));
     }
 
     if (form) {
@@ -571,9 +600,7 @@ function setupAddDepartment() {
                 renderDepartments();
 
                 setAddFormMessage("success", "Department oprettet.");
-                setTimeout(() => {
-                    showAddForm(false);
-                }, 600);
+                setTimeout(() => showAddForm(false), 600);
             } catch (err) {
                 setAddFormMessage("error", err.message || "Der opstod en fejl under oprettelse.");
             } finally {
@@ -588,18 +615,13 @@ function setupAddDepartment() {
 
 /** Setup edit department */
 function setupEditDepartment() {
-    // Ikke admin? Så ingen edit-liste
     if (currentRole !== "admin") return;
 
     const cancelBtn = document.getElementById("cancelEditDepartment");
     const form = document.getElementById("editDepartmentForm");
     const updateBtn = document.getElementById("updateDepartmentBtn");
 
-    if (cancelBtn) {
-        cancelBtn.addEventListener("click", () => {
-            showEditForm(false);
-        });
-    }
+    if (cancelBtn) cancelBtn.addEventListener("click", () => showEditForm(false));
 
     if (form) {
         form.addEventListener("submit", async (e) => {
@@ -642,7 +664,7 @@ function setupEditDepartment() {
                 const updated = await updateDepartment(editingDepartmentId, payload);
 
                 allDepartments = allDepartments.map(dep =>
-                    String(dep.departmentID) === String(editingDepartmentId)
+                    String(dep.departmentID ?? dep.id) === String(editingDepartmentId)
                         ? { ...dep, ...updated }
                         : dep
                 );
@@ -650,9 +672,7 @@ function setupEditDepartment() {
                 renderDepartments();
                 setEditFormMessage("success", "Department opdateret.");
 
-                setTimeout(() => {
-                    showEditForm(false);
-                }, 600);
+                setTimeout(() => showEditForm(false), 600);
             } catch (err) {
                 setEditFormMessage("error", err.message || "Der opstod en fejl under opdatering.");
             } finally {
@@ -667,9 +687,8 @@ function setupEditDepartment() {
 
 /** Init */
 window.addEventListener("DOMContentLoaded", () => {
-    // 1) Kræv login (ellers redirect til login.html)
     const role = requireAuth();
-    if (!role) return; // vi er på vej væk
+    if (!role) return;
     currentRole = role;
 
     initTheme();
@@ -686,14 +705,8 @@ window.addEventListener("DOMContentLoaded", () => {
     const editContainer = document.getElementById("editDepartmentContainer");
 
     if (currentRole !== "admin") {
-        if (toggleBtn) {
-            toggleBtn.style.display = "none";
-        }
-        if (addContainer) {
-            addContainer.classList.add("hidden");
-        }
-        if (editContainer) {
-            editContainer.classList.add("hidden");
-        }
+        if (toggleBtn) toggleBtn.style.display = "none";
+        if (addContainer) addContainer.classList.add("hidden");
+        if (editContainer) editContainer.classList.add("hidden");
     }
 });
