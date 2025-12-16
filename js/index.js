@@ -64,11 +64,16 @@ function getCurrentUser() {
     }
 }
 
-function getCurrentUserRole() {
-    const user = getCurrentUser();
-    if (!user || !user.username) return "user";
-    if (user.username === "admin") return "admin";
-    return "user";
+function isAdmin() {
+    const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) return false;
+
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return payload?.roles?.includes("ROLE_ADMIN");
+    } catch {
+        return false;
+    }
 }
 
 /**
@@ -84,7 +89,8 @@ function requireAuth() {
         window.location.href = "login.html";
         return null;
     }
-    return getCurrentUserRole();
+    return isAdmin() ? "admin" : "user";
+
 }
 
 // ===== RESTEN AF APPEN =====
@@ -1016,7 +1022,8 @@ function setupAutoRefreshControls() {
 
 /* ===== INIT ===== */
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => 
+ {
     // Først: kræv login
     const role = requireAuth();
     if (!role) return; // bliver redirected til login, så stop her
@@ -1060,7 +1067,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // ADMIN-KNAPPER: kun admin ser "Opdater nu" + "Download rapport"
     if (refreshNowButton) {
-        if (currentRole === "admin") {
+        if (isAdmin()) {
             refreshNowButton.style.display = "inline-flex";
             refreshNowButton.addEventListener("click", handleManualRefresh);
         } else {
@@ -1069,7 +1076,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     if (downloadReportButton) {
-        if (currentRole === "admin") {
+        if (isAdmin()) {
             downloadReportButton.style.display = "inline-flex";
             downloadReportButton.setAttribute("aria-disabled", "true");
             downloadReportButton.addEventListener("click", handleDownloadReport);
@@ -1077,6 +1084,75 @@ window.addEventListener("DOMContentLoaded", () => {
             downloadReportButton.style.display = "none";
         }
     }
+
+    function parseJwt(token) {
+        try {
+            return JSON.parse(atob(token.split('.')[1]));
+        } catch {
+            return null;
+        }
+    }
+
+    const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+    const payload = parseJwt(token);
+
+    if (payload?.roles?.includes("ROLE_ADMIN")) {
+        document.querySelectorAll(".admin-only").forEach(el => {
+            el.style.display = "block";
+        });
+    }
+    const modal = document.getElementById("createUserModal");
+
+    document.getElementById("createUserButton")
+        ?.addEventListener("click", () => modal.classList.remove("hidden"));
+
+    document.getElementById("cancelCreateUser")
+        .addEventListener("click", () => modal.classList.add("hidden"));
+
+
+    const res = await fetch("http://localhost:8080/api/ticketservice/departments", {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        console.error("Kunne ikke hente departments:", res.status, text);
+        return;
+    }
+
+    const departments = await res.json();
+
+    const select = document.getElementById("newDepartment");
+    select.innerHTML = departments.map(d =>
+        `<option value="${d.departmentID}">${d.departmentName}</option>`
+    ).join("");
+
+    document.getElementById("createUserForm")
+        .addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                username: document.getElementById("newUsername").value,
+                password: document.getElementById("newPassword").value,
+                role: document.getElementById("newRole").value,
+                department: {
+                    departmentID: document.getElementById("newDepartment").value
+                }
+            };
+
+            const res = await fetch("http://localhost:8080/auth/user", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+        });
+
 
     scheduleAutoRefresh();
     loadStats();
