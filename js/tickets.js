@@ -202,6 +202,7 @@ function normalizeTicket(t) {
         id: t.metricsDepartmentID ?? t.id ?? t.ticketId ?? "Ukendt",
         status: (t.status ?? t.routingStatus ?? "").toUpperCase(),
         subject: t.subject ?? t.title ?? "",
+        content: t.content ?? t.body ?? t.mailContent ?? t.message ?? "",
         date: t.createdAt ?? t.date,
         // altid P1 / P2 / P3 / SIMA
         priority: formatPriority(
@@ -212,6 +213,11 @@ function normalizeTicket(t) {
 
 function getNormalizedTickets() {
     return allTickets.map(normalizeTicket);
+}
+
+function findNormalizedTicketById(ticketId) {
+    const normalized = getNormalizedTickets();
+    return normalized.find(t => String(t.id) === String(ticketId)) || null;
 }
 
 /* ===================================================== */
@@ -278,7 +284,66 @@ function paginate(tickets) {
 }
 
 /* ===================================================== */
-/* UI BUILDERS (OLD UI) */
+/* MODAL (MAIL CONTENT) */
+/* ===================================================== */
+
+function ensureModalWired() {
+    const modal = document.getElementById("ticketModal");
+    if (!modal) return;
+
+    // Kun wire én gang
+    if (modal.dataset.wired === "true") return;
+    modal.dataset.wired = "true";
+
+    const closeBtn = modal.querySelector("[data-ticket-modal-close]");
+    closeBtn?.addEventListener("click", closeTicketModal);
+
+    // klik på overlay (udenfor dialog) lukker
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeTicketModal();
+    });
+
+    // ESC lukker
+    window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("is-open")) {
+            closeTicketModal();
+        }
+    });
+}
+
+function openTicketModal(ticket) {
+    ensureModalWired();
+
+    const modal = document.getElementById("ticketModal");
+    if (!modal) return;
+
+    const idEl = document.getElementById("ticketModalId");
+    const subjectEl = document.getElementById("ticketModalSubject");
+    const metaEl = document.getElementById("ticketModalMeta");
+    const bodyEl = document.getElementById("ticketModalBody");
+
+    if (idEl) idEl.textContent = `#${ticket.id}`;
+    if (subjectEl) subjectEl.textContent = ticket.subject || "(ingen subject)";
+    if (metaEl) metaEl.textContent = `${ticket.status || ""} • ${ticket.priority || ""} • ${formatDate(ticket.date) || ""}`;
+
+    // Render content som tekst (XSS-sikkert)
+    if (bodyEl) {
+        bodyEl.textContent = ticket.content || "(intet indhold)";
+    }
+
+    modal.classList.add("is-open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeTicketModal() {
+    const modal = document.getElementById("ticketModal");
+    if (!modal) return;
+    modal.classList.remove("is-open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+/* ===================================================== */
+/* UI BUILDERS */
 /* ===================================================== */
 
 function buildFilterBar(statuses) {
@@ -338,7 +403,13 @@ function renderTableRows(tickets) {
                             <td>#${t.id}</td>
                             <td><span class="ticket-status ${isFailure ? "status-failure" : "status-success"}">${t.status}</span></td>
                             <td>${priorityCell}</td>
-                            <td>${t.subject}</td>
+                            <td>
+                                <button class="ticket-open-btn"
+                                        type="button"
+                                        data-ticket-open-id="${t.id}">
+                                    ${t.subject || "(ingen subject)"}
+                                </button>
+                            </td>
                             <td>${formatDate(t.date)}</td>
                             <td>
                                 ${canEdit
@@ -373,10 +444,17 @@ function renderCardRows(tickets) {
 
         return `
             <div class="ticket-card">
-                <h3>Ticket #${t.id}</h3>
+                <div class="ticket-card-header">
+                    <h3>Ticket #${t.id}</h3>
+                    <button class="ticket-open-btn"
+                            type="button"
+                            data-ticket-open-id="${t.id}">
+                        Åbn mail
+                    </button>
+                </div>
                 <p><strong>Status:</strong> ${t.status}</p>
                 <p><strong>Prioritet:</strong> ${priorityRow}</p>
-                <p><strong>Subject:</strong> ${t.subject}</p>
+                <p><strong>Subject:</strong> ${t.subject || "(ingen subject)"}</p>
                 <p><strong>Dato:</strong> ${formatDate(t.date)}</p>
                 ${canEdit
             ? `<button class="ticket-flag-button ${isFailure ? "flag-correct" : "flag-wrong"}"
@@ -422,6 +500,7 @@ function renderTicketList(container) {
     wireUpInteractions(container, totalPages);
     attachFlagButtonHandlers(container);
     attachPriorityChangeHandlers(container);
+    attachOpenTicketHandlers(container);
 }
 
 /* ===================================================== */
@@ -514,6 +593,35 @@ function wireUpInteractions(container, totalPages) {
         currentPage = 1;
         persistFilters();
         renderTicketList(container);
+    });
+}
+
+/* ===================================================== */
+/* OPEN TICKET (SHOW MAIL CONTENT) */
+/* ===================================================== */
+
+function attachOpenTicketHandlers(container) {
+    const results = container.querySelector("#ticket-results");
+    if (!results) return;
+
+    // Event delegation
+    results.addEventListener("click", (e) => {
+        const target = e.target;
+
+        // Hvis man klikker på knapper/dropdowns der ikke skal åbne modal
+        if (target.closest(".ticket-flag-button")) return;
+        if (target.closest(".ticket-priority-select")) return;
+
+        const openBtn = target.closest("[data-ticket-open-id]");
+        if (!openBtn) return;
+
+        const ticketId = openBtn.getAttribute("data-ticket-open-id");
+        if (!ticketId) return;
+
+        const ticket = findNormalizedTicketById(ticketId);
+        if (!ticket) return;
+
+        openTicketModal(ticket);
     });
 }
 
