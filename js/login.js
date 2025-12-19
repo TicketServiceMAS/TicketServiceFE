@@ -1,4 +1,5 @@
-const AUTH_BASE_URL = "http://localhost:8080";
+//const AUTH_BASE_URL = "http://localhost:8080";
+const AUTH_BASE_URL = "ticketservicemas-b4addvfjf6hthedj.norwayeast-01.azurewebsites.net"
 // .idea/js/login.js
 
 // Simpel "fake" auth-funktion – kan senere skiftes til rigtig backend
