@@ -1,5 +1,5 @@
 //const API_BASE_URL = "http://localhost:8080/api/ticketservice";
-const API_BASE_URL = "ticketservicemas-b4addvfjf6hthedj.norwayeast-01.azurewebsites.net/api/ticketservice"
+const API_BASE_URL = "https://ticketservicemas-b4addvfjf6hthedj.norwayeast-01.azurewebsites.net/api/ticketservice"
 
 /* ============================================================
    AUTH HEADERS
