@@ -5,239 +5,287 @@
     <title>Ticket Routing Tool – Statistik</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-        :root {
-            --accent: #16a34a;       /* grøn */
-            --accent-soft: #dcfce7;
-            --danger: #dc2626;
-            --danger-soft: #fee2e2;
-            --text: #111827;
-            --text-muted: #6b7280;
-            --surface: #ffffff;
-            --surface-alt: #f9fafb;
-            --border: #e5e7eb;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Inter, system-ui, sans-serif;
-            background: #f3f4f6;
-            color: var(--text);
-        }
-
-        .page {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 16px 40px;
-        }
-
-        header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 2.2rem;
-        }
-
-        header p {
-            margin: 6px 0 0;
-            color: var(--text-muted);
-            font-size: 1rem;
-        }
-
-        .header-text {
-            flex: 1;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 14px;
-            border-radius: 999px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            text-decoration: none;
-            border: 1px solid transparent;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .btn-secondary {
-            background: var(--surface);
-            border-color: var(--border);
-            color: var(--text);
-        }
-
-        .btn-secondary:hover {
-            background: #e5e7eb;
-        }
-
-        .card {
-            background: var(--surface);
-            border-radius: 14px;
-            padding: 24px;
-            border: 1px solid var(--border);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .card-header h2 {
-            margin: 0;
-            font-size: 1.35rem;
-            font-weight: 600;
-        }
-
-        .badge {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            border-radius: 999px;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .badge.good {
-            background: var(--accent-soft);
-            color: var(--accent);
-        }
-
-        .badge.ok {
-            background: #fef9c3;
-            color: #eab308;
-        }
-
-        .badge.bad {
-            background: var(--danger-soft);
-            color: var(--danger);
-        }
-
-        .content-layout {
-            display: grid;
-            grid-template-columns: 1.4fr 1fr;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .accuracy-main {
-            font-size: 2.3rem;
-            font-weight: 700;
-        }
-
-        .accuracy-sub {
-            color: var(--text-muted);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 14px;
-            margin-top: 16px;
-        }
-
-        .stat-card {
-            background: var(--surface-alt);
-            padding: 14px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-        }
-
-        .stat-value {
-            font-size: 1.4rem;
-            font-weight: 600;
-            margin-top: 4px;
-        }
-
-        .stat-extra {
-            font-size: 0.8rem;
-            margin-top: 4px;
-            color: var(--text-muted);
-        }
-
-        .chart-wrapper {
-            background: var(--surface-alt);
-            padding: 16px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-        }
-
-        .chart-caption {
-            text-align: center;
-            color: var(--text-muted);
-            margin-top: 6px;
-            font-size: 0.85rem;
-        }
-
-        @media (max-width: 800px) {
-            .content-layout {
-                grid-template-columns: 1fr;
-            }
-
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .header-actions {
-                align-self: stretch;
-                justify-content: flex-start;
-            }
-        }
-    </style>
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
 
-<div class="page">
-    <header>
-        <div class="header-text">
-            <h1>Ticket Routing Tool</h1>
-            <p>Overblik over hvor præcist systemet fordeler tickets.</p>
-        </div>
+<div class="app-shell">
 
-        <!-- KNAP TIL DEPARTMENTS -->
-        <div class="header-actions">
-            <a href="./departments.html" class="btn btn-secondary">
-                Se departments
-            </a>
+    <!-- ================= HEADER ================= -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <div class="brand-logo">itm8</div>
+                <div>
+                    <div class="brand-text-main">
+                        <div class="brand-title">Ticket Routing Tool</div>
+                        <span class="brand-pill">Internal</span>
+                    </div>
+                    <div class="brand-subtitle">
+                        Routing performance & kvalitetsoverblik
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right side -->
+            <div class="topbar-right">
+                <nav class="topbar-nav">
+                    <a href="./index.html" class="nav-link nav-link-active">
+                        <span class="dot"></span>
+                        Dashboard
+                    </a>
+
+                    <a href="departments.html" class="nav-link">
+                        <span class="dot"></span>
+                        Departments
+                    </a>
+                </nav>
+
+                <!-- SETTINGS -->
+                <div class="settings-menu">
+                    <button id="settingsButton" class="settings-button" type="button">
+                        <span class="settings-icon">⚙</span>
+                    </button>
+
+                    <div id="settingsDropdown" class="settings-dropdown">
+                        <div class="settings-group-label">Indstillinger</div>
+
+                        <!-- Theme toggle -->
+                        <div class="settings-item settings-item-toggle">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Tema</div>
+                                <div class="settings-item-sub" id="themeStatusLabel">Lyst tema</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="themeToggleInput">
+                                <span class="slider"></span>
+                            </label>
+                            <div id="themePreview" class="theme-preview"></div>
+                        </div>
+
+                        <!-- Auto refresh -->
+                        <div class="settings-group-label">Auto-refresh</div>
+
+                        <div class="settings-item settings-item-toggle">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Auto-refresh</div>
+                                <div class="settings-item-sub" id="autoRefreshStatusLabel">Aktiveret</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="autoRefreshToggleInput">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="settings-item settings-item-inline">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Interval</div>
+                                <div class="settings-item-sub">Hvor ofte opdateres dashboardet?</div>
+                            </div>
+
+                            <select id="autoRefreshIntervalSelect" class="settings-select">
+                                <option value="30000">30 sek</option>
+                                <option value="60000" selected>1 minut</option>
+                                <option value="120000">2 minutter</option>
+                                <option value="300000">5 minutter</option>
+                            </select>
+                        </div>
+
+                        <div class="settings-item settings-item-static">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Næste auto-refresh</div>
+                                <div class="settings-item-sub" id="autoRefreshNextLabel">Planlægges...</div>
+                            </div>
+                        </div>
+
+                        <button class="settings-item" data-setting="refresh">Opdater data</button>
+
+                        <hr class="settings-divider">
+
+                        <!-- ADMIN ONLY -->
+                        <hr class="settings-divider admin-only" style="display:none">
+
+                        <button
+                                id="createUserButton"
+                                class="settings-item admin-only"
+                                style="display:none"
+                        >
+                            👤 Opret ny bruger
+                        </button>
+
+                        <button class="settings-item" data-setting="logout">Log ud</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
-    <main id="output">
-        Indlæser statistik...
+    <!-- ================= MAIN PAGE ================= -->
+    <main class="page">
+        <section class="hero">
+            <div class="hero-left">
+                <div class="hero-overline">Routing Performance</div>
+
+                <h1>
+                    Quality of ticket <span>routing</span>
+                </h1>
+
+                <p>
+                    Overblik over hvor præcist systemet fordeler tickets – og hvordan routingkvaliteten udvikler sig over tid.
+                </p>
+            </div>
+
+            <div class="hero-meta">
+                <span class="pill pill-soft">
+                    <span class="pill-dot"></span>
+                    Live data
+                </span>
+
+                <div class="hero-updated">
+                    <span class="hero-updated-label">Sidst opdateret</span>
+                    <span id="lastUpdated" class="hero-updated-value"></span>
+
+                    <button id="refreshNowButton" class="hero-refresh">↻ Opdater nu</button>
+                </div>
+
+                <div class="hero-next-refresh">
+                    <span class="hero-updated-label">Næste auto-refresh</span>
+                    <span id="nextRefreshLabel" class="hero-updated-value">Planlægges...</span>
+                </div>
+
+                <button id="downloadReportButton" class="hero-download" disabled>
+                    <span class="hero-download-icon">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Microsoft_Office_Excel_%282019%E2%80%932025%29.svg/1200px-Microsoft_Office_Excel_%282019%E2%80%932025%29.svg.png"
+                             alt="" loading="lazy">
+                    </span>
+                    <span class="hero-download-text">
+                        <span class="hero-download-title">Excel</span>
+                        <span class="hero-download-sub">Download rapport</span>
+                    </span>
+                </button>
+
+                <button id="backToDepartments" class="back-button">
+                    ← Tilbage til departments
+                </button>
+            </div>
+        </section>
+
+        <section id="output" class="fade-in">
+            <div class="card">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Indlæser statistik...</p>
+                </div>
+            </div>
+
+            <div id="ticket-output"></div>
+        </section>
+
+        <section id="departmentTicketListSection">
+            <h2>Department Ticket List</h2>
+
+            <div class="ticket-chip-row" id="ticketChipRow">
+                <div class="ticket-chip-group">
+                    <span class="chip-label">Status</span>
+                    <div id="statusChipContainer" class="ticket-chips"></div>
+                </div>
+
+                <div class="ticket-chip-group">
+                    <span class="chip-label">Prioritet</span>
+                    <div id="priorityChipContainer" class="ticket-chips"></div>
+                </div>
+            </div>
+
+            <div id="ticket-list"></div>
+        </section>
     </main>
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="footer">
+        <span>itm8 • Ticket Routing Tool</span>
+        <span class="footer-divider">•</span>
+        <span>Internal dashboard</span>
+    </footer>
+
 </div>
 
-<!-- VIGTIGT: korrekt sti til index.js i .idea/js -->
-<script type="module" src=".idea/js/index.js"></script>
+<!-- ================= CREATE USER MODAL (OUTSIDE DROPDOWN) ================= -->
+<div id="createUserModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+
+    <div class="modal-content">
+        <h2>Opret ny bruger</h2>
+
+        <form id="createUserForm">
+            <label>
+                Brugernavn
+                <input type="text" id="newUsername" required>
+            </label>
+
+            <label>
+                Password
+                <input type="password" id="newPassword" required>
+            </label>
+
+            <label>
+                Rolle
+                <select id="newRole">
+                    <option value="USER">USER</option>
+                    <option value="ADMIN">ADMIN</option>
+                </select>
+            </label>
+
+            <label>
+                Department
+                <select id="newDepartment" required></select>
+            </label>
+
+            <div class="modal-actions">
+                <button type="submit">Opret</button>
+                <button type="button" id="cancelCreateUser">Annuller</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Opdaterer data...</p>
+    </div>
+</div>
+
+<!-- Ticket modal (mail content) -->
+<div id="ticketModal" class="ticket-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="ticket-modal-dialog" role="document">
+        <div class="ticket-modal-header">
+            <div class="ticket-modal-title">
+                <span id="ticketModalId" class="ticket-modal-id">#</span>
+                <span id="ticketModalSubject" class="ticket-modal-subject"></span>
+            </div>
+            <button type="button" class="ticket-modal-close" data-ticket-modal-close aria-label="Luk">✕</button>
+        </div>
+
+        <div id="ticketModalMeta" class="ticket-modal-meta"></div>
+
+        <pre id="ticketModalBody" class="ticket-modal-body"></pre>
+    </div>
+</div>
+
+<!-- JS -->
+<script type="module" src="js/index.js"></script>
+<script type="module" src="js/tickets.js"></script>
+<script type="module" src="js/navTransitions.js"></script>
 
 </body>
 </html>

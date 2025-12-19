@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <title>Login – Ticket Routing Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/login.css">
+
+    <!-- Login JS -->
+    <script type="module" src="js/login.js"></script>
+</head>
+<body>
+<div class="login-shell">
+    <div class="login-card">
+        <div class="login-brand">
+            <div class="login-logo">itm8</div>
+            <div>
+                <div class="login-brand-text-main">
+                    <div class="login-title-main">Ticket Routing Tool</div>
+                    <span class="login-pill">Internal</span>
+                </div>
+                <div class="login-subtitle">
+                    Log ind for at se dashboard og departments
+                </div>
+            </div>
+        </div>
+
+        <div class="login-heading">
+            <h1>Login</h1>
+            <p>Brug demo-login nedenfor.</p>
+        </div>
+
+        <form id="loginForm" class="login-form">
+            <div class="login-field">
+                <label for="username" class="login-label">Brugernavn</label>
+                <input
+                        id="username"
+                        name="username"
+                        type="text"
+                        class="login-input"
+                        autocomplete="username"
+                        placeholder="f.eks. admin"
+                        required
+                />
+            </div>
+
+            <div class="login-field">
+                <label for="password" class="login-label">Adgangskode</label>
+                <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        class="login-input"
+                        autocomplete="current-password"
+                        placeholder="f.eks. admin123"
+                        required
+                />
+            </div>
+
+            <div id="loginMessage" class="login-message"></div>
+
+            <div class="login-actions">
+                <button type="submit" id="loginBtn" class="login-button">
+                    Login
+                </button>
+
+                <div class="login-help">
+                    Demo-login: <strong>admin</strong> / <strong>admin123</strong>
+                </div>
+            </div>
+        </form>
+
+        <div class="login-footer">
+            Udviklingsversion • <a href="./index.html">Spring dashboard over</a> (uden login)
+        </div>
+    </div>
+</div>
+</body>
+</html>

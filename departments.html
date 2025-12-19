@@ -5,121 +5,248 @@
     <title>Departments – Ticket Routing Tool</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- VIGTIGT: korrekt sti til departments.js i .idea/js -->
-    <script type="module" src=".idea/js/departments.js"></script>
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <style>
-        :root {
-            --accent: #16a34a;
-            --text: #111827;
-            --text-muted: #6b7280;
-            --surface: #ffffff;
-            --surface-alt: #f9fafb;
-            --border: #e5e7eb;
-        }
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/departments.css">
 
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Inter, system-ui, sans-serif;
-            background: #f3f4f6;
-            color: var(--text);
-        }
-
-        .page {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 16px 40px;
-        }
-
-        h1 {
-            margin: 0 0 10px;
-        }
-
-        .subtitle {
-            margin: 0 0 20px;
-            color: var(--text-muted);
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin-bottom: 16px;
-            color: var(--accent);
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-
-        .card {
-            background: var(--surface);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-        }
-
-        .department-list {
-            margin-top: 10px;
-        }
-
-        .department-item {
-            padding: 12px;
-            background: var(--surface-alt);
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border: 1px solid var(--border);
-        }
-
-        .department-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 4px;
-            gap: 8px;
-        }
-
-        .department-title {
-            font-weight: 600;
-            word-break: break-word;
-        }
-
-        .department-status {
-            font-size: 0.8rem;
-            padding: 2px 8px;
-            border-radius: 999px;
-            background: #e5e7eb;
-            color: #374151;
-            white-space: nowrap;
-        }
-
-        .department-meta {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-    </style>
+    <!-- JS -->
+    <script type="module" src="js/departments.js"></script>
+    <script type="module" src="js/navTransitions.js"></script>
 </head>
+
 <body>
+<div class="app-shell">
 
-<div class="page">
-    <a class="back-link" href="./index.html">← Tilbage til dashboard</a>
+    <!-- ================= HEADER ================= -->
+    <header class="topbar">
+        <div class="topbar-inner">
 
-    <h1>Departments</h1>
-    <p class="subtitle">Liste over alle departments i systemet.</p>
+            <div class="brand">
+                <div class="brand-logo">itm8</div>
 
+                <div>
+                    <div class="brand-text-main">
+                        <span class="brand-title">Ticket Routing Tool</span>
+                        <span class="brand-pill">Internal</span>
+                    </div>
 
-    <section class="card">
-        <div id="department-output">Henter departments...</div>
-    </section>
+                    <div class="brand-subtitle">
+                        Routing performance & kvalitetsoverblik
+                    </div>
+                </div>
+            </div>
+
+            <!-- Højre side: navigation + settings-tandhjul -->
+            <div class="topbar-right">
+                <nav class="topbar-nav">
+                    <a href="./index.html" class="nav-link">
+                        Dashboard
+                    </a>
+                    <a href="./departments.html" class="nav-link nav-link-active">
+                        Departments
+                    </a>
+                </nav>
+
+                <div class="settings-menu">
+                    <button
+                            id="settingsButton"
+                            class="settings-button"
+                            type="button"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            aria-label="Åbn indstillinger"
+                    >
+                        <span class="settings-icon">⚙</span>
+                    </button>
+
+                    <div id="settingsDropdown" class="settings-dropdown" aria-label="Settings menu">
+                        <div class="settings-group-label">Indstillinger</div>
+                        <div class="settings-item settings-item-toggle" data-setting="theme">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Tema</div>
+                                <div class="settings-item-sub" id="themeStatusLabel">Lyst tema</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="themeToggleInput" aria-label="Skift tema">
+                                <span class="slider"></span>
+                            </label>
+                            <div class="theme-preview" id="themePreview" aria-hidden="true"></div>
+                        </div>
+                        <div class="settings-group-label">Auto-refresh</div>
+                        <div class="settings-item settings-item-toggle" id="autoRefreshToggleRow">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Auto-refresh</div>
+                                <div class="settings-item-sub" id="autoRefreshStatusLabel">Aktiveret</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="autoRefreshToggleInput" aria-label="Slå auto-refresh til eller fra">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item settings-item-inline" id="autoRefreshIntervalRow">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Interval</div>
+                                <div class="settings-item-sub">Hvor ofte skal dashboardet opdateres?</div>
+                            </div>
+                            <select id="autoRefreshIntervalSelect" class="settings-select" aria-label="Vælg auto-refresh interval">
+                                <option value="30000">Hvert 30. sekund</option>
+                                <option value="60000" selected>Hvert 1. minut</option>
+                                <option value="120000">Hvert 2. minut</option>
+                                <option value="300000">Hvert 5. minut</option>
+                            </select>
+                        </div>
+                        <div class="settings-item settings-item-static" id="autoRefreshScheduleRow">
+                            <div class="settings-item-text">
+                                <div class="settings-item-title">Næste auto-refresh</div>
+                                <div class="settings-item-sub" id="autoRefreshNextLabel">Planlægges...</div>
+                            </div>
+                        </div>
+                        <button class="settings-item" type="button" data-setting="refresh">
+                            Opdater data
+                        </button>
+                        <hr class="settings-divider">
+                        <button class="settings-item" type="button" data-setting="logout">
+                            Log ud
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- ================= PAGE CONTENT ================= -->
+    <main class="page">
+
+        <div id="departmentLiveRegion" class="visually-hidden" aria-live="polite"></div>
+
+        <h1 style="margin: 0 0 6px;">Departments</h1>
+        <p style="margin: 0 0 20px; color: var(--text-muted);">
+            Administrér departments og få overblik over routing performance.
+        </p>
+
+        <div class="card">
+
+            <!-- ======== Card Header ======== -->
+            <div class="card-header-row">
+
+                <div class="card-header-text">
+                    <div class="card-title">Department-oversigt</div>
+                    <div class="card-subtitle">
+                        Klik på et department for at åbne dets routingdashboard.
+                    </div>
+                </div>
+
+                    <div class="toolbar">
+
+                        <!-- Search -->
+                        <div class="toolbar-search">
+                            <label class="visually-hidden" for="departmentSearch">Søg efter department</label>
+                            <input id="departmentSearch" type="text" placeholder="Søg efter department...">
+                        </div>
+
+                        <div class="toolbar-result" aria-live="polite">
+                            <span class="result-badge" id="departmentResultBadge">0</span>
+                            <span class="result-label">matches</span>
+                        </div>
+
+                        <!-- Filter chips -->
+                        <button class="toolbar-chip toolbar-chip-active" type="button">
+                            <span class="dot"></span> Alle
+                        </button>
+
+                    <button class="toolbar-chip" type="button">
+                        <span class="dot"></span> Høj accuracy
+                    </button>
+
+                    <button class="toolbar-chip" type="button">
+                        <span class="dot"></span> Lav accuracy
+                    </button>
+
+                    <!-- Create New -->
+                    <button id="toggleAddDepartment" class="toolbar-button-primary" type="button">
+                        + Nyt department
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- ======== Add Department ======== -->
+            <div id="addDepartmentContainer" class="add-department-container hidden">
+                <div class="add-department-title">Tilføj nyt department</div>
+
+                <form id="addDepartmentForm">
+                    <div class="add-department-grid">
+
+                        <div class="add-department-field">
+                            <label class="add-department-label" for="newDepartmentName">Navn *</label>
+                            <input id="newDepartmentName" type="text" class="add-department-input" required>
+                        </div>
+
+                        <div class="add-department-field">
+                            <label class="add-department-label" for="newDepartmentMail">Mailadresse *</label>
+                            <input id="newDepartmentMail" type="email" class="add-department-input" required>
+                        </div>
+
+                        <div class="add-department-actions">
+                            <button class="btn-primary" type="submit">Gem</button>
+                            <button id="cancelAddDepartment" class="btn-ghost" type="button">Annullér</button>
+                        </div>
+
+                    </div>
+
+                    <div id="addDepartmentMessage" class="add-department-error hidden"></div>
+                </form>
+            </div>
+
+            <!-- ======== Edit Department ======== -->
+            <div id="editDepartmentContainer" class="add-department-container hidden">
+                <div class="add-department-title">Rediger department</div>
+
+                <form id="editDepartmentForm">
+                    <div class="add-department-grid">
+
+                        <div class="add-department-field">
+                            <label class="add-department-label" for="editDepartmentName">Navn *</label>
+                            <input id="editDepartmentName" type="text" class="add-department-input" required>
+                        </div>
+
+                        <div class="add-department-field">
+                            <label class="add-department-label" for="editDepartmentMail">Mailadresse *</label>
+                            <input id="editDepartmentMail" type="email" class="add-department-input" required>
+                        </div>
+
+                        <div class="add-department-actions">
+                            <button id="updateDepartmentBtn" class="btn-primary" type="submit">Gem ændringer</button>
+                            <button id="cancelEditDepartment" class="btn-ghost" type="button">Annullér</button>
+                        </div>
+
+                    </div>
+
+                    <div id="editDepartmentMessage" class="add-department-error hidden"></div>
+                </form>
+            </div>
+
+            <!-- ======== Department List Output ======== -->
+            <div id="department-output" role="status" aria-live="polite">
+                Henter departments...
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="footer">
+        <span>itm8 • Ticket Routing Tool</span>
+        <span class="footer-divider">•</span>
+        <span>Internal dashboard</span>
+    </footer>
+
 </div>
-
 </body>
 </html>
