@@ -1,6 +1,4 @@
-//const API_BASE_URL = "http://localhost:8080/api/ticketservice";
-const API_BASE_URL = "https://ticketservicemas-b4addvfjf6hthedj.norwayeast-01.azurewebsites.net/api/ticketservice"
-
+import {API_BASE_URL} from "./config.js"
 /* ============================================================
    AUTH HEADERS
 ============================================================ */
@@ -17,7 +15,7 @@ function getAuthHeaders(isJson = true) {
 ============================================================ */
 
 export async function getDepartments() {
-    const res = await fetch(`${API_BASE_URL}/departments`, {
+    const res = await fetch(`${API_BASE_URL()}/departments`, {
         headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error(`Kunne ikke hente departments (status ${res.status})`);
@@ -25,7 +23,7 @@ export async function getDepartments() {
 }
 
 export async function createDepartment(payload) {
-    const res = await fetch(`${API_BASE_URL}/departments`, {
+    const res = await fetch(`${API_BASE_URL()}/departments`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload)
@@ -44,7 +42,7 @@ export async function createDepartment(payload) {
 }
 
 export async function updateDepartment(id, payload) {
-    const res = await fetch(`${API_BASE_URL}/departments/${id}`, {
+    const res = await fetch(`${API_BASE_URL()}/departments/${id}`, {
         method: "PUT",
         headers: getAuthHeaders(),
         body: JSON.stringify(payload)
@@ -63,7 +61,7 @@ export async function updateDepartment(id, payload) {
 }
 
 export async function deleteDepartment(id) {
-    const res = await fetch(`${API_BASE_URL}/departments/${id}`, {
+    const res = await fetch(`${API_BASE_URL()}/departments/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(false)
     });
@@ -85,7 +83,7 @@ export async function deleteDepartment(id) {
 ============================================================ */
 
 export async function getTicketsForDepartment(id) {
-    const res = await fetch(`${API_BASE_URL}/metrics/departments/${id}`, {
+    const res = await fetch(`${API_BASE_URL()}/metrics/departments/${id}`, {
         headers: getAuthHeaders(false)
     });
     if (!res.ok) throw new Error(`Kunne ikke hente metrics/tickets for department ${id} (status ${res.status})`);
@@ -93,7 +91,7 @@ export async function getTicketsForDepartment(id) {
 }
 
 export async function getDepartmentTicketList(id) {
-    const res = await fetch(`${API_BASE_URL}/departments/tickets/${id}`, {
+    const res = await fetch(`${API_BASE_URL()}/departments/tickets/${id}`, {
         headers: getAuthHeaders(false)
     });
     if (!res.ok) throw new Error(`Kunne ikke hente metrics/tickets for department ${id} (status ${res.status})`);
@@ -105,7 +103,7 @@ export async function getDepartmentTicketList(id) {
 ---------------------------- */
 
 export async function markTicketAsMisrouted(ticketId) {
-    const res = await fetch(`${API_BASE_URL}/tickets/${ticketId}/misrouted`, {
+    const res = await fetch(`${API_BASE_URL()}/tickets/${ticketId}/misrouted`, {
         method: "POST",
         headers: getAuthHeaders(false)
     });
@@ -119,7 +117,7 @@ export async function markTicketAsMisrouted(ticketId) {
    MARK AS CORRECT (ADMIN ONLY)
 ---------------------------- */
 export async function markTicketAsCorrect(ticketId) {
-    const res = await fetch(`${API_BASE_URL}/tickets/${ticketId}/correct`, {
+    const res = await fetch(`${API_BASE_URL()}/tickets/${ticketId}/correct`, {
         method: "POST",
         headers: getAuthHeaders(false)
     });
@@ -134,7 +132,7 @@ export async function markTicketAsCorrect(ticketId) {
 ---------------------------- */
 
 export async function updateTicketPriority(ticketId, priorityId) {
-    const res = await fetch(`${API_BASE_URL}/tickets/${ticketId}/priority/${priorityId}`, {
+    const res = await fetch(`${API_BASE_URL()}/tickets/${ticketId}/priority/${priorityId}`, {
         method: "POST",
         headers: getAuthHeaders(false)
     });
@@ -147,7 +145,7 @@ export async function updateTicketPriority(ticketId, priorityId) {
 ============================================================ */
 
 export async function getRoutingStats() {
-    const res = await fetch(`${API_BASE_URL}/stats`, {
+    const res = await fetch(`${API_BASE_URL()}/stats`, {
         headers: getAuthHeaders(false)
     });
     if (!res.ok) throw new Error(`Kunne ikke hente stats (status ${res.status})`);
@@ -155,7 +153,7 @@ export async function getRoutingStats() {
 }
 
 export async function getRoutingStatsForDepartment(id) {
-    const res = await fetch(`${API_BASE_URL}/stats/${id}`, {
+    const res = await fetch(`${API_BASE_URL()}/stats/${id}`, {
         headers: getAuthHeaders(false)
     });
     if (!res.ok) throw new Error(`Kunne ikke hente stats for department ${id} (status ${res.status})`);
@@ -167,7 +165,7 @@ export async function getRoutingStatsForDepartment(id) {
 ---------------------------- */
 
 export async function getMetricsHistoryForAllDepartments() {
-    const res = await fetch(`${API_BASE_URL}/metrics/departments`, {
+    const res = await fetch(`${API_BASE_URL()}/metrics/departments`, {
         headers: getAuthHeaders(false)
     });
     if (!res.ok) throw new Error(`Kunne ikke hente historiske metrics (status ${res.status})`);

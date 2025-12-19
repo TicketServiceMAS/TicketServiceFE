@@ -5,6 +5,9 @@ import {
     getTicketsForDepartment,
     getDepartmentTicketList,
 } from "./api.js";
+import {API_BASE_URL} from "./config.js"
+import {AUTH_BASE_URL} from "./config.js"
+
 import { loadTicketList } from "./tickets.js";
 
 import {
@@ -1110,7 +1113,7 @@ window.addEventListener("DOMContentLoaded", async () =>
         .addEventListener("click", () => modal.classList.add("hidden"));
 
 
-    const res = await fetch("http://localhost:8080/api/ticketservice/departments", {
+    const res = await fetch(`${API_BASE_URL()}/departments`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -1143,7 +1146,7 @@ window.addEventListener("DOMContentLoaded", async () =>
              };
 
              try {
-                 const res = await fetch("http://localhost:8080/auth/user", {
+                 const res = await fetch(`${AUTH_BASE_URL()}/auth/user`, {
                      method: "POST",
                      headers: {
                          "Content-Type": "application/json",

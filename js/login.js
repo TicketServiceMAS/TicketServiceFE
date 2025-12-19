@@ -1,5 +1,4 @@
-//const AUTH_BASE_URL = "http://localhost:8080";
-const AUTH_BASE_URL = "https://ticketservicemas-b4addvfjf6hthedj.norwayeast-01.azurewebsites.net"
+import {AUTH_BASE_URL} from "./config.js"
 // .idea/js/login.js
 
 // Simpel "fake" auth-funktion – kan senere skiftes til rigtig backend
@@ -18,7 +17,7 @@ const AUTH_BASE_URL = "https://ticketservicemas-b4addvfjf6hthedj.norwayeast-01.a
         };
     }*/
 async function fakeAuthenticate(username, password) {
-    const res = await fetch(`${AUTH_BASE_URL}/auth/login`, {
+    const res = await fetch(`${AUTH_BASE_URL()}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
