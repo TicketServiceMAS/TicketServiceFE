@@ -1129,31 +1129,48 @@ window.addEventListener("DOMContentLoaded", async () =>
         `<option value="${d.departmentID}">${d.departmentName}</option>`
     ).join("");
 
-    document.getElementById("createUserForm")
-        .addEventListener("submit", async (e) => {
-            e.preventDefault();
+     document.getElementById("createUserForm")
+         .addEventListener("submit", async (e) => {
+             e.preventDefault();
 
-            const payload = {
-                username: document.getElementById("newUsername").value,
-                password: document.getElementById("newPassword").value,
-                role: document.getElementById("newRole").value,
-                department: {
-                    departmentID: document.getElementById("newDepartment").value
-                }
-            };
+             const payload = {
+                 username: document.getElementById("newUsername").value,
+                 password: document.getElementById("newPassword").value,
+                 role: document.getElementById("newRole").value,
+                 department: {
+                     departmentID: document.getElementById("newDepartment").value
+                 }
+             };
 
-            const res = await fetch("http://localhost:8080/auth/user", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
+             try {
+                 const res = await fetch("http://localhost:8080/auth/user", {
+                     method: "POST",
+                     headers: {
+                         "Content-Type": "application/json",
+                         Authorization: `Bearer ${token}`
+                     },
+                     body: JSON.stringify(payload)
+                 });
 
-        });
+                 if (!res.ok) {
+                     const text = await res.text();
+                     console.error("Could not create user:", res.status, text);
+                     return;
+                 }
+
+                 // Close the modal after successful submission
+                 modal.classList.add("hidden");
+
+                 // Optionally, reset the form
+                 document.getElementById("createUserForm").reset();
+
+             } catch (error) {
+                 console.error("Error creating user:", error);
+             }
+         });
 
 
-    scheduleAutoRefresh();
+
+     scheduleAutoRefresh();
     loadStats();
 });
