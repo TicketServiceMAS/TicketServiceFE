@@ -1146,7 +1146,7 @@ window.addEventListener("DOMContentLoaded", async () =>
              };
 
              try {
-                 const res = await fetch(`${AUTH_BASE_URL()}/auth/user`, {
+                 const res = await fetch(`${API_BASE_URL()}/user`, {
                      method: "POST",
                      headers: {
                          "Content-Type": "application/json",
