@@ -249,12 +249,13 @@ function buildExcelReportContent(snapshot, exportedAt) {
         ? snapshot.tickets.map(normalizeTicketForExport)
         : [];
 
+    // ⭐ FIXET VERSION — ingen .metrics
     const ticketRows = normalizedTickets.map(ticket => ([
         `#${ticket.id}`,
         ticket.status,
         ticket.priority,
-        ticket.metrics.subject,
-        formatDateTime(ticket.metrics.date)
+        ticket.subject,
+        formatDateTime(ticket.date)
     ]));
 
     const statsTable = buildTable(["Nøgle", "Værdi"], statsRows);
@@ -288,7 +289,6 @@ function buildExcelReportContent(snapshot, exportedAt) {
         </html>
     `;
 }
-
 function enableReportButton() {
     const downloadBtn = document.getElementById("downloadReportButton");
     if (downloadBtn) {
@@ -324,6 +324,7 @@ function handleDownloadReport() {
     URL.revokeObjectURL(url);
     setLiveStatus("Rapport downloadet (Excel).", false);
 }
+
 
 function loadAutoRefreshPreferences() {
     try {
