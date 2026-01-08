@@ -324,16 +324,17 @@ function openTicketModal(ticket) {
 
     if (idEl) idEl.textContent = `#${ticket.id}`;
     if (subjectEl) subjectEl.textContent = ticket.subject || "(ingen subject)";
-    if (metaEl) metaEl.textContent = `${ticket.status || ""} • ${ticket.priority || ""} • ${formatDate(ticket.date) || ""}`;
+    if (metaEl) metaEl.textContent =
+        `${ticket.status || ""} • ${ticket.priority || ""} • ${formatDate(ticket.date) || ""}`;
 
-    // Render content som tekst (XSS-sikkert)
-    if (bodyEl) {
-        bodyEl.textContent = ticket.content || "(intet indhold)";
-    }
+    if (bodyEl) bodyEl.textContent = ticket.content || "(intet indhold)";
 
+    // 🔥 HER ER FIXET
     modal.classList.add("is-open");
-    modal.setAttribute("aria-hidden", "false");
+    modal.removeAttribute("aria-hidden");
 }
+
+
 
 function closeTicketModal() {
     const modal = document.getElementById("ticketModal");
@@ -673,5 +674,8 @@ function attachPriorityChangeHandlers(container) {
                 select.disabled = prevDisabled;
             }
         });
+    });
+    window.addEventListener("DOMContentLoaded", () => {
+        ensureModalWired();
     });
 }
