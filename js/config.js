@@ -1,13 +1,13 @@
 // config.js
 // Konfiguration + mock-data + URL-parametre
 export function API_BASE_URL() {
-    return "http://localhost:8080/api/ticketservice"
-    //return "https://ticketservicemas-b4addvfjf6hthedj.norwayeast-01.azurewebsites.net/api/ticketservice"
+    //return "http://localhost:8080/api/ticketservice"
+    return "https://ticketservicemas-b4addvfjf6hthedj.norwayeast-01.azurewebsites.net/api/ticketservice"
 }
 
 export function AUTH_BASE_URL() {
-    return "http://localhost:8080"
-    //return "https://ticketservicemas-b4addvfjf6hthedj.norwayeast-01.azurewebsites.net"
+    //return "http://localhost:8080"
+    return "https://ticketservicemas-b4addvfjf6hthedj.norwayeast-01.azurewebsites.net"
 }
 export const USE_MOCK = false;
 
