@@ -50,7 +50,6 @@ let latestReportData = null;
 const AUTO_REFRESH_ENABLED_KEY = "autoRefreshEnabled";
 const AUTO_REFRESH_INTERVAL_KEY = "autoRefreshIntervalMs";
 
-// ===== AUTH (via login page) =====
 const AUTH_TOKEN_KEY = "authToken";
 const AUTH_USER_KEY = "currentUser";
 
@@ -79,11 +78,7 @@ function isAdmin() {
     }
 }
 
-/**
- * Sørger for at man er logget ind.
- * Hvis ikke → redirect til login.html
- * Returnerer "admin" eller "user".
- */
+
 function requireAuth() {
     const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
     const user = getCurrentUser();
@@ -96,7 +91,7 @@ function requireAuth() {
 
 }
 
-// ===== RESTEN AF APPEN =====
+
 
 function setLiveStatus(message, isBusy = false) {
     const liveRegion = document.getElementById("liveStatus");
@@ -159,18 +154,16 @@ function mapPriorityToCode(priorityRaw) {
 
     const value = String(priorityRaw).toLowerCase().trim();
 
-    // Direkte match
+
     if (["p1", "prio1", "priority1", "1"].includes(value)) return "P1";
     if (["p2", "prio2", "priority2", "2"].includes(value)) return "P2";
     if (["p3", "prio3", "priority3", "3"].includes(value)) return "P3";
     if (["sima", "sima-ticket", "sima support"].includes(value)) return "SIMA";
 
-    // Teksttyper
     if (["kritisk", "critical", "urgent", "høj", "hoej", "high"].includes(value)) return "P1";
     if (["medium", "mellem", "normal"].includes(value)) return "P2";
     if (["lav", "low"].includes(value)) return "P3";
 
-    // Hvis brugeren allerede har skrevet P1/P2/P3/SIMA
     const upper = String(priorityRaw).toUpperCase().trim();
     if (["P1", "P2", "P3", "SIMA"].includes(upper)) return upper;
 
@@ -202,7 +195,7 @@ function normalizeTicketForExport(ticket) {
 
         date: ticket.createdAt ?? ticket.created_at ?? ticket.date ?? "",
 
-        priority: normalizedPriority  // P1 / P2 / P3 / SIMA
+        priority: normalizedPriority
     };
 }
 
@@ -249,12 +242,13 @@ function buildExcelReportContent(snapshot, exportedAt) {
         ? snapshot.tickets.map(normalizeTicketForExport)
         : [];
 
+    // ⭐ FIXET VERSION — ingen .metrics
     const ticketRows = normalizedTickets.map(ticket => ([
         `#${ticket.id}`,
         ticket.status,
         ticket.priority,
-        ticket.metrics.subject,
-        formatDateTime(ticket.metrics.date)
+        ticket.subject,
+        formatDateTime(ticket.date)
     ]));
 
     const statsTable = buildTable(["Nøgle", "Værdi"], statsRows);
@@ -288,7 +282,6 @@ function buildExcelReportContent(snapshot, exportedAt) {
         </html>
     `;
 }
-
 function enableReportButton() {
     const downloadBtn = document.getElementById("downloadReportButton");
     if (downloadBtn) {
@@ -324,6 +317,7 @@ function handleDownloadReport() {
     URL.revokeObjectURL(url);
     setLiveStatus("Rapport downloadet (Excel).", false);
 }
+
 
 function loadAutoRefreshPreferences() {
     try {
@@ -419,7 +413,6 @@ function renderStatusStrip({ accuracyPercent, totalTickets, incorrect, defaulted
     }
 }
 
-/* ================= HOVED-FUNKTION: loadStats ================= */
 
 async function loadStats(options = {}) {
     const { skipOverlay = false } = options;
@@ -468,10 +461,7 @@ async function loadStats(options = {}) {
                     departmentData = { departmentName: tickets[0].departmentName };
                 }
             } else {
-                // Hent:
-                //  - stats for department
-                //  - metrics-objekt (til navn m.m.)
-                //  - ticket-listen for department
+
                 const [statsFromApi, deptMetrics, ticketList] = await Promise.all([
                     getRoutingStatsForDepartment(depId),
                     getTicketsForDepartment(depId),
@@ -701,7 +691,7 @@ async function loadStats(options = {}) {
             return;
         }
 
-        // ===== Donut-chart =====
+
         const canvas = document.getElementById("accuracyChart");
         if (!canvas) {
             console.error("Kunne ikke finde canvas-elementet til donut-grafen.");
@@ -782,7 +772,6 @@ async function loadStats(options = {}) {
             }
         });
 
-        // ===== Line-chart: daglig + glidende gennemsnit =====
         const lineCanvas = document.getElementById("statusBarChart");
         const captionEl = document.getElementById("statusBarChartCaption");
 
@@ -1023,7 +1012,6 @@ function setupAutoRefreshControls() {
     }
 }
 
-/* ===== INIT ===== */
 
 window.addEventListener("DOMContentLoaded", async () => 
  {
@@ -1068,7 +1056,6 @@ window.addEventListener("DOMContentLoaded", async () =>
         ticketSection.style.display = isDepartmentView ? "block" : "none";
     }
 
-    // ADMIN-KNAPPER: kun admin ser "Opdater nu" + "Download rapport"
     if (refreshNowButton) {
         if (isAdmin()) {
             refreshNowButton.style.display = "inline-flex";
@@ -1146,7 +1133,7 @@ window.addEventListener("DOMContentLoaded", async () =>
              };
 
              try {
-                 const res = await fetch(`${AUTH_BASE_URL()}/auth/user`, {
+                 const res = await fetch(`${API_BASE_URL()}/user`, {
                      method: "POST",
                      headers: {
                          "Content-Type": "application/json",
@@ -1161,10 +1148,8 @@ window.addEventListener("DOMContentLoaded", async () =>
                      return;
                  }
 
-                 // Close the modal after successful submission
                  modal.classList.add("hidden");
 
-                 // Optionally, reset the form
                  document.getElementById("createUserForm").reset();
 
              } catch (error) {

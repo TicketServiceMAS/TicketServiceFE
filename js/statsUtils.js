@@ -38,7 +38,6 @@ export function computeStatsFromTickets(tickets) {
     return result;
 }
 
-// Daglig accuracy pr. dato
 export function buildDailyAccuracySeries(tickets) {
     const map = new Map();
 
@@ -85,7 +84,6 @@ export function buildDailyAccuracySeries(tickets) {
     });
 }
 
-// 7-dages glidende gennemsnit (eller anden windowSize)
 export function buildSmoothedAccuracySeries(dailySeries, windowSize = 7) {
     if (!Array.isArray(dailySeries) || dailySeries.length === 0) {
         return [];

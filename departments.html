@@ -5,23 +5,22 @@
     <title>Departments – Ticket Routing Tool</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- CSS -->
     <link rel="stylesheet" href="css/departments.css">
 
-    <!-- JS -->
     <script type="module" src="js/departments.js"></script>
     <script type="module" src="js/navTransitions.js"></script>
+    <script type="module" src="js/index.js"></script>
+    <script type="module" src="js/tickets.js"></script>
+
 </head>
 
 <body>
 <div class="app-shell">
 
-    <!-- ================= HEADER ================= -->
     <header class="topbar">
         <div class="topbar-inner">
 
@@ -40,7 +39,6 @@
                 </div>
             </div>
 
-            <!-- Højre side: navigation + settings-tandhjul -->
             <div class="topbar-right">
                 <nav class="topbar-nav">
                     <a href="./index.html" class="nav-link">
@@ -119,7 +117,6 @@
         </div>
     </header>
 
-    <!-- ================= PAGE CONTENT ================= -->
     <main class="page">
 
         <div id="departmentLiveRegion" class="visually-hidden" aria-live="polite"></div>
@@ -131,7 +128,6 @@
 
         <div class="card">
 
-            <!-- ======== Card Header ======== -->
             <div class="card-header-row">
 
                 <div class="card-header-text">
@@ -143,7 +139,6 @@
 
                     <div class="toolbar">
 
-                        <!-- Search -->
                         <div class="toolbar-search">
                             <label class="visually-hidden" for="departmentSearch">Søg efter department</label>
                             <input id="departmentSearch" type="text" placeholder="Søg efter department...">
@@ -154,7 +149,6 @@
                             <span class="result-label">matches</span>
                         </div>
 
-                        <!-- Filter chips -->
                         <button class="toolbar-chip toolbar-chip-active" type="button">
                             <span class="dot"></span> Alle
                         </button>
@@ -167,7 +161,6 @@
                         <span class="dot"></span> Lav accuracy
                     </button>
 
-                    <!-- Create New -->
                     <button id="toggleAddDepartment" class="toolbar-button-primary" type="button">
                         + Nyt department
                     </button>
@@ -175,7 +168,6 @@
                 </div>
             </div>
 
-            <!-- ======== Add Department ======== -->
             <div id="addDepartmentContainer" class="add-department-container hidden">
                 <div class="add-department-title">Tilføj nyt department</div>
 
@@ -203,7 +195,6 @@
                 </form>
             </div>
 
-            <!-- ======== Edit Department ======== -->
             <div id="editDepartmentContainer" class="add-department-container hidden">
                 <div class="add-department-title">Rediger department</div>
 
@@ -231,7 +222,6 @@
                 </form>
             </div>
 
-            <!-- ======== Department List Output ======== -->
             <div id="department-output" role="status" aria-live="polite">
                 Henter departments...
             </div>
@@ -240,7 +230,6 @@
 
     </main>
 
-    <!-- ================= FOOTER ================= -->
     <footer class="footer">
         <span>itm8 • Ticket Routing Tool</span>
         <span class="footer-divider">•</span>
@@ -248,5 +237,6 @@
     </footer>
 
 </div>
+
 </body>
 </html>

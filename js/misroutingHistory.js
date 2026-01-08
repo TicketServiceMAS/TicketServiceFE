@@ -5,7 +5,6 @@ let chartInstance = null;
 
 function formatDateLabel(isoDate) {
     if (!isoDate) return "";
-    // isoDate forventes som "YYYY-MM-DD"
     try {
         const [y, m, d] = isoDate.split("-");
         return `${d}-${m}-${y}`;
@@ -128,7 +127,6 @@ async function loadHistory() {
     }
 }
 
-/** Init */
 window.addEventListener("DOMContentLoaded", () => {
     initTheme?.();
     setupSettingsMenu?.();

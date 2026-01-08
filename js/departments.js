@@ -10,13 +10,11 @@ import { initTheme, setupSettingsMenu } from "./theme.js";
 let allDepartments = [];
 let editingDepartmentId = null;
 
-// filter / sort state
 let currentFilter = "all";
 let currentSearchQuery = "";
 let isSkeletonActive = false;
 let renderTimer = null;
 
-// ===== AUTH helpers =====
 const AUTH_TOKEN_KEY = "authToken";
 const AUTH_USER_KEY = "currentUser";
 
@@ -51,7 +49,6 @@ function requireAuth() {
     return getCurrentUserRole();
 }
 
-// ===========================
 
 function updateResultBadge(value) {
     const badge = document.getElementById("departmentResultBadge");
@@ -93,14 +90,12 @@ function setDepartmentLiveStatus(message, isBusy = false) {
     liveRegion.setAttribute("aria-busy", isBusy ? "true" : "false");
 }
 
-// Simpel email-validering
 function isValidEmail(email) {
     if (!email) return false;
     const regex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/;
     return regex.test(email);
 }
 
-/** Render departments */
 function renderDepartments() {
     const output = document.getElementById("department-output");
     if (!output) return;
@@ -154,7 +149,6 @@ function renderDepartments() {
             const accuracyClass =
                 accuracy >= 90 ? "accuracy-good" : accuracy >= 70 ? "accuracy-ok" : "accuracy-bad";
 
-            // KUN admin ser Rediger / Slet
             const actionsHtml = currentRole === "admin"
                 ? `
                     <div class="department-actions">
@@ -207,7 +201,6 @@ function renderDepartments() {
     attachDepartmentItemHandlers();
 }
 
-/** Klik-håndtering for department items */
 function attachDepartmentItemHandlers() {
     const container = document.getElementById("department-output");
     if (!container) return;
@@ -244,7 +237,6 @@ function attachDepartmentItemHandlers() {
         });
     });
 
-    // Edit/Slet kun for admin
     if (currentRole === "admin") {
         const editBtns = container.querySelectorAll(".department-action-edit");
         editBtns.forEach(btn => {
@@ -266,7 +258,6 @@ function attachDepartmentItemHandlers() {
     }
 }
 
-/** Hent departments + metrics */
 async function loadDepartments(showSkeleton = false) {
     const output = document.getElementById("department-output");
     if (!output) return;
@@ -309,10 +300,7 @@ async function loadDepartments(showSkeleton = false) {
             })
         );
 
-        // ==========================================================
-        // HARD FILTER: Normal user ser KUN sit eget department
-        // currentUser indeholder kun { username }, så vi mapper username -> departmentName
-        // ==========================================================
+
         const user = getCurrentUser();
         let finalList = withStats;
 
@@ -363,7 +351,6 @@ async function loadDepartments(showSkeleton = false) {
     }
 }
 
-/** Søgning */
 function setupSearch() {
     const searchInput = document.getElementById("departmentSearch");
     if (!searchInput) return;
@@ -374,7 +361,6 @@ function setupSearch() {
     });
 }
 
-/** Filter-chips */
 function setupFilterChips() {
     const chips = document.querySelectorAll(".toolbar-chip");
     if (!chips.length) return;
@@ -399,7 +385,6 @@ function setupFilterChips() {
     });
 }
 
-/** Add department UI */
 function showAddForm(show) {
     const container = document.getElementById("addDepartmentContainer");
     const msgEl = document.getElementById("addDepartmentMessage");
@@ -444,7 +429,6 @@ function setAddFormMessage(type, text) {
     }
 }
 
-/** Edit department UI */
 function showEditForm(show) {
     const container = document.getElementById("editDepartmentContainer");
     const msgEl = document.getElementById("editDepartmentMessage");
@@ -490,7 +474,6 @@ function setEditFormMessage(type, text) {
     }
 }
 
-/** Åbn edit-form */
 function openEditForm(departmentId) {
     const dep = allDepartments.find(d => String(d.departmentID ?? d.id) === String(departmentId));
     if (!dep) {
@@ -510,7 +493,6 @@ function openEditForm(departmentId) {
     showEditForm(true);
 }
 
-/** Slet department */
 async function handleDeleteDepartment(departmentId) {
     const dep = allDepartments.find(d => String(d.departmentID ?? d.id) === String(departmentId));
     const name = dep?.departmentName ?? `ID ${departmentId}`;
@@ -533,7 +515,6 @@ async function handleDeleteDepartment(departmentId) {
     }
 }
 
-/** Setup add department */
 function setupAddDepartment() {
     if (currentRole !== "admin") return;
 
@@ -613,7 +594,6 @@ function setupAddDepartment() {
     }
 }
 
-/** Setup edit department */
 function setupEditDepartment() {
     if (currentRole !== "admin") return;
 

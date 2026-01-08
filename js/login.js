@@ -1,22 +1,6 @@
 import {AUTH_BASE_URL} from "./config.js"
-// .idea/js/login.js
 
-// Simpel "fake" auth-funktion – kan senere skiftes til rigtig backend
-/*async function fakeAuthenticate(username, password) {
-    // Simuler lidt netværksdelay
-    await new Promise(resolve => setTimeout(resolve, 600));
-
-    // Demo-bruger
-    if (username === "admin" && password === "admin123") {
-        return {
-            token: "dev-fake-token-123",
-            user: {
-                username: "admin",
-                displayName: "Administrator"
-            }
-        };
-    }*/
-async function fakeAuthenticate(username, password) {
+async function authenticate(username, password) {
     const res = await fetch(`${AUTH_BASE_URL()}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -27,12 +11,12 @@ async function fakeAuthenticate(username, password) {
         throw new Error("Forkert brugernavn eller adgangskode.");
     }
 
-    // Backend returns a plain string, not JSON
+
     const token = await res.text();
 
     return {
         token,
-        user: { username } // optionally request user info later
+        user: { username }
     };
 }
 
@@ -86,16 +70,15 @@ window.addEventListener("DOMContentLoaded", () => {
             }
             setLoginMessage(null, "");
 
-            // LIGE NU: fake login
-            const result = await fakeAuthenticate(username, password);
 
-            // Gem "token" og brugerinfo i localStorage
+            const result = await authenticate(username, password);
+
+
             sessionStorage.setItem("authToken", result.token);
             sessionStorage.setItem("currentUser", JSON.stringify(result.user));
 
             setLoginMessage("success", "Login lykkedes – omdirigerer...");
 
-            // Redirect til dashboard
             setTimeout(() => {
                 window.location.href = "index.html";
             }, 600);
@@ -113,10 +96,10 @@ window.addEventListener("DOMContentLoaded", () => {
 /*
  * NÅR I SENERE FÅR BACKEND:
  *
- * 1) Slet fakeAuthenticate ovenfor
+ * 1) Slet authenticate ovenfor
  * 2) Erstat i submit-handler:
  *
- *    const result = await fakeAuthenticate(username, password);
+ *    const result = await authenticate(username, password);
  *
  *    med fx:
  *
