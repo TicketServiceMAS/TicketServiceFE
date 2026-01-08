@@ -1571,8 +1571,94 @@ body.page-leaving {
     border: none;
 }
 
-.modal-actions button[type="button"] {
-    background: transparent;
-    border: 1px solid #d1d5db;
+#ticketModal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: rgba(0,0,0,0.55) !important;
+    z-index: 99999 !important;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
 }
+
+#ticketModal.is-open {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.ticket-modal-dialog {
+    background: white !important;
+    padding: 20px !important;
+    border-radius: 12px !important;
+    max-width: 700px !important;
+    width: 90% !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important;
+}
+
+/* Style priority dropdown så den matcher dine knapper */
+.ticket-priority-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    padding: 6px 32px 6px 12px;
+    background: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    position: relative;
+
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Hover */
+.ticket-priority-select:hover {
+    border-color: #cbd5e1;
+}
+
+/* Focus */
+.ticket-priority-select:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
+    outline: none;
+}
+
+/* Custom dropdown pil */
+.ticket-priority-select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg width='14' height='14' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 7L10 12L15 7' stroke='%23888' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-position: right 10px center;
+    background-repeat: no-repeat;
+    background-size: 14px;
+}
+.ticket-open-btn {
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #374151;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+}
+
+.ticket-open-btn:hover {
+    border-color: #cbd5e1;
+    background: #f9fafb;
+}
+
+.ticket-open-btn:active {
+    background: #f3f4f6;
+}
+
 
