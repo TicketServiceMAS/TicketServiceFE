@@ -1631,5 +1631,41 @@ body.page-leaving {
 .ticket-open-btn:active {
     background: #f3f4f6;
 }
+.ticket-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    font-size: 18px;
+    font-weight: bold;
+    color: #374151;
+
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ticket-modal-close:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.ticket-modal-close:active {
+    background: #e5e7eb;
+}
+.ticket-modal-dialog {
+    position: relative;
+}
+
 
 
