@@ -1,7 +1,6 @@
 // theme.js
 // Dark/light tema + logout + settings-menu-opsætning
 
-/* ================= TEMA / DARK MODE ================= */
 
 function syncThemeToggleUI(theme) {
     const statusLabel = document.getElementById("themeStatusLabel");
@@ -59,7 +58,6 @@ export function toggleTheme() {
     applyTheme(next);
 }
 
-/* ================= LOGOUT ================= */
 
 export function handleLogout() {
     try {
@@ -70,7 +68,6 @@ export function handleLogout() {
     window.location.href = "./login.html";
 }
 
-/* ================= SETTINGS-MENU (tandhjul) ================= */
 
 export function setupSettingsMenu(options = {}) {
     const btn = document.getElementById("settingsButton");

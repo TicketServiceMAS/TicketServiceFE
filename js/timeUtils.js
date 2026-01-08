@@ -1,5 +1,5 @@
 // timeUtils.js
-// Tid, formatering og hentning af alle tickets / metrics
+
 
 import {
     getDepartments,
@@ -53,23 +53,15 @@ export function formatDateTime(isoString) {
     return d.toLocaleString("da-DK");
 }
 
-/**
- * Version der matcher jeres oprindelige index.js:
- * - henter metrics/tickets pr. department
- * - returnerer en liste af objekter { departmentId, ...data }
- * - vi forsøger IKKE at flade om til rene tickets her
- */
+
 export async function loadAllTicketsFromBackend() {
     try {
-        // Brug ny endpoint der returnerer historiske metrics for alle departments.
-        // Dette sikrer at linjegrafen har data selv når tickets ikke er fladet ud per department.
         const history = await getMetricsHistoryForAllDepartments();
 
         if (Array.isArray(history)) {
             return history;
         }
 
-        // Fallback til gammel strategi hvis backend svarer uventet.
         const departments = await getDepartments();
         if (!Array.isArray(departments) || departments.length === 0) {
             console.warn("Ingen departments fundet");
@@ -128,11 +120,7 @@ export async function loadAllTicketsFromBackend() {
     }
 }
 
-/**
- * (EKSTRA) Alternativ helper der flader alt ud til rene tickets.
- * Bruger vi ikke lige nu, men den ligger her hvis backend senere
- * returnerer arrays med tickets i en `tickets`-property.
- */
+
 export async function loadAllTicketsFlattened() {
     const perDepartment = await loadAllTicketsFromBackend();
     const flattened = [];
@@ -140,7 +128,6 @@ export async function loadAllTicketsFlattened() {
     for (const dep of perDepartment) {
         if (!dep) continue;
 
-        // hvis backend har en tickets-liste
         if (Array.isArray(dep.tickets)) {
             for (const t of dep.tickets) {
                 flattened.push(t);

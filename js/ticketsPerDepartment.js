@@ -28,7 +28,6 @@ async function loadTickets() {
         const defaulted = stats.defaultedCount ?? 0;
         const accuracy = totalTickets > 0 ? (success / totalTickets) * 100 : 0;
 
-        // --- UPDATED: Added <div id="ticket-list"></div> ---
         output.innerHTML = `
             <div class="ticket-stats">
                 <p><strong>Total tickets:</strong> ${totalTickets}</p>
@@ -78,7 +77,6 @@ async function loadTickets() {
             }
         });
 
-        // --- NEW: Load all tickets after stats ---
         loadAllTickets();
 
     } catch (err) {
@@ -86,9 +84,7 @@ async function loadTickets() {
     }
 }
 
-/* ---------------------------------------------------------
-   NEW FUNCTION: Fetch and render all tickets for the department
---------------------------------------------------------- */
+
 async function loadAllTickets() {
     const listContainer = document.getElementById("ticket-list");
 
@@ -100,7 +96,6 @@ async function loadAllTickets() {
             return;
         }
 
-        // Build list HTML
         const html = tickets.map(t => `
             <div class="ticket-item">
                 <p><strong>ID:</strong> ${t.id}</p>

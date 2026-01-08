@@ -32,7 +32,7 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* ================= ACCESSIBILITY ================= */
+
 
 .visually-hidden {
     position: absolute;
@@ -56,7 +56,7 @@ textarea:focus-visible,
     box-shadow: 0 0 0 2px #ede9fe;
 }
 
-/* ================= APP SHELL ================= */
+
 
 .app-shell {
     min-height: 100vh;
@@ -64,7 +64,7 @@ textarea:focus-visible,
     flex-direction: column;
 }
 
-/* ================= HEADER ================= */
+
 
 .topbar {
     background: rgba(255,255,255,0.96);
@@ -136,7 +136,6 @@ textarea:focus-visible,
     margin-top: 2px;
 }
 
-/* NAVIGATION */
 
 .topbar-right {
     display: flex;
@@ -193,7 +192,6 @@ textarea:focus-visible,
     background: #5f259e;
 }
 
-/* ================= PAGE ================= */
 
 .page {
     max-width: 1100px;
@@ -202,7 +200,6 @@ textarea:focus-visible,
     flex: 1;
 }
 
-/* Page header over card */
 
 .page-header {
     display: flex;
@@ -243,7 +240,6 @@ textarea:focus-visible,
     color: #047857;
 }
 
-/* ================= CARD ================= */
 
 .card {
     background: var(--surface);
@@ -280,7 +276,6 @@ textarea:focus-visible,
     color: var(--text-muted);
 }
 
-/* ================= TOOLBAR ================= */
 
 .toolbar {
     display: flex;
@@ -290,7 +285,6 @@ textarea:focus-visible,
     justify-content: flex-end;
 }
 
-/* Search */
 
 .toolbar-search {
     display: flex;
@@ -330,7 +324,6 @@ textarea:focus-visible,
     box-shadow: 0 0 0 1px rgba(95,37,158,0.18);
 }
 
-/* Result badge */
 
 .toolbar-result {
     display: inline-flex;
@@ -357,7 +350,6 @@ textarea:focus-visible,
     font-size: 0.8rem;
 }
 
-/* Filter chips */
 
 .toolbar-chip {
     padding: 6px 12px;
@@ -399,7 +391,6 @@ textarea:focus-visible,
     background: var(--accent);
 }
 
-/* Primary toolbar button */
 
 .toolbar-button-primary {
     padding: 8px 14px;
@@ -424,7 +415,7 @@ textarea:focus-visible,
     transform: translateY(-1px);
 }
 
-/* ================= ADD / EDIT FORMS ================= */
+
 
 .add-department-container {
     margin-top: 16px;
@@ -498,7 +489,6 @@ textarea:focus-visible,
     flex-wrap: wrap;
 }
 
-/* Buttons */
 
 .btn-primary {
     padding: 8px 14px;
@@ -544,7 +534,7 @@ textarea:focus-visible,
     font-size: 0.8rem;
 }
 
-/* ================= DEPARTMENT LIST ================= */
+
 
 #department-output {
     margin-top: 18px;
@@ -553,7 +543,6 @@ textarea:focus-visible,
     gap: 12px;
 }
 
-/* loading skeleton */
 
 .department-skeleton {
     display: grid;
@@ -589,7 +578,6 @@ textarea:focus-visible,
     100% { background-position: -200% 0; }
 }
 
-/* Department row */
 
 .department-item {
     display: flex;
@@ -616,7 +604,6 @@ textarea:focus-visible,
     border-color: var(--accent);
 }
 
-/* Left: name + mail + metrics */
 
 .department-main {
     display: flex;
@@ -702,7 +689,6 @@ textarea:focus-visible,
     font-size: 0.82rem;
 }
 
-/* Right: id + actions */
 
 .department-meta {
     display: flex;
@@ -730,7 +716,7 @@ textarea:focus-visible,
     gap: 10px;
 }
 
-/* Action buttons */
+
 
 .department-action {
     font-size: 0.8rem;
@@ -746,7 +732,7 @@ textarea:focus-visible,
             transform 0.05s ease-out;
 }
 
-/* Rediger */
+
 .department-action-edit {
     background: #ffffff;
     border-color: #cbd5e1;
@@ -759,7 +745,7 @@ textarea:focus-visible,
     transform: translateY(-1px);
 }
 
-/* Slet */
+
 .department-action-delete {
     background: var(--danger-soft);
     color: var(--danger);
@@ -773,7 +759,7 @@ textarea:focus-visible,
     transform: translateY(-1px);
 }
 
-/* ================= FOOTER ================= */
+
 
 .footer {
     padding: 14px;
@@ -788,7 +774,7 @@ textarea:focus-visible,
     opacity: 0.6;
 }
 
-/* ================= RESPONSIVE ================= */
+
 
 @media (max-width: 800px) {
     .topbar-inner {
@@ -828,7 +814,7 @@ textarea:focus-visible,
     }
 }
 
-/* ========== SETTINGS / TANDHJUL I TOPBAR ========== */
+
 
 .settings-menu {
     position: relative;
@@ -1029,7 +1015,7 @@ input:checked + .slider:before {
     margin: 6px 0;
 }
 
-/* ================= DARK THEME ================= */
+
 
 body[data-theme="dark"] {
     --accent: #a855f7;
@@ -1076,9 +1062,7 @@ body[data-theme="dark"] .toolbar-search input::placeholder {
     color: #6b7280;
 }
 
-/* ===========================================
-   TICKETS LIST – TABLE + CARD VIEW
-=========================================== */
+
 
 #departmentTicketListSection {
     margin-top: 30px;
@@ -1141,9 +1125,7 @@ body[data-theme="dark"] .toolbar-search input::placeholder {
     border: 1px solid rgba(95,37,158,0.2);
 }
 
-/* ===========================================
-   PRIORITY BADGES (P1 / P2 / P3 / SIMA)
-=========================================== */
+
 
 .priority-badge {
     padding: 4px 10px;
@@ -1172,9 +1154,7 @@ body[data-theme="dark"] .toolbar-search input::placeholder {
     background: #2563eb;
 }
 
-/* ===========================================
-   TICKET TABLE
-=========================================== */
+
 
 .ticket-table {
     width: 100%;
@@ -1200,7 +1180,7 @@ body[data-theme="dark"] .toolbar-search input::placeholder {
     background: #faf5ff;
 }
 
-/* Routing status badge */
+
 
 .status-success {
     background: #ecfdf5;
@@ -1220,9 +1200,7 @@ body[data-theme="dark"] .toolbar-search input::placeholder {
     font-weight: 600;
 }
 
-/* ===========================================
-   ACTION BUTTONS (admin routing change)
-=========================================== */
+
 
 .ticket-flag-button {
     padding: 6px 12px;
@@ -1260,9 +1238,7 @@ body[data-theme="dark"] .toolbar-search input::placeholder {
     opacity: 0.6;
 }
 
-/* ===========================================
-   CARD VIEW
-=========================================== */
+
 
 .ticket-card {
     background: white;
@@ -1285,9 +1261,7 @@ body[data-theme="dark"] .toolbar-search input::placeholder {
     margin: 14px 0;
 }
 
-/* ===========================================
-   PAGINATION
-=========================================== */
+
 
 .ticket-pagination {
     margin-top: 16px;

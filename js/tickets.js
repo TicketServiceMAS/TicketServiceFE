@@ -7,9 +7,6 @@ import {
 
 import { SELECTED_DEPARTMENT_ID } from "./config.js";
 
-/* ===================================================== */
-/* STATE */
-/* ===================================================== */
 
 const PAGE_SIZE = 10;
 
@@ -27,9 +24,6 @@ let activeDepartmentKey = null;
 
 const FILTER_STORAGE_KEY = "departmentTicketFilters";
 
-/* ===================================================== */
-/* AUTH */
-/* ===================================================== */
 
 const AUTH_USER_KEY = "currentUser";
 
@@ -47,9 +41,6 @@ function canEditRouting() {
     return user?.username === "admin";
 }
 
-/* ===================================================== */
-/* HELPERS */
-/* ===================================================== */
 
 function formatDate(iso) {
     if (!iso) return "";
@@ -57,16 +48,13 @@ function formatDate(iso) {
     return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("da-DK");
 }
 
-/**
- * Mapper alle mulige priority-felter til en af:
- *  - "P1", "P2", "P3" eller "SIMA"
- */
+
 function mapPriorityToCode(priorityRaw) {
     if (!priorityRaw) return "P3"; // default
 
     let value = priorityRaw;
 
-    // Hvis backend sender et objekt, prøv at trække en tekstværdi ud
+
     if (typeof value === "object" && value !== null) {
         const candidate =
             value.code ??
@@ -86,22 +74,18 @@ function mapPriorityToCode(priorityRaw) {
 
     const v = String(value).toLowerCase().trim();
 
-    // Direkte match
     if (["p1", "prio1", "priority1", "1"].includes(v)) return "P1";
     if (["p2", "prio2", "priority2", "2"].includes(v)) return "P2";
     if (["p3", "prio3", "priority3", "3"].includes(v)) return "P3";
     if (["sima", "sima-ticket", "sima support"].includes(v)) return "SIMA";
 
-    // Teksttyper → mappes til P1–P3
     if (["kritisk", "critical", "urgent", "høj", "hoej", "high"].includes(v)) return "P1";
     if (["medium", "mellem", "normal"].includes(v)) return "P2";
     if (["lav", "low"].includes(v)) return "P3";
 
-    // Hvis der allerede står P1/P2/P3/SIMA i en eller anden casing
     const upper = String(value).toUpperCase().trim();
     if (["P1", "P2", "P3", "SIMA"].includes(upper)) return upper;
 
-    // Fallback
     return "P3";
 }
 
@@ -110,7 +94,6 @@ function formatPriority(raw) {
 }
 
 function normalizePriority(p) {
-    // Bruges til nøgler i filter-state/counts (lowercase)
     return mapPriorityToCode(p).toLowerCase(); // "p1", "p2", "p3", "sima"
 }
 
@@ -118,8 +101,7 @@ function getStorageKey(departmentId) {
     return String(departmentId ?? SELECTED_DEPARTMENT_ID ?? "all");
 }
 
-// Mapper P1/P2/P3/SIMA → backend priorityId
-// JUSTÉR denne hvis jeres API bruger andre ID'er.
+
 function mapPriorityCodeToId(code) {
     switch (code) {
         case "P1": return 1;
@@ -130,9 +112,7 @@ function mapPriorityCodeToId(code) {
     }
 }
 
-/* ===================================================== */
-/* FILTER STATE STORAGE */
-/* ===================================================== */
+
 
 function loadSavedFilters(departmentId) {
     try {
@@ -158,9 +138,7 @@ function persistFilters() {
     } catch { }
 }
 
-/* ===================================================== */
-/* LOAD */
-/* ===================================================== */
+
 
 export async function loadTicketList(departmentId) {
     const container = document.getElementById("ticket-list");
@@ -193,9 +171,7 @@ export async function loadTicketList(departmentId) {
     }
 }
 
-/* ===================================================== */
-/* NORMALIZATION */
-/* ===================================================== */
+
 
 function normalizeTicket(t) {
     return {
@@ -220,9 +196,7 @@ function findNormalizedTicketById(ticketId) {
     return normalized.find(t => String(t.id) === String(ticketId)) || null;
 }
 
-/* ===================================================== */
-/* FILTERING */
-/* ===================================================== */
+
 
 function matchesFilters(t) {
     if (filters.search) {
@@ -247,9 +221,7 @@ function matchesFilters(t) {
     return true;
 }
 
-/* ===================================================== */
-/* COUNTS */
-/* ===================================================== */
+
 
 function buildStatusCounts(tickets) {
     const counts = { "": tickets.length };
@@ -268,9 +240,7 @@ function buildPriorityCounts(tickets) {
     return counts;
 }
 
-/* ===================================================== */
-/* PAGINATION */
-/* ===================================================== */
+
 
 function paginate(tickets) {
     const totalPages = Math.max(1, Math.ceil(tickets.length / PAGE_SIZE));
@@ -283,27 +253,21 @@ function paginate(tickets) {
     };
 }
 
-/* ===================================================== */
-/* MODAL (MAIL CONTENT) */
-/* ===================================================== */
 
 function ensureModalWired() {
     const modal = document.getElementById("ticketModal");
     if (!modal) return;
 
-    // Kun wire én gang
     if (modal.dataset.wired === "true") return;
     modal.dataset.wired = "true";
 
     const closeBtn = modal.querySelector("[data-ticket-modal-close]");
     closeBtn?.addEventListener("click", closeTicketModal);
 
-    // klik på overlay (udenfor dialog) lukker
     modal.addEventListener("click", (e) => {
         if (e.target === modal) closeTicketModal();
     });
 
-    // ESC lukker
     window.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && modal.classList.contains("is-open")) {
             closeTicketModal();
@@ -329,7 +293,6 @@ function openTicketModal(ticket) {
 
     if (bodyEl) bodyEl.textContent = ticket.content || "(intet indhold)";
 
-    // 🔥 HER ER FIXET
     modal.classList.add("is-open");
     modal.removeAttribute("aria-hidden");
 }
@@ -343,9 +306,6 @@ function closeTicketModal() {
     modal.setAttribute("aria-hidden", "true");
 }
 
-/* ===================================================== */
-/* UI BUILDERS */
-/* ===================================================== */
 
 function buildFilterBar(statuses) {
     return `
@@ -469,9 +429,6 @@ function renderCardRows(tickets) {
     }).join("");
 }
 
-/* ===================================================== */
-/* RENDER */
-/* ===================================================== */
 
 function renderTicketList(container) {
     const normalized = getNormalizedTickets();
@@ -504,9 +461,6 @@ function renderTicketList(container) {
     attachOpenTicketHandlers(container);
 }
 
-/* ===================================================== */
-/* CHIPS */
-/* ===================================================== */
 
 function renderFilterChips(statuses, statusCounts, priorityCounts) {
     const statusEl = document.getElementById("statusChipContainer");
@@ -545,9 +499,6 @@ function renderFilterChips(statuses, statusCounts, priorityCounts) {
     }
 }
 
-/* ===================================================== */
-/* EVENTS */
-/* ===================================================== */
 
 function wireUpInteractions(container, totalPages) {
     container.querySelector("#ticketSearchInput")?.addEventListener("input", e => {
@@ -597,19 +548,15 @@ function wireUpInteractions(container, totalPages) {
     });
 }
 
-/* ===================================================== */
-/* OPEN TICKET (SHOW MAIL CONTENT) */
-/* ===================================================== */
+
 
 function attachOpenTicketHandlers(container) {
     const results = container.querySelector("#ticket-results");
     if (!results) return;
 
-    // Event delegation
     results.addEventListener("click", (e) => {
         const target = e.target;
 
-        // Hvis man klikker på knapper/dropdowns der ikke skal åbne modal
         if (target.closest(".ticket-flag-button")) return;
         if (target.closest(".ticket-priority-select")) return;
 
@@ -626,9 +573,7 @@ function attachOpenTicketHandlers(container) {
     });
 }
 
-/* ===================================================== */
-/* ACTION BUTTONS */
-/* ===================================================== */
+
 
 function attachFlagButtonHandlers(container) {
     container.querySelectorAll(".ticket-flag-button").forEach(btn => {
@@ -642,9 +587,7 @@ function attachFlagButtonHandlers(container) {
     });
 }
 
-/**
- * Kun admin: ændre prioritet via dropdown.
- */
+
 function attachPriorityChangeHandlers(container) {
     if (!canEditRouting()) return;
 
@@ -660,7 +603,6 @@ function attachPriorityChangeHandlers(container) {
             try {
                 await updateTicketPriority(ticketId, priorityId);
 
-                // Opdatér lokal state så filtre m.m. stadig passer
                 const rawTicket = allTickets.find(t =>
                     String(t.metricsDepartmentID ?? t.id ?? t.ticketId ?? "Ukendt") === String(ticketId)
                 );

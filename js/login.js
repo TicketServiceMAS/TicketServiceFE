@@ -79,7 +79,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
             setLoginMessage("success", "Login lykkedes – omdirigerer...");
 
-            // Redirect til dashboard
             setTimeout(() => {
                 window.location.href = "index.html";
             }, 600);

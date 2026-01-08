@@ -5,22 +5,18 @@
     <title>Ticket Routing Tool – Statistik</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Inter font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- External CSS -->
     <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
 
 <div class="app-shell">
 
-    <!-- ================= HEADER ================= -->
     <header class="topbar">
         <div class="topbar-inner">
             <div class="brand">
@@ -36,7 +32,6 @@
                 </div>
             </div>
 
-            <!-- Right side -->
             <div class="topbar-right">
                 <nav class="topbar-nav">
                     <a href="./index.html" class="nav-link nav-link-active">
@@ -50,7 +45,6 @@
                     </a>
                 </nav>
 
-                <!-- SETTINGS -->
                 <div class="settings-menu">
                     <button id="settingsButton" class="settings-button" type="button">
                         <span class="settings-icon">⚙</span>
@@ -72,7 +66,6 @@
                             <div id="themePreview" class="theme-preview"></div>
                         </div>
 
-                        <!-- Auto refresh -->
                         <div class="settings-group-label">Auto-refresh</div>
 
                         <div class="settings-item settings-item-toggle">
@@ -111,7 +104,6 @@
 
                         <hr class="settings-divider">
 
-                        <!-- ADMIN ONLY -->
                         <hr class="settings-divider admin-only" style="display:none">
 
                         <button
@@ -129,7 +121,6 @@
         </div>
     </header>
 
-    <!-- ================= MAIN PAGE ================= -->
     <main class="page">
         <section class="hero">
             <div class="hero-left">
@@ -209,7 +200,6 @@
         </section>
     </main>
 
-    <!-- ================= FOOTER ================= -->
     <footer class="footer">
         <span>itm8 • Ticket Routing Tool</span>
         <span class="footer-divider">•</span>
@@ -218,7 +208,6 @@
 
 </div>
 
-<!-- ================= CREATE USER MODAL (OUTSIDE DROPDOWN) ================= -->
 <div id="createUserModal" class="modal hidden">
     <div class="modal-backdrop"></div>
 
@@ -257,7 +246,6 @@
     </div>
 </div>
 
-<!-- Loading overlay -->
 <div id="loadingOverlay" class="loading-overlay">
     <div class="loading">
         <div class="spinner"></div>
@@ -281,7 +269,6 @@
     </div>
 </div>
 
-<!-- JS -->
 <script type="module" src="js/index.js"></script>
 <script type="module" src="js/tickets.js"></script>
 <script type="module" src="js/navTransitions.js"></script>
